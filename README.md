@@ -13,9 +13,9 @@ A mobile task management app with three modes (to-do list, daily tasks, RPG) and
 
 ## Platform Support
 
-⏳ Android (In development)
-⏳ iOS (In development)
-⏳ Desktop (In development)
+- ⏳ Android (In development)
+- ⏳ iOS (In development)
+- ⏳ Desktop (In development)
 
 ## Future Roadmap
 
