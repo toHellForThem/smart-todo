@@ -1,6 +1,7 @@
 # others
 frontend/App.js.backup
 backend/venv/
+backend/__pycache__/
 frontend/.env
 
 # dependencies
