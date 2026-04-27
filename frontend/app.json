@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "toDoSoDo",
+    "slug": "toDoSoDo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "jsEngine": "hermes",
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "jsEngine": "hermes",
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.toDoSoDo"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
