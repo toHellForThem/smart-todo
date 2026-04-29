@@ -151,12 +151,23 @@ export default function App() {
     InteractionManager.runAfterInteractions(() => {
       socket.on('server:todo_updated', (updatedTodo) => {
         setTodoList(prev => {
-          const existing = prev.find(t => t.id === updatedTodo.id);
-          if (!existing || updatedTodo.updatedAt > (existing.updatedAt || 0)) {
-            return prev.map(t => t.id === updatedTodo.id ? updatedTodo : t);
-          }
-          return prev;
+          const index = prev.findIndex(t => t.id === updatedTodo.id);
+          if (index !== -1) {
+            const existing = prev[index];
+            if (updatedTodo.updatedAt > (existing.updatedAt || 0)) {
+              const newList = [...prev];
+              newList[index] = updatedTodo;
+              return newList;
+            }
+            return prev;
+          } 
+          return [...prev, updatedTodo];
         });
+      });
+    });
+    InteractionManager.runAfterInteractions(() => {
+      socket.on('server:todo_deleted', (deletedId) => {
+        setTodoList(prev => prev.filter(todo => todo.id !== deletedId));
       });
     });
     
@@ -164,6 +175,7 @@ export default function App() {
       socket.off('connect');
       socket.off('server:all_todos');
       socket.off('server:todo_updated');
+      socket.off('server:todo_deleted');
     };
   }, []);
 
@@ -186,45 +198,49 @@ export default function App() {
     setTask('');
     socket.emit('client:sync_todo', newTodo);
   }
-}, [task])
+}, [task, socket])
 
   const deleteToRecycle = useCallback((id) => {
+    let updated = null;
     setTodoList(prev => {
       return prev.map(todo => {
         if (todo.id === id) {
-          const updated = { ...todo, deleted: true, updatedAt: Date.now() };
-          socket.emit('client:sync_todo', updated);
+          updated = { ...todo, deleted: true, updatedAt: Date.now() };
           return updated;
         }
         return todo;
       });
     });
-  },[])
+    if (updated) {
+      socket.emit('client:sync_todo', updated);
+    }
+  },[socket])
 
   const statusChangeTask = useCallback((id) => {
+    let updated = null;
     setTodoList(prev => {
       return prev.map(todo => {
         if (todo.id === id) {
-          const updated = { ...todo, completed: !todo.completed, updatedAt: Date.now() };
-          socket.emit('client:sync_todo', updated);
+          updated = { ...todo, completed: !todo.completed, updatedAt: Date.now() };
           return updated;
         }
         return todo;
       });
     });
-  },[])
+    if (updated) {
+      socket.emit('client:sync_todo', updated);
+    }
+  },[socket])
 
-  const deleteTodo = useCallback(async (id) => {
-    setTodoList(prev => prev.filter(item => item.id !== id));
+  const deleteTodo = useCallback((id) => {
+    setTodoList(prev => {
+    const todoToDelete = prev.find(item => item.id === id);
+    if (todoToDelete) {
+      socket.emit('client:delete_todo', id);
+    }
+    return prev.filter(item => item.id !== id);
   });
-
-  const restoreFromRecycle = (id) => {
-    setTodoList(prev => 
-      prev.map(todo => 
-        todo.id === id ? { ...todo, deleted: false } : todo
-      )
-    );
-  };
+}, [socket]);
 
   return (
     <SafeAreaProvider>
@@ -281,6 +297,7 @@ export default function App() {
                 todoList={todoList} 
                 deleteTodo={deleteTodo}
                 leftAction={leftAction}
+                setTodoList={setTodoList}
               />
             )}
           </View>
@@ -450,7 +467,7 @@ const leftAction = (prog, drag, mode) => {
   );
 };
 
-const RecycleItem = memo(({ item, deleteTodo, leftAction }) => {
+const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList}) => {
 
   const handleDelete = useCallback(() => {
     deleteTodo(item.id);
@@ -459,6 +476,22 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction }) => {
   const renderLeft = useCallback((prog, drag) => {
     return leftAction(prog, drag, 'hardDelete')
   }, [leftAction]);
+
+  const restoreTask = useCallback(() => {
+    let updated = null;
+    setTodoList(prev => {
+      return prev.map(todo => {
+        if (todo.id === item.id) {
+          updated = { ...todo, deleted: !todo.deleted, updatedAt: Date.now() };
+          return updated;
+        }
+        return todo;
+      });
+    });
+    if (updated) {
+      socket.emit('client:sync_todo', updated);
+    }
+  },[socket])
 
   return (
     <Swipeable
@@ -478,12 +511,19 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction }) => {
         <Text style={[styles.todoText, item.completed && styles.completedText]}>
           {item.text}
         </Text>
+        <TouchableOpacity 
+          onPress={restoreTask}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          style={{marginLeft: 'auto'}}
+        >
+          <Text style={{ fontWeight: 'bold', fontSize: 16}}>♻️</Text>
+        </TouchableOpacity>
       </View>
     </Swipeable>
   );
 });
 
-const RecycleTab = memo(({ todoList, deleteTodo, leftAction }) => {
+const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList}) => {
 
   const activeTodos = useMemo(() => 
     todoList.filter(item => item.deleted), 
@@ -492,11 +532,12 @@ const RecycleTab = memo(({ todoList, deleteTodo, leftAction }) => {
 
   const renderItem = React.useCallback(({ item }) => (
     <RecycleItem 
+      setTodoList={setTodoList}
       item={item}
       deleteTodo={deleteTodo}
       leftAction={leftAction}
     />
-  ), [deleteTodo, leftAction]); // Важно добавить зависимости
+  ), [deleteTodo, leftAction]);
 
   return (
     <FlatList

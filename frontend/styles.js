@@ -119,7 +119,13 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 3,
   },
-  addButtonText: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
+  addButtonText: { 
+    color: '#FFF', 
+    fontSize: 24, 
+    fontWeight: 'bold',
+    marginBottom: 3,
+    textAlign: 'center',
+  },
   
   todoItem: {
     flexDirection: 'row',

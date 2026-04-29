@@ -72,3 +72,8 @@ async def handle_sync(sid, data):
         print(f"Обновлено: {data['text']} (Client version was newer)")
     else:
         print(f"На сервере данные новее для: {data['text']}")
+
+@sio.on('client:delete_todo')
+async def handle_delete_todo(sid, todo_id):
+    db_query("DELETE FROM todos WHERE id = ?", (todo_id,))
+    await sio.emit('server:todo_deleted', todo_id, skip_sid=sid)
