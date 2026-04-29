@@ -89,12 +89,16 @@ export const styles = StyleSheet.create({
     width: '99%',
     elevation: 1,
   },
-  todoWrapper: { flex: 1},
+  todoWrapper: {
+   flex: 1,
+  },
   inputContainer: {
     flexDirection: 'row',
     marginTop: 20,
-    marginBottom: 20,
-    marginHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+    paddingHorizontal: 20,
   },
   input: {
     flex: 1,
@@ -123,7 +127,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     padding: 15,
     borderRadius: 15,
-    elevation: 2,
+    elevation: 1,
     marginHorizontal: 0,
     marginBottom: 0,
   },

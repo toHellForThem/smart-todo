@@ -59,10 +59,10 @@ export default function App() {
     })
     .onEnd((event) => {
       const swipeVelocity = event.velocityY;
-      if (swipeVelocity > 500 || event.translationY > MAX_PULL * 0.2) {
+      if (swipeVelocity > 500 || event.translationY > MAX_PULL * 0.4) {
         translateY.value = withSpring(MAX_PULL);
         isActive.value = 1;
-      } else if (swipeVelocity < -500 || event.translationY < -20) {
+      } else if (swipeVelocity < -500 || event.translationY < -100) {
         translateY.value = withSpring(0);
         isActive.value = 0;
       } else {
@@ -329,11 +329,9 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   
   return (
     <Swipeable
-      friction={2}
+      friction={1.6}
       leftThreshold={78}
       overshootLeft={true}
-      activeOffsetX={[-10, 10]}
-      failOffsetY={[-10, 10]}
       renderLeftActions={renderLeft}
       onSwipeableLeftOpen={handleDelete}
       containerStyle={{
@@ -407,6 +405,7 @@ const TodoTab = memo(({
         overScrollMode="never"
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 10 }}
       />
     </View>
   );
@@ -463,7 +462,7 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction }) => {
 
   return (
     <Swipeable
-      friction={2}
+      friction={1.6}
       leftThreshold={70}
       overshootLeft={true}
       renderLeftActions={renderLeft}
@@ -506,6 +505,7 @@ const RecycleTab = memo(({ todoList, deleteTodo, leftAction }) => {
       overScrollMode="never"
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
+      contentContainerStyle={{ paddingBottom: 10 }}
     />
   );
 });
