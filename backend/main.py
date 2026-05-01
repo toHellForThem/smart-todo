@@ -1,9 +1,37 @@
+import sqlite3
+import os
+import json
+import datetime
+from typing import List
 from fastapi import FastAPI
-import socketio
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
-import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+import socketio
+import jwt
+
+
+load_dotenv()
+SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+ALGORITHM = "HS256"
+
+def create_access_token(user_id: int):
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return (payload.get("user_id"),)
+    except jwt.ExpiredSignatureError:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False})
+        return (payload.get("user_id"), "expired")
+    except jwt.InvalidTokenError:
+        return None
 
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 app = FastAPI()
@@ -19,13 +47,25 @@ app.add_middleware(
 def init_db():
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            settings JSON
+        )
+    ''')
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS todos (
-            id TEXT PRIMARY KEY,
+            id TEXT,
             text TEXT,
             completed BOOLEAN DEFAULT FALSE,
             deleted BOOLEAN DEFAULT FALSE,
-            updated_at INTEGER DEFAULT 0
+            updated_at INTEGER DEFAULT 0,
+            type TEXT DEFAULT 'todo',
+            user_id INTEGER,
+            PRIMARY KEY (id, user_id),
+            FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
     conn.commit()
@@ -35,6 +75,7 @@ init_db()
 
 def db_query(query, params=(), is_select=False):
     conn = sqlite3.connect("tasks.db")
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute(query, params)
     res = None
@@ -49,31 +90,159 @@ class Todo(BaseModel):
     text: str
     completed: bool = False
     deleted: bool = False
-    updated_at: int
+    type: str = 'todo'
+    updatedAt: int
+
+@sio.on('client:register')
+async def handle_register(sid, data):
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        await sio.emit('server:register_error', {'msg': 'Заполните все поля!'}, room=sid)
+        return
+
+    password_hash = generate_password_hash(password)
+    default_settings = json.dumps({
+        "main_page": 'todo',
+        "theme": "default",
+        "soft_delete": True
+    })
+
+    try:
+        db_query(
+            "INSERT INTO users (username, password_hash, settings) VALUES (?, ?, ?)",
+            (username, password_hash, default_settings)
+        )
+        print(f"Пользователь {username} успешно зарегистрирован!")
+        await sio.emit('server:register_success', {'msg': 'Аккаунт создан!'}, room=sid)
+    except Exception as e:
+        print(f"Ошибка регистрации: {e}")
+        await sio.emit('server:register_error', {'msg': 'Логин уже занят'}, room=sid)
+
+@sio.on('client:login')
+async def handle_login(sid, data):
+    user = db_query('SELECT * FROM users WHERE username = ?', (data['username'],), is_select=True)
+
+    if not user:
+        print('Логина не существует')
+        return
+    
+    user = user[0]
+
+    if check_password_hash(user['password_hash'], data['password']):
+        
+        token = create_access_token(user['id'])
+        
+        await sio.save_session(sid, {'user_id': user['id']})
+
+        await sio.enter_room(sid, user['id'])
+
+        await sio.emit('server:login_success', {
+            'username': user['username'],
+            'token': token,
+            'settings': json.loads(user['settings'])
+        }, room=sid)
+    else:
+        print('Пароль неверный, авторизация не удалась')
+
 
 @sio.event
-async def connect(sid, environ):
-    print(f"Клиент подключился: {sid}")
-    rows = db_query("SELECT * FROM todos WHERE deleted = 0 ORDER BY id DESC", is_select=True)
-    todos = [{"id": r[0], "text": r[1], "completed": bool(r[2]), "deleted": bool(r[3])} for r in rows]
-    await sio.emit('server:all_todos', todos, to=sid)
+async def connect(sid, environ, auth):
+    print(f"Клиент подключается: {sid}")
+    token = auth.get("token") if auth else None
+    user_id = decode_token(token)
+
+    if user_id:
+        if len(user_id) > 1:
+            token = create_access_token(user_id[0])
+            print('Токен переиздан')
+        
+        user = db_query('SELECT * FROM users WHERE id = ?', (user_id[0],), is_select=True)
+        user = user[0]
+
+        await sio.save_session(sid, {'user_id': user['id']})
+
+        await sio.enter_room(sid, user['id'])
+
+        await sio.emit('server:login_success', {
+            'username': user['username'],
+            'token': token,
+            'settings': json.loads(user['settings'])
+        }, room=sid)
+
+    return True
+
+@sio.on('client:get_todos')
+async def handle_get_todos(sid):
+    session = await sio.get_session(sid)
+    user_id = session.get('user_id')
+
+    if not user_id:
+        print('Нет задач для синхронизации')
+        return
+    
+    rows = db_query("SELECT * FROM todos WHERE user_id = ?", (user_id,), True)
+
+    todos = []
+    for r in rows:
+        todo_obj = Todo(
+            id=r['id'],
+            text=r['text'],
+            completed=bool(r['completed']),
+            deleted=bool(r['deleted']),
+            type=r['type'],
+            updatedAt=int(r['updated_at'])
+        )
+        todos.append(todo_obj.dict())
+
+    await sio.emit('server:all_todos', todos, room=sid)
 
 @sio.on('client:sync_todo')
 async def handle_sync(sid, data):
+    session = await sio.get_session(sid)
+    user_id = session.get('user_id')
+    print(f"DEBUG: SID {sid} пытается обновить задачу. В сессии user_id = |{user_id}|")
+    if not user_id:
+        print('Сессия без авторизации')
+        return
+    
+    participants = list(sio.manager.get_participants('/', user_id))
+    print(f"DEBUG: В комнате {user_id} сейчас сокетов: {len(participants)} | Список SID: {participants}")
+
     todo_id = data['id']
     client_updated_at = data.get('updatedAt', 0)
-    row = db_query("SELECT updated_at FROM todos WHERE id = ?", (todo_id,), is_select=True)
+    row = db_query("SELECT updated_at FROM todos WHERE id = ? AND user_id = ?", (todo_id, user_id), is_select=True)
     if not row or client_updated_at > row[0][0]:
         db_query("""
-            INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at)
-            VALUES (?, ?, ?, ?, ?)
-        """, (data['id'], data['text'], data['completed'], data['deleted'], client_updated_at))
-        await sio.emit('server:todo_updated', data, skip_sid=sid)
+            INSERT OR REPLACE INTO todos (id, text, completed, deleted, type, updated_at, user_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (data['id'], data['text'], data['completed'], data['deleted'], data['type'], client_updated_at, user_id))
+        await sio.emit('server:todo_updated', data, room=user_id, skip_sid=sid)
         print(f"Обновлено: {data['text']} (Client version was newer)")
     else:
         print(f"На сервере данные новее для: {data['text']}")
 
 @sio.on('client:delete_todo')
 async def handle_delete_todo(sid, todo_id):
-    db_query("DELETE FROM todos WHERE id = ?", (todo_id,))
-    await sio.emit('server:todo_deleted', todo_id, skip_sid=sid)
+    session = await sio.get_session(sid)
+    user_id = session.get('user_id')
+
+    if not user_id:
+        print('Удаление без авторизации')
+        return
+
+    db_query("DELETE FROM todos WHERE id = ? AND user_id = ?", (todo_id, user_id))
+    await sio.emit('server:todo_deleted', todo_id, room=user_id, skip_sid=sid)
+
+@sio.on('client:logout')
+async def handle_logout(sid):
+    session = await sio.get_session(sid)
+    user_id = session.get('user_id')
+
+    if not user_id:
+        print('Выход без авторизации')
+        return
+    
+    await sio.leave_room(sid, user_id)
+    await sio.save_session(sid, {})

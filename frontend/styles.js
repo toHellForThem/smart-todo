@@ -162,4 +162,42 @@ export const styles = StyleSheet.create({
     borderBottomLeftRadius: 15,
     borderTopLeftRadius: 15,
   },
+  containerColumn: { flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'},
+  baseText: {
+    color: '#666',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 15,
+    
+  },
+  linkText: {
+    color: '#007AFF',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+  authButton: {
+    justifyContent: 'center',
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 10,
+    elevation: 2
+  },
+  authButtonText: {
+    color: '#FFF',
+    fontSize: 20, 
+    fontWeight: 'bold',
+  },
+  authInput: {
+    backgroundColor: '#FFFFFF', // Белый фон
+    borderWidth: 1,
+    borderColor: '#E2E8F0',    // Светло-серый бордюр
+    borderRadius: 12,          // Скругленные углы
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#1A202C',
+    width: '75%',
+    marginBottom: 10
+  }
 });

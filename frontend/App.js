@@ -22,27 +22,22 @@ import ReAnimated, {
   withSpring,
   interpolate
 } from 'react-native-reanimated';
-import axios from 'axios';
 import { styles } from './styles';
-import { TodoStorage } from './src/utils/storage';
+import { TodoStorage, AuthStorage } from './src/utils/storage';
 import { socket } from './src/utils/socket';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
+import socketIo from 'socket.io-client/dist/socket.io.js';
+
 
 const MAX_PULL = 400;
 const emojis = ['😫', '🙁', '😐', '🙂', '😎'];
 
-const API_URL = `${process.env.EXPO_PUBLIC_SOCKET_URL}/todos`;
-
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: 1000,
-});
-
 export default function App() {
-  const translateY = useSharedValue(0);
   const [task, setTask] = useState('');
   const [todoList, setTodoList] = useState(() => TodoStorage.getAll());
   const [currentTab, setCurrentTab] = useState('todo');
+  const [authMode, setAuthMode] = useState('local'); // local, auth
+  const translateY = useSharedValue(0);
   const context = useSharedValue(0);
   const isActive = useSharedValue(0);
 
@@ -124,6 +119,17 @@ export default function App() {
     });
 
     InteractionManager.runAfterInteractions(() => {
+      socket.on('server:login_success', (data) => {
+        const { username, token, settings } = data;
+        socket.emit('client:get_todos');
+        setAuthMode('auth');
+        AuthStorage.setUsername(username);
+        AuthStorage.setToken(token);
+        AuthStorage.setSettings(settings);
+      });
+    });
+
+    InteractionManager.runAfterInteractions(() => {
       socket.on('server:all_todos', (serverTodos) => {
         setTodoList(localTodos => {
           const merged = [...localTodos];
@@ -165,6 +171,7 @@ export default function App() {
         });
       });
     });
+
     InteractionManager.runAfterInteractions(() => {
       socket.on('server:todo_deleted', (deletedId) => {
         setTodoList(prev => prev.filter(todo => todo.id !== deletedId));
@@ -176,6 +183,7 @@ export default function App() {
       socket.off('server:all_todos');
       socket.off('server:todo_updated');
       socket.off('server:todo_deleted');
+      socket.off('server:login_success');
     };
   }, []);
 
@@ -192,6 +200,7 @@ export default function App() {
       text: task,
       completed: false,
       deleted: false,
+      type: 'todo',
       updatedAt: Date.now()
     };
     setTodoList(prev => [newTodo, ...prev]);
@@ -279,7 +288,6 @@ export default function App() {
               <Text style={styles.icon}>⚙️</Text>
             </TouchableOpacity>
           </View>
-
           <View style={styles.main}>
             {currentTab === 'todo' && (
               <TodoTab 
@@ -299,6 +307,12 @@ export default function App() {
                 leftAction={leftAction}
                 setTodoList={setTodoList}
               />
+            )}
+            {currentTab === 'settings' && (
+                <SettingsTab
+                  authMode={authMode}
+                  setAuthMode={setAuthMode}
+                />
             )}
           </View>
 
@@ -550,3 +564,102 @@ const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList}) => {
     />
   );
 });
+
+const SettingsTab = ({authMode, setAuthMode}) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [authState, setAuthState] = useState('');
+  useEffect(() => {
+    if (!authMode){
+      setAuthMode('local');
+    }
+  }, []);
+
+  const handleLogin = () => {
+    if (username && password) {
+      socket.emit('client:login', { username, password });
+      setAuthMode('auth');
+      setAuthState('');
+    }
+  };
+
+  const handleRegister = () => {
+    if (username && password) {
+      socket.emit('client:register', { username, password });
+      setAuthMode('local');
+      setAuthState('login');
+    }
+  };
+
+  const handleLogout = () => {
+    AuthStorage.logout();
+    setAuthMode('local');
+    setAuthState('');
+    setUsername('');
+    setPassword('');
+    socket.emit('client:logout');
+  }
+
+  return (
+      <View style={styles.containerColumn}>
+        {authMode === 'local' && (
+          <View style={{alignItems: 'center'}}>
+            <TouchableOpacity 
+              style={styles.authButton}
+              onPress={() => {
+                setAuthState('login');
+                setAuthMode('');
+              }}
+            >
+              <Text style={styles.authButtonText}>Войти</Text>
+            </TouchableOpacity>
+            <Text style={styles.baseText}>
+              Нет аккаунта?{' '}
+              <Text 
+                style={styles.linkText} 
+                onPress={() => {
+                  setAuthState('register');
+                  setAuthMode('');
+              }}>
+                Зарегистрироваться
+              </Text>
+            </Text>
+          </View>
+        )}
+        {authMode === 'auth' && (
+          <TouchableOpacity onPress={handleLogout} style={styles.authButton}>
+            <Text style={styles.authButtonText}>Выйти</Text>
+          </TouchableOpacity>
+        )}
+        {authState !='' && (
+          <View style={{alignItems: 'center', flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
+            <TextInput
+              placeholder='Логин'
+              value={username}
+              onChangeText={setUsername}
+              style={styles.authInput}
+              placeholderTextColor={'#aaaaaa'}
+            />
+            <TextInput
+              placeholder='Пароль'
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              style={styles.authInput}
+              placeholderTextColor={'#aaaaaa'}
+            />
+          </View>
+        )}
+        {authState === 'login' && (
+          <TouchableOpacity onPress={handleLogin} style={styles.authButton}>
+            <Text style={styles.authButtonText}>Войти</Text>
+          </TouchableOpacity>
+        )}
+        {authState === 'register' && (
+          <TouchableOpacity onPress={handleRegister} style={styles.authButton}>
+            <Text style={styles.authButtonText}>Зарегистрироваться</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+  );
+};
