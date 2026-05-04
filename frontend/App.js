@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, memo, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, memo, useMemo } from 'react';
 import {
   Text, 
   View, 
@@ -9,7 +9,9 @@ import {
   ViewBase,
   InteractionManager,
   Animated,
-  StyleSheet
+  StyleSheet,
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
 import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -26,6 +28,8 @@ import { styles } from './styles';
 import { TodoStorage, AuthStorage } from './src/utils/storage';
 import { socket } from './src/utils/socket';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { TextInput as PaperInput, PaperProvider, Surface } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons'; 
 import socketIo from 'socket.io-client/dist/socket.io.js';
 
 
@@ -36,7 +40,8 @@ export default function App() {
   const [task, setTask] = useState('');
   const [todoList, setTodoList] = useState(() => TodoStorage.getAll());
   const [currentTab, setCurrentTab] = useState('todo');
-  const [authMode, setAuthMode] = useState('local'); // local, auth
+  const [authMode, setAuthMode] = useState('local');
+  const [authState, setAuthState] = useState('');
   const translateY = useSharedValue(0);
   const context = useSharedValue(0);
   const isActive = useSharedValue(0);
@@ -123,6 +128,7 @@ export default function App() {
         const { username, token, settings } = data;
         socket.emit('client:get_todos');
         setAuthMode('auth');
+        setAuthState('');
         AuthStorage.setUsername(username);
         AuthStorage.setToken(token);
         AuthStorage.setSettings(settings);
@@ -283,7 +289,13 @@ export default function App() {
               <Text style={styles.icon}>🗑️</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => setCurrentTab('settings')}
+              onPress={() => {
+                setCurrentTab('settings')
+                setAuthState('');
+                if (!authMode){
+                  setAuthMode('local');
+                }
+              }}
             >
               <Text style={styles.icon}>⚙️</Text>
             </TouchableOpacity>
@@ -312,6 +324,8 @@ export default function App() {
                 <SettingsTab
                   authMode={authMode}
                   setAuthMode={setAuthMode}
+                  authState={authState}
+                  setAuthState={setAuthState}
                 />
             )}
           </View>
@@ -407,7 +421,7 @@ const TodoTab = memo(({
     [todoList]
   );
 
-  const renderItem = React.useCallback(({ item }) => (
+  const renderItem = useCallback(({ item }) => (
     <TodoItem 
       item={item}
       statusChangeTask={statusChangeTask}
@@ -544,7 +558,7 @@ const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList}) => {
     [todoList]
   );
 
-  const renderItem = React.useCallback(({ item }) => (
+  const renderItem = useCallback(({ item }) => (
     <RecycleItem 
       setTodoList={setTodoList}
       item={item}
@@ -565,10 +579,10 @@ const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList}) => {
   );
 });
 
-const SettingsTab = ({authMode, setAuthMode}) => {
+const SettingsTab = ({authMode, setAuthMode, authState, setAuthState}) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [authState, setAuthState] = useState('');
+  const [isPasswordVisible, setPasswordVisible] = useState(false);
   useEffect(() => {
     if (!authMode){
       setAuthMode('local');
@@ -578,8 +592,6 @@ const SettingsTab = ({authMode, setAuthMode}) => {
   const handleLogin = () => {
     if (username && password) {
       socket.emit('client:login', { username, password });
-      setAuthMode('auth');
-      setAuthState('');
     }
   };
 
@@ -601,65 +613,105 @@ const SettingsTab = ({authMode, setAuthMode}) => {
   }
 
   return (
-      <View style={styles.containerColumn}>
-        {authMode === 'local' && (
-          <View style={{alignItems: 'center'}}>
-            <TouchableOpacity 
-              style={styles.authButton}
-              onPress={() => {
-                setAuthState('login');
-                setAuthMode('');
-              }}
-            >
-              <Text style={styles.authButtonText}>Войти</Text>
-            </TouchableOpacity>
-            <Text style={styles.baseText}>
-              Нет аккаунта?{' '}
-              <Text 
-                style={styles.linkText} 
-                onPress={() => {
-                  setAuthState('register');
-                  setAuthMode('');
-              }}>
-                Зарегистрироваться
-              </Text>
-            </Text>
+      <PaperProvider>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={styles.containerColumn}>
+            {authMode === 'local' && (
+              <View style={{alignItems: 'center'}}>
+                <TouchableOpacity 
+                  style={styles.authButton}
+                  onPress={() => {
+                    setAuthState('login');
+                    setAuthMode('');
+                  }}
+                >
+                  <Text style={styles.authButtonText}>Войти</Text>
+                </TouchableOpacity>
+                <Text style={styles.baseText}>
+                  Нет аккаунта?{' '}
+                  <Text 
+                    style={styles.linkText} 
+                    onPress={() => {
+                      setAuthState('register');
+                      setAuthMode('');
+                  }}>
+                    Зарегистрироваться
+                  </Text>
+                </Text>
+              </View>
+            )}
+            {authMode === 'auth' && (
+              <TouchableOpacity onPress={handleLogout} style={styles.authButton}>
+                <Text style={styles.authButtonText}>Выйти</Text>
+              </TouchableOpacity>
+            )}
+            {authState !='' && (
+              <View style={{alignItems: 'center', flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
+                <Surface style={styles.surfaceAuth}>
+                  <PaperInput
+                    placeholder='Логин'
+                    value={username}
+                    onChangeText={setUsername}
+                    style={styles.authInput}
+                    mode="outlined"
+                    outlineColor="#E2E8F0"
+                    textColor="#1A202C"
+                    theme={{
+                      roundness: 12,
+                      colors: {
+                        primary: '#3B82F6',
+                      },
+                    }}
+                    left={<PaperInput.Icon icon="account" color="#3B82F6"/>} 
+                    placeholderTextColor={'#aaaaaa'}
+                  />
+                </Surface>
+                <Surface style={styles.surfaceAuth}>
+                  <PaperInput
+                    placeholder='Пароль'
+                    value={password}
+                    onChangeText={setPassword}
+                    mode="outlined"
+                    outlineColor="#E2E8F0"
+                    textColor="#1A202C"
+                    theme={{
+                      roundness: 12,
+                      colors: {
+                        primary: '#3B82F6',
+                      },
+                    }}
+                    left={
+                      <PaperInput.Icon
+                        icon="lock-outline"
+                        color="#3B82F6"
+                      />
+                    }
+                    right={
+                      <PaperInput.Icon 
+                        icon={isPasswordVisible ? "eye" : "eye-off"} 
+                        onPress={() => setPasswordVisible(!isPasswordVisible)}
+                        color="#3B82F6"
+                      />
+                    }
+                    secureTextEntry={!isPasswordVisible}
+                    style={styles.authInput}
+                    placeholderTextColor={'#aaaaaa'}
+                  />
+                </Surface>
+              </View>
+            )}
+            {authState === 'login' && (
+              <TouchableOpacity onPress={handleLogin} style={styles.authButton}>
+                <Text style={styles.authButtonText}>Войти</Text>
+              </TouchableOpacity>
+            )}
+            {authState === 'register' && (
+              <TouchableOpacity onPress={handleRegister} style={styles.authButton}>
+                <Text style={styles.authButtonText}>Зарегистрироваться</Text>
+              </TouchableOpacity>
+            )}
           </View>
-        )}
-        {authMode === 'auth' && (
-          <TouchableOpacity onPress={handleLogout} style={styles.authButton}>
-            <Text style={styles.authButtonText}>Выйти</Text>
-          </TouchableOpacity>
-        )}
-        {authState !='' && (
-          <View style={{alignItems: 'center', flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
-            <TextInput
-              placeholder='Логин'
-              value={username}
-              onChangeText={setUsername}
-              style={styles.authInput}
-              placeholderTextColor={'#aaaaaa'}
-            />
-            <TextInput
-              placeholder='Пароль'
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              style={styles.authInput}
-              placeholderTextColor={'#aaaaaa'}
-            />
-          </View>
-        )}
-        {authState === 'login' && (
-          <TouchableOpacity onPress={handleLogin} style={styles.authButton}>
-            <Text style={styles.authButtonText}>Войти</Text>
-          </TouchableOpacity>
-        )}
-        {authState === 'register' && (
-          <TouchableOpacity onPress={handleRegister} style={styles.authButton}>
-            <Text style={styles.authButtonText}>Зарегистрироваться</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+        </TouchableWithoutFeedback>
+      </PaperProvider>
   );
 };

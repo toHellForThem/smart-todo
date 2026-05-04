@@ -190,14 +190,14 @@ export const styles = StyleSheet.create({
   },
   authInput: {
     backgroundColor: '#FFFFFF', // Белый фон
-    borderWidth: 1,
-    borderColor: '#E2E8F0',    // Светло-серый бордюр
-    borderRadius: 12,          // Скругленные углы
-    paddingHorizontal: 16,
-    paddingVertical: 14,
     fontSize: 16,
     color: '#1A202C',
-    width: '75%',
-    marginBottom: 10
-  }
+    width: '100%',
+  },
+  surfaceAuth: {
+    width: '75%',  
+    marginBottom: 10,
+    borderRadius: 12,
+    backgroundColor: 'none',
+  },
 });
