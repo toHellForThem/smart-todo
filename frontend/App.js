@@ -31,6 +31,7 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { TextInput as PaperInput, PaperProvider, Surface } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
 import socketIo from 'socket.io-client/dist/socket.io.js';
+import Toast from 'react-native-toast-message';
 
 
 const MAX_PULL = 400;
@@ -183,13 +184,21 @@ export default function App() {
         setTodoList(prev => prev.filter(todo => todo.id !== deletedId));
       });
     });
-    
+
+    InteractionManager.runAfterInteractions(() => {
+      socket.on('server:register_success', () => {
+        setAuthMode('');
+        setAuthState('login');
+      });
+    });
+      
     return () => {
       socket.off('connect');
       socket.off('server:all_todos');
       socket.off('server:todo_updated');
       socket.off('server:todo_deleted');
       socket.off('server:login_success');
+      socket.off('server:register_success');
     };
   }, []);
 
@@ -583,23 +592,41 @@ const SettingsTab = ({authMode, setAuthMode, authState, setAuthState}) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setPasswordVisible] = useState(false);
+
+  
+
   useEffect(() => {
     if (!authMode){
       setAuthMode('local');
     }
+
+    socket.on('server:auth_message', (data)=>{
+      if (data.status === 'success'){
+        setUsername('');
+        setPassword('');
+      }
+
+      Toast.show({
+        type: data.status,
+        text1: data.message,
+        visibilityTime: 3000
+      })
+    })
+
+    return () => socket.off('server:auth_message');
   }, []);
 
   const handleLogin = () => {
     if (username && password) {
+      Keyboard.dismiss()
       socket.emit('client:login', { username, password });
     }
   };
 
   const handleRegister = () => {
     if (username && password) {
+      Keyboard.dismiss()
       socket.emit('client:register', { username, password });
-      setAuthMode('local');
-      setAuthState('login');
     }
   };
 
@@ -623,6 +650,8 @@ const SettingsTab = ({authMode, setAuthMode, authState, setAuthState}) => {
                   onPress={() => {
                     setAuthState('login');
                     setAuthMode('');
+                    setUsername('');
+                    setPassword('');
                   }}
                 >
                   <Text style={styles.authButtonText}>Войти</Text>
@@ -634,6 +663,8 @@ const SettingsTab = ({authMode, setAuthMode, authState, setAuthState}) => {
                     onPress={() => {
                       setAuthState('register');
                       setAuthMode('');
+                      setUsername('');
+                      setPassword('');
                   }}>
                     Зарегистрироваться
                   </Text>
@@ -710,6 +741,7 @@ const SettingsTab = ({authMode, setAuthMode, authState, setAuthState}) => {
                 <Text style={styles.authButtonText}>Зарегистрироваться</Text>
               </TouchableOpacity>
             )}
+            <Toast />
           </View>
         </TouchableWithoutFeedback>
       </PaperProvider>
