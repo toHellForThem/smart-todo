@@ -1,9 +1,10 @@
 import datetime
 import json
 import os
-import sqlite3
+from contextlib import asynccontextmanager
 from datetime import timezone
 
+import aiosqlite
 import jwt
 import socketio
 from dotenv import load_dotenv
@@ -38,8 +39,44 @@ def decode_token(token: str):
         return None
 
 
+async def init_db():
+    async with aiosqlite.connect("tasks.db") as db:
+        try:
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    settings JSON
+                )
+            """)
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS todos (
+                    id TEXT,
+                    text TEXT,
+                    completed BOOLEAN DEFAULT FALSE,
+                    deleted BOOLEAN DEFAULT FALSE,
+                    updated_at INTEGER DEFAULT 0,
+                    type TEXT DEFAULT 'todo',
+                    user_id INTEGER,
+                    PRIMARY KEY (id, user_id),
+                    FOREIGN KEY (user_id) REFERENCES users (id)
+                )
+            """)
+            await db.commit()
+        except Exception as e:
+            print(f"Ошибка базы данных{e}")
+            raise e
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+
+
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 socket_app = socketio.ASGIApp(sio, app)
 
 app.add_middleware(
@@ -50,50 +87,22 @@ app.add_middleware(
 )
 
 
-def init_db():
-    conn = sqlite3.connect("tasks.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            settings JSON
-        )
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS todos (
-            id TEXT,
-            text TEXT,
-            completed BOOLEAN DEFAULT FALSE,
-            deleted BOOLEAN DEFAULT FALSE,
-            updated_at INTEGER DEFAULT 0,
-            type TEXT DEFAULT 'todo',
-            user_id INTEGER,
-            PRIMARY KEY (id, user_id),
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    """)
-    conn.commit()
-    conn.close()
+async def db_query(query, params=(), is_select=False):
+    async with aiosqlite.connect("tasks.db", timeout=10) as db:
+        db.row_factory = aiosqlite.Row
+        await db.execute("PRAGMA journal_mode=WAL;")
 
+        try:
+            async with db.execute(query, params) as cursor:
+                if is_select:
+                    res = await cursor.fetchall()
+                    return res
 
-init_db()
-
-
-def db_query(query, params=(), is_select=False):
-    conn = sqlite3.connect("tasks.db", timeout=5)
-    try:
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        res = None
-        if is_select:
-            res = cursor.fetchall()
-        conn.commit()
-        return res
-    finally:
-        conn.close()
+                await db.commit()
+                return None
+        except Exception as e:
+            print(f"Ошибка базы данных {e}")
+            raise e
 
 
 class Todo(BaseModel):
@@ -127,7 +136,7 @@ async def handle_register(sid, data):
     )
 
     try:
-        db_query(
+        await db_query(
             "INSERT INTO users (username, password_hash, settings) VALUES (?, ?, ?)",
             (username, password_hash, default_settings),
         )
@@ -155,7 +164,7 @@ async def handle_register(sid, data):
 
 @sio.on("client:login")
 async def handle_login(sid, data):
-    user = db_query(
+    user = await db_query(
         "SELECT * FROM users WHERE username = ?", (data["username"],), is_select=True
     )
 
@@ -223,7 +232,7 @@ async def connect(sid, environ, auth):
             token = create_access_token(user_id[0])
             print("Токен переиздан")
 
-        user = db_query(
+        user = await db_query(
             "SELECT * FROM users WHERE id = ?", (user_id[0],), is_select=True
         )
         user = user[0]
@@ -254,7 +263,7 @@ async def handle_get_todos(sid):
         print("Нет задач для синхронизации")
         return
 
-    rows = db_query("SELECT * FROM todos WHERE user_id = ?", (user_id,), True)
+    rows = await db_query("SELECT * FROM todos WHERE user_id = ?", (user_id,), True)
 
     todos = []
     for r in rows:
@@ -266,7 +275,7 @@ async def handle_get_todos(sid):
             type=r["type"],
             updatedAt=int(r["updated_at"]),
         )
-        todos.append(todo_obj.dict())
+        todos.append(todo_obj.model_dump())
 
     await sio.emit("server:all_todos", todos, room=sid)
 
@@ -287,13 +296,13 @@ async def handle_sync(sid, data):
 
     todo_id = data["id"]
     client_updated_at = data.get("updatedAt", 0)
-    row = db_query(
+    row = await db_query(
         "SELECT updated_at FROM todos WHERE id = ? AND user_id = ?",
         (todo_id, user_id),
         is_select=True,
     )
     if not row or client_updated_at > row[0][0]:
-        db_query(
+        await db_query(
             """
             INSERT OR REPLACE INTO todos (id, text, completed, deleted, type, updated_at, user_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -323,7 +332,7 @@ async def handle_delete_todo(sid, todo_id):
         print("Удаление без авторизации")
         return
 
-    db_query("DELETE FROM todos WHERE id = ? AND user_id = ?", (todo_id, user_id))
+    await db_query("DELETE FROM todos WHERE id = ? AND user_id = ?", (todo_id, user_id))
     await sio.emit("server:todo_deleted", todo_id, room=user_id, skip_sid=sid)
 
 
