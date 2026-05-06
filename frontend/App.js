@@ -29,13 +29,19 @@ import { TodoStorage, AuthStorage } from './src/utils/storage';
 import { socket } from './src/utils/socket';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { TextInput as PaperInput, PaperProvider, Surface } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons'; 
+import { MaterialCommunityIcons, Ionicons, MaterialIcons } from '@expo/vector-icons'; 
 import socketIo from 'socket.io-client/dist/socket.io.js';
 import Toast from 'react-native-toast-message';
 
 
-const MAX_PULL = 400;
-const emojis = ['😫', '🙁', '😐', '🙂', '😎'];
+const MAX_PULL = 396;
+const moods = [
+    { value: 1, icon: 'emoticon-dead-outline', color: '#4B4B4B' },
+    { value: 2, icon: 'emoticon-sad-outline', color: '#FF5252' },
+    { value: 3, icon: 'emoticon-neutral-outline', color: '#FFC107' },
+    { value: 4, icon: 'emoticon-happy-outline', color: '#8BC34A' }, 
+    { value: 5, icon: 'emoticon-excited-outline', color: '#4CAF50' },
+];
 
 export default function App() {
   const [task, setTask] = useState('');
@@ -75,7 +81,8 @@ export default function App() {
           isActive.value = 0;
         }
       }
-    });
+    })
+    .hitSlop({ vertical: 17 });
     
 
   const onHandlerStateChange = (event) => {
@@ -271,15 +278,22 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaView style={styles.container}>
           <View style={styles.header}>
-            <TouchableOpacity><Text style={styles.icon}>⭐</Text></TouchableOpacity>
+            <TouchableOpacity>
+              <MaterialCommunityIcons 
+                style={{padding: 2, marginRight: 5, borderRadius: 10, backgroundColor: '#d9e7fd'}} 
+                name={'clock-edit-outline'} 
+                size={45} 
+                color={'#3B82F6'}
+              />
+            </TouchableOpacity>
             <GestureDetector gesture={panGesture}>
               <View style={styles.scoreContainer}>
                 <Text style={{fontSize: 20}}>Как твои делишки?</Text>
                 <ReAnimated.View style={[styles.contentPlaceholder, animatedContentProps]}>
                     <ReAnimated.View style={[styles.moodMeter, contentAnimatedStyle]}>
-                      {emojis.map((emoji, index) => (
-                        <TouchableOpacity key={index} onPress={() => console.log(index + 1)}>
-                          <Text style={{ fontSize: 40 }}>{emoji}</Text>
+                      {moods.map((mood) => (
+                        <TouchableOpacity key={mood.value} onPress={() => console.log(mood.value)}>
+                          <MaterialCommunityIcons name={mood.icon} size={50} color={mood.color} />
                         </TouchableOpacity>
                       ))}
                     </ReAnimated.View>
@@ -287,7 +301,11 @@ export default function App() {
                 <ReAnimated.View style={[styles.invisibleShade, tailStyle]}/>
                 <ReAnimated.View style={[styles.scoreShade, animatedStyle, { cursor: 'grab' }]}>
                   <View>
-                    <Text style={styles.pullIcon}>︾</Text>
+                    <Ionicons
+                      name={'caret-down'} 
+                      size={20} 
+                      color={'#3b83f6'}
+                    />
                   </View>
                 </ReAnimated.View>
               </View>
@@ -295,7 +313,12 @@ export default function App() {
             <TouchableOpacity
               onPress={() => setCurrentTab('recycle')}
             >
-              <Text style={styles.icon}>🗑️</Text>
+              <Ionicons 
+                style={{padding: 2, marginRight: 5, borderRadius: 10, backgroundColor: '#d9e7fd'}} 
+                name={'trash-outline'} 
+                size={45} 
+                color={'#3B82F6'}
+              />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
@@ -306,7 +329,12 @@ export default function App() {
                 }
               }}
             >
-              <Text style={styles.icon}>⚙️</Text>
+              <Ionicons 
+                style={{padding: 2, borderRadius: 10, backgroundColor: '#d9e7fd'}} 
+                name={'settings-outline'} 
+                size={45} 
+                color={'#3B82F6'}
+              />
             </TouchableOpacity>
           </View>
           <View style={styles.main}>
@@ -402,7 +430,14 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
           onPress={handlePress}
           style={[styles.checkbox, item.completed && styles.checked]}
         >
-          {item.completed && <Text style={styles.checkMark}>✓</Text>}
+          {item.completed && (
+            <MaterialCommunityIcons
+              style={{borderRadius: 4, backgroundColor: '#d9e7fd'}} 
+              name={'check-bold'} 
+              size={20} 
+              color={'#3B82F6'}
+            />
+          )}
         </TouchableOpacity>
         <Text  
           style={[styles.todoText, item.completed && styles.completedText]}
@@ -450,7 +485,12 @@ const TodoTab = memo(({
           placeholderTextColor="#94A3B8"
         />
         <TouchableOpacity style={styles.addButton} onPress={addTask}>
-          <Text style={styles.addButtonText}>+</Text>
+          <MaterialCommunityIcons
+            style={{borderRadius: 10, backgroundColor: '#d9e7fd'}} 
+            name={'plus-thick'} 
+            size={24} 
+            color={'#3B82F6'}
+          />
         </TouchableOpacity>
       </View>
       <FlatList
@@ -550,10 +590,25 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList}) => {
         </Text>
         <TouchableOpacity 
           onPress={restoreTask}
-          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          style={{marginLeft: 'auto'}}
+          style={{
+            marginLeft: 'auto', 
+            alignSelf: 'stretch', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            backgroundColor: '#d9e7fd',
+            borderBottomRightRadius: 15, 
+            borderTopRightRadius: 15,
+            width: 50,
+          }}
         >
-          <Text style={{ fontWeight: 'bold', fontSize: 16}}>♻️</Text>
+          <Ionicons
+            style={{
+              alignItems: 'center'
+            }}
+            name={'arrow-undo-outline'} 
+            size={25} 
+            color={'#3B82F6'}
+          />
         </TouchableOpacity>
       </View>
     </Swipeable>
