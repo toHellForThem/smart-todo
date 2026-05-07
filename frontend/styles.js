@@ -197,5 +197,22 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 12,
     backgroundColor: 'none',
-  }
+  },
+  progressContainer: { marginBottom: 20 },
+  progressText: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
+  progressBarBg: { height: 10, backgroundColor: '#E0E7FF', borderRadius: 5 },
+  progressBarFill: { height: 10, backgroundColor: '#3B82F6', borderRadius: 5 },
+  inputWrapper: { flexDirection: 'row', marginBottom: 20 },
+  item: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#fff', 
+    padding: 15, 
+    borderRadius: 12, 
+    marginBottom: 10,
+    elevation: 2 
+  },
+  itemCompleted: { opacity: 0.6 },
+  itemText: { marginLeft: 10, fontSize: 16 },
+  textCompleted: { textDecorationLine: 'line-through' }
 });

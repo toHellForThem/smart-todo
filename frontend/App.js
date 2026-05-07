@@ -215,21 +215,22 @@ export default function App() {
     }, 1000);
   }, [todoList]);
 
-  const addTask = useCallback(()=> {
-  if (task.trim().length > 0) {
-    const newTodo = { 
-      id: Date.now().toString(), 
-      text: task,
-      completed: false,
-      deleted: false,
-      type: 'todo',
-      updatedAt: Date.now()
-    };
-    setTodoList(prev => [newTodo, ...prev]);
-    setTask('');
-    socket.emit('client:sync_todo', newTodo);
-  }
-}, [task, socket])
+  const addTask = useCallback((task, progressEnd=1)=> {
+    if (task.trim().length > 0) {
+      const newTodo = { 
+        id: Date.now().toString(), 
+        text: task,
+        completed: false,
+        deleted: false,
+        updatedAt: Date.now(),
+        type: currentTab,
+        progressNow: 0,
+        progressEnd: progressEnd,
+      };
+      setTodoList(prev => [newTodo, ...prev]);
+      socket.emit('client:sync_todo', newTodo);
+    }
+  }, [task, socket, currentTab])
 
   const deleteToRecycle = useCallback((id) => {
     let updated = null;
@@ -247,11 +248,19 @@ export default function App() {
     }
   },[socket])
 
-  const statusChangeTask = useCallback((id) => {
+  const statusChangeTask = useCallback((id, progressNow) => {
     let updated = null;
     setTodoList(prev => {
       return prev.map(todo => {
         if (todo.id === id) {
+          if (todo.progressEnd > 1) {
+            updated = { 
+              ...todo, 
+              progressNow: progressNow,
+              completed: progressNow === todo.progressEnd, 
+              updatedAt: Date.now() };
+            return updated;
+          }
           updated = { ...todo, completed: !todo.completed, updatedAt: Date.now() };
           return updated;
         }
@@ -265,13 +274,13 @@ export default function App() {
 
   const deleteTodo = useCallback((id) => {
     setTodoList(prev => {
-    const todoToDelete = prev.find(item => item.id === id);
-    if (todoToDelete) {
-      socket.emit('client:delete_todo', id);
-    }
-    return prev.filter(item => item.id !== id);
-  });
-}, [socket]);
+      const todoToDelete = prev.find(item => item.id === id);
+      if (todoToDelete) {
+        socket.emit('client:delete_todo', id);
+      }
+      return prev.filter(item => item.id !== id);
+    });
+  }, [socket]);
 
   return (
     <SafeAreaProvider>
@@ -342,7 +351,7 @@ export default function App() {
               <TodoTab 
                 task={task}
                 setTask={setTask} 
-                addTask={addTask} 
+                addTask={(task) => addTask(task)} 
                 todoList={todoList} 
                 statusChangeTask={statusChangeTask} 
                 deleteTodo={deleteToRecycle}
@@ -358,15 +367,21 @@ export default function App() {
               />
             )}
             {currentTab === 'settings' && (
-                <SettingsTab
-                  authMode={authMode}
-                  setAuthMode={setAuthMode}
-                  authState={authState}
-                  setAuthState={setAuthState}
-                />
+              <SettingsTab
+                authMode={authMode}
+                setAuthMode={setAuthMode}
+                authState={authState}
+                setAuthState={setAuthState}
+              />
+            )}
+            {currentTab ==='daily' && (
+              <DailyTab
+                todoList={todoList} 
+                onAdd={(task, progressEnd) => addTask(task, progressEnd)}
+                onToggle={(id, progressNow) => statusChangeTask(id, progressNow)}
+              />
             )}
           </View>
-
           <View style={styles.footer}>
             <TouchableOpacity 
               style={[styles.tab, currentTab === 'rpg' && styles.activeTab]} 
@@ -398,7 +413,7 @@ export default function App() {
 const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
 
   const handlePress = useCallback(() => {
-    statusChangeTask(item.id, item.completed);
+    statusChangeTask(item.id, 1);
   }, [item.id, item.completed, statusChangeTask]);
 
   const handleDelete = useCallback(() => {
@@ -544,7 +559,7 @@ const leftAction = (prog, drag, mode) => {
   );
 };
 
-const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList}) => {
+const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
 
   const handleDelete = useCallback(() => {
     deleteTodo(item.id);
@@ -615,7 +630,7 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList}) => {
   );
 });
 
-const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList}) => {
+const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList }) => {
 
   const activeTodos = useMemo(() => 
     todoList.filter(item => item.deleted), 
@@ -643,7 +658,7 @@ const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList}) => {
   );
 });
 
-const SettingsTab = ({authMode, setAuthMode, authState, setAuthState}) => {
+const SettingsTab = ({ authMode, setAuthMode, authState, setAuthState }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setPasswordVisible] = useState(false);
@@ -800,5 +815,69 @@ const SettingsTab = ({authMode, setAuthMode, authState, setAuthState}) => {
           </View>
         </TouchableWithoutFeedback>
       </PaperProvider>
+  );
+};
+
+const DailyTab = ({ todoList, onAdd, onToggle }) => {
+  const [task, setTask] = useState('');
+  const dailies = useMemo(() => 
+    todoList.filter(item => item.type === 'daily'), 
+    [todoList]
+  );
+  
+  const progress = useMemo(() => {
+    if (dailies.length === 0) return 0;
+    const completed = dailies.filter(d => d.completed).length;
+    return Math.round((completed / dailies.length) * 100);
+  }, [dailies]);
+
+  const handleAdd = () => {
+    if (task.trim()) {
+      onAdd(task);
+      setTask('');
+    }
+  };
+
+  return (
+    <View style={styles.todoWrapper}>
+      <View style={styles.progressContainer}>
+        <Text style={styles.progressText}>Прогресс дня: {progress}%</Text>
+        <View style={styles.progressBarBg}>
+          <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+        </View>
+      </View>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Новая ежедневка..."
+          value={task}
+          onChangeText={setTask}
+        />
+        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+          <MaterialCommunityIcons name="plus-thick" size={24} color="#3B82F6" />
+        </TouchableOpacity>
+      </View>
+
+      <FlatList
+        data={dailies}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity 
+            style={[styles.item, item.completed && styles.itemCompleted]} 
+            onPress={() => onToggle(item.id)}
+          >
+            <Ionicons 
+              name={item.completed ? "checkbox" : "square-outline"} 
+              size={24} 
+              color={item.completed ? "#4CAF50" : "#3B82F6"} 
+            />
+            <Text style={[styles.itemText, item.completed && styles.textCompleted]}>
+              {item.text}
+            </Text>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
   );
 };
