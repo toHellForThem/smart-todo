@@ -58,6 +58,8 @@ async def init_db():
                     deleted BOOLEAN DEFAULT FALSE,
                     updated_at INTEGER DEFAULT 0,
                     type TEXT DEFAULT 'todo',
+                    progress_now INTEGER DEFAULT 0,
+                    progress_end INTEGER DEFAULT 1,
                     user_id INTEGER,
                     PRIMARY KEY (id, user_id),
                     FOREIGN KEY (user_id) REFERENCES users (id)
@@ -110,8 +112,10 @@ class Todo(BaseModel):
     text: str
     completed: bool = False
     deleted: bool = False
+    updatedAt: int = 0
     type: str = "todo"
-    updatedAt: int
+    progressNow: int = 0
+    progressEnd: int = 1
 
 
 @sio.on("client:register")
@@ -272,8 +276,10 @@ async def handle_get_todos(sid):
             text=r["text"],
             completed=bool(r["completed"]),
             deleted=bool(r["deleted"]),
-            type=r["type"],
             updatedAt=int(r["updated_at"]),
+            type=r["type"],
+            progressNow=r["progress_now"],
+            progressEnd=r["progress_end"],
         )
         todos.append(todo_obj.model_dump())
 
@@ -304,16 +310,18 @@ async def handle_sync(sid, data):
     if not row or client_updated_at > row[0][0]:
         await db_query(
             """
-            INSERT OR REPLACE INTO todos (id, text, completed, deleted, type, updated_at, user_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at, type, progress_now, progress_end, user_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             (
                 data["id"],
                 data["text"],
                 data["completed"],
                 data["deleted"],
-                data["type"],
                 client_updated_at,
+                data["type"],
+                data["progressNow"],
+                data["progressEnd"],
                 user_id,
             ),
         )
