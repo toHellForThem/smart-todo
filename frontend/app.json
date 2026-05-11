@@ -23,7 +23,8 @@
       },
       "jsEngine": "hermes",
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.toDoSoDo"
+      "package": "com.anonymous.toDoSoDo",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "favicon": "./assets/favicon.png"

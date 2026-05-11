@@ -134,6 +134,8 @@ export const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 15,
     elevation: 1,
+    overflow: 'hidden',
+    position: 'relative',
   },
   checkbox: {
     width: 24,
@@ -214,5 +216,49 @@ export const styles = StyleSheet.create({
   },
   itemCompleted: { opacity: 0.6 },
   itemText: { marginLeft: 10, fontSize: 16 },
-  textCompleted: { textDecorationLine: 'line-through' }
+  textCompleted: { textDecorationLine: 'line-through' },
+  backgroundContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#ffffff',
+    zIndex: -1,
+    marginRight: 50,
+  },
+  backgroundBar: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+  },
+  divider: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  fill: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+  },
+  floatingContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 50,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  grid: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+  },
+  segment: {
+    flex: 1,
+    height: '100%',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(59, 130, 246, 0.08)',
+  }
 });

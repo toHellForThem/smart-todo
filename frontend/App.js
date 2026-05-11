@@ -11,7 +11,10 @@ import {
   Animated,
   StyleSheet,
   Keyboard,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  LayoutAnimation,
+  Platform, 
+  UIManager
 } from 'react-native';
 import { SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
 import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -33,6 +36,10 @@ import { MaterialCommunityIcons, Ionicons, MaterialIcons } from '@expo/vector-ic
 import socketIo from 'socket.io-client/dist/socket.io.js';
 import Toast from 'react-native-toast-message';
 
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const MAX_PULL = 396;
 const moods = [
@@ -216,7 +223,7 @@ export default function App() {
   }, [todoList]);
 
   const addTask = useCallback((task, progressEnd=1)=> {
-    if (task.trim().length > 0) {
+    if (task.trim()) {
       const newTodo = { 
         id: Date.now().toString(), 
         text: task,
@@ -248,21 +255,38 @@ export default function App() {
     }
   },[socket])
 
-  const statusChangeTask = useCallback((id, progressNow) => {
+  const statusChangeTask = useCallback((id) => {
     let updated = null;
     setTodoList(prev => {
       return prev.map(todo => {
         if (todo.id === id) {
-          if (todo.progressEnd > 1) {
+          if(todo.completed){
             updated = { 
               ...todo, 
-              progressNow: progressNow,
-              completed: progressNow === todo.progressEnd, 
-              updatedAt: Date.now() };
+              progressNow: 0,
+              completed: false, 
+              updatedAt: Date.now()
+            };
+            return updated;
+          } else {
+            if (todo.progressEnd > 1) {
+              const nextProgress = todo.progressNow + 1;
+              updated = { 
+                ...todo, 
+                progressNow: nextProgress,
+                completed: nextProgress === todo.progressEnd, 
+                updatedAt: Date.now()
+              };
+              return updated;
+            }
+            updated = { 
+              ...todo,
+              progressNow: 1,
+              completed: true, 
+              updatedAt: Date.now() 
+            };
             return updated;
           }
-          updated = { ...todo, completed: !todo.completed, updatedAt: Date.now() };
-          return updated;
         }
         return todo;
       });
@@ -271,6 +295,45 @@ export default function App() {
       socket.emit('client:sync_todo', updated);
     }
   },[socket])
+
+  const leftAction = useCallback((prog, drag, mode) => {
+    const isRecycle = mode === 'hardDelete';
+
+    const opacity = drag.interpolate({
+      inputRange: [0, 30, 77 - (isRecycle ? 2 : -6)],
+      outputRange: [0, 0.4, 1],
+      extrapolate: 'clamp',
+    });
+
+    const translateX = drag.interpolate({
+      inputRange: [0, 65, 77 - (isRecycle ? 2 : -6)],
+      outputRange: [-59 + (isRecycle ? 2 : -6), 6 + (isRecycle ? 2 : -6), 18],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <View style={{ 
+        height: '100%', 
+        justifyContent: 'center', 
+        paddingTop: 8,
+        paddingBottom: 2,
+      }}>
+        <Animated.View style={[
+          styles.deleteBack, 
+          {
+            opacity: opacity,
+            marginRight: -190,
+            transform: [{ translateX: translateX}],
+            backgroundColor: isRecycle ? '#EF4444' : '#3B82F6'
+          }
+        ]}>
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>
+            {isRecycle ? 'Удалить':'В корзину'}
+          </Text>
+        </Animated.View> 
+      </View>
+    );
+  },[]);
 
   const deleteTodo = useCallback((id) => {
     setTodoList(prev => {
@@ -351,7 +414,7 @@ export default function App() {
               <TodoTab 
                 task={task}
                 setTask={setTask} 
-                addTask={(task) => addTask(task)} 
+                onAdd={addTask} 
                 todoList={todoList} 
                 statusChangeTask={statusChangeTask} 
                 deleteTodo={deleteToRecycle}
@@ -377,8 +440,10 @@ export default function App() {
             {currentTab ==='daily' && (
               <DailyTab
                 todoList={todoList} 
-                onAdd={(task, progressEnd) => addTask(task, progressEnd)}
-                onToggle={(id, progressNow) => statusChangeTask(id, progressNow)}
+                onAdd={addTask}
+                statusChangeTask={statusChangeTask}
+                deleteTodo={deleteToRecycle}
+                leftAction={leftAction}
               />
             )}
           </View>
@@ -389,14 +454,12 @@ export default function App() {
             >
               <Text style={styles.tabText}>РПГ</Text>
             </TouchableOpacity>
-
             <TouchableOpacity 
               style={[styles.tab, currentTab === 'todo' && styles.activeTab]} 
               onPress={() => setCurrentTab('todo')}
             >
               <Text style={styles.tabText}>To do</Text>
             </TouchableOpacity>
-
             <TouchableOpacity 
               style={[styles.tab, currentTab === 'daily' && styles.activeTab]} 
               onPress={() => setCurrentTab('daily')}
@@ -469,16 +532,23 @@ const TodoTab = memo(({
    todoList, 
    task, 
    setTask, 
-   addTask, 
+   onAdd, 
    deleteTodo, 
    statusChangeTask, 
    leftAction,
 }) => {
   
   const activeTodos = useMemo(() => 
-    todoList.filter(item => !item.deleted), 
+    todoList.filter(item => item.type === 'todo' && !item.deleted), 
     [todoList]
   );
+
+  const handleAdd = useCallback(() => {
+    if (task.trim()) {
+      onAdd(task, 1);
+      setTask('');
+    }
+  });
 
   const renderItem = useCallback(({ item }) => (
     <TodoItem 
@@ -499,7 +569,7 @@ const TodoTab = memo(({
           placeholder="Что нужно сделать?"
           placeholderTextColor="#94A3B8"
         />
-        <TouchableOpacity style={styles.addButton} onPress={addTask}>
+        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
           <MaterialCommunityIcons
             style={{borderRadius: 10, backgroundColor: '#d9e7fd'}} 
             name={'plus-thick'} 
@@ -520,47 +590,7 @@ const TodoTab = memo(({
   );
 });
 
-const leftAction = (prog, drag, mode) => {
-  const isRecycle = mode === 'hardDelete';
-
-  const opacity = drag.interpolate({
-    inputRange: [0, 30, 77 - (isRecycle ? 2 : -6)],
-    outputRange: [0, 0.4, 1],
-    extrapolate: 'clamp',
-  });
-
-  const translateX = drag.interpolate({
-    inputRange: [0, 65, 77 - (isRecycle ? 2 : -6)],
-    outputRange: [-59 + (isRecycle ? 2 : -6), 6 + (isRecycle ? 2 : -6), 18],
-    extrapolate: 'clamp',
-  });
-
-  return (
-    <View style={{ 
-      height: '100%', 
-      justifyContent: 'center', 
-      paddingTop: 8,
-      paddingBottom: 2,
-    }}>
-      <Animated.View style={[
-        styles.deleteBack, 
-        {
-          opacity: opacity,
-          marginRight: -190,
-          transform: [{ translateX: translateX}],
-          backgroundColor: isRecycle ? '#EF4444' : '#3B82F6'
-        }
-      ]}>
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          {isRecycle ? 'Удалить':'В корзину'}
-        </Text>
-      </Animated.View> 
-    </View>
-  );
-};
-
 const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
-
   const handleDelete = useCallback(() => {
     deleteTodo(item.id);
   }, [item.id, deleteTodo]);
@@ -818,25 +848,167 @@ const SettingsTab = ({ authMode, setAuthMode, authState, setAuthState }) => {
   );
 };
 
-const DailyTab = ({ todoList, onAdd, onToggle }) => {
+const FillProgress = memo(({ progressNow, progressEnd }) => {
+  const scaleX = useRef(new Animated.Value(0)).current;
+  const segments = useMemo(() => Array.from({ length: progressEnd }), [progressEnd]);
+
+  useEffect(() => {
+    Animated.timing(scaleX, {
+      toValue: progressNow / progressEnd,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [progressNow, progressEnd]);
+
+  return (
+    <View style={styles.backgroundContainer}>
+      <Animated.View 
+        style={[
+          styles.fill, 
+          { 
+            transform: [
+              { translateX: -135 },
+              { scaleX: scaleX.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 1],
+                }) 
+              },
+              { translateX: 135 }
+            ] 
+          }
+        ]} 
+      />
+      <View style={styles.grid}>
+        {segments.map((_, index) => (
+          <View 
+            key={index} 
+            style={[
+              styles.segment, 
+              index === segments.length - 1 ? { borderRightWidth: 0 } : {}
+            ]} 
+          />
+        ))}
+      </View>
+    </View>
+  );
+});
+
+const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
+
+  const handlePress = useCallback(() => {
+    statusChangeTask(item.id);
+  }, [item.id, item.completed, statusChangeTask]);
+
+  const handleDelete = useCallback(() => {
+    deleteTodo(item.id);
+  }, [item.id, item.deleted, deleteTodo]);
+
+  const renderLeft = (prog, drag) => {
+    return leftAction(prog, drag, 'toRecycle');
+  };
+  
+  return (
+    <Swipeable
+      friction={1.6}
+      leftThreshold={78}
+      overshootLeft={true}
+      renderLeftActions={renderLeft}
+      onSwipeableLeftOpen={handleDelete}
+      containerStyle={{
+        paddingTop: 8,
+        paddingBottom: 2,
+        paddingHorizontal: 20,
+        backgroundColor: 'transparent', 
+      }}
+    >
+      <View style={styles.todoItem}>
+        <FillProgress 
+          progressNow={item.progressNow} 
+          progressEnd={item.progressEnd} 
+        />
+        <Text  
+          style={[styles.todoText, { backgroundColor: 'transparent' }, item.completed && styles.completedText]}
+          onPress={handlePress}
+        >
+          {item.text}
+        </Text>
+        <TouchableOpacity 
+          onPress={handlePress}
+          style={{
+            marginLeft: 'auto', 
+            alignSelf: 'stretch', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            backgroundColor: '#d9e7fd',
+            borderBottomRightRadius: 15, 
+            borderTopRightRadius: 15,
+            width: 50,
+          }}
+        >
+          <Ionicons
+            style={{
+              alignItems: 'center'
+            }}
+            name={ item.completed ? 'flash-sharp' : 'flash-outline' } 
+            size={25} 
+            color={'#3B82F6'}
+          />
+        </TouchableOpacity>
+      </View>
+    </Swipeable>
+  );
+});
+
+const DailyTab = memo(({ todoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
   const [task, setTask] = useState('');
+  const [progressEnd, setProgressEnd] = useState(1);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const dailies = useMemo(() => 
-    todoList.filter(item => item.type === 'daily'), 
+    todoList.filter(item => item.type === 'daily' && !item.deleted), 
     [todoList]
   );
-  
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setKeyboardVisible(true);
+    });
+
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   const progress = useMemo(() => {
     if (dailies.length === 0) return 0;
     const completed = dailies.filter(d => d.completed).length;
     return Math.round((completed / dailies.length) * 100);
   }, [dailies]);
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     if (task.trim()) {
-      onAdd(task);
+      onAdd(task, progressEnd);
       setTask('');
     }
-  };
+  });
+
+  const renderItem = useCallback(({ item }) => (
+    <DailyItem 
+      item={item}
+      statusChangeTask={statusChangeTask}
+      deleteTodo={deleteTodo}
+      leftAction={leftAction}
+    />
+  ), [statusChangeTask, deleteTodo, leftAction]);
 
   return (
     <View style={styles.todoWrapper}>
@@ -846,7 +1018,6 @@ const DailyTab = ({ todoList, onAdd, onToggle }) => {
           <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
         </View>
       </View>
-
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -858,26 +1029,32 @@ const DailyTab = ({ todoList, onAdd, onToggle }) => {
           <MaterialCommunityIcons name="plus-thick" size={24} color="#3B82F6" />
         </TouchableOpacity>
       </View>
-
       <FlatList
+        style
         data={dailies}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={[styles.item, item.completed && styles.itemCompleted]} 
-            onPress={() => onToggle(item.id)}
-          >
-            <Ionicons 
-              name={item.completed ? "checkbox" : "square-outline"} 
-              size={24} 
-              color={item.completed ? "#4CAF50" : "#3B82F6"} 
-            />
-            <Text style={[styles.itemText, item.completed && styles.textCompleted]}>
-              {item.text}
-            </Text>
-          </TouchableOpacity>
-        )}
+        renderItem={renderItem}
+        keyboardShouldPersistTaps="always"
       />
+      <View style={[styles.floatingContainer, { 
+        bottom: keyboardHeight - 71,
+        opacity: isKeyboardVisible ? 1 : 0
+      }]}>
+        <TouchableOpacity hitSlop={20} onPress={() => {
+          setProgressEnd(progressEnd === 1 ? 1 : progressEnd - 1);
+        }}>
+          <Ionicons name="remove-circle-outline" size={30} color="#3B82F6" />
+        </TouchableOpacity>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', marginHorizontal: 5 }}>
+          {progressEnd}
+        </Text>
+        <TouchableOpacity hitSlop={20} onPress={() => {
+          setProgressEnd(progressEnd === 20 ? 20 : progressEnd + 1);
+        }}>
+          <Ionicons name="add-circle-outline" size={30} color="#3B82F6" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
-};
+});
+
