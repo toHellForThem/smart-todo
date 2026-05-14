@@ -42,6 +42,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 const MAX_PULL = 396;
+const timeToReset = [18, 45, 0, 0];
 const moods = [
     { value: 1, icon: 'emoticon-dead-outline', color: '#4B4B4B' },
     { value: 2, icon: 'emoticon-sad-outline', color: '#FF5252' },
@@ -138,45 +139,62 @@ export default function App() {
       console.log('Connected to Server!');
     });
 
-    InteractionManager.runAfterInteractions(() => {
-      socket.on('server:login_success', (data) => {
-        const { username, token, settings } = data;
-        socket.emit('client:get_todos');
-        setAuthMode('auth');
-        setAuthState('');
-        AuthStorage.setUsername(username);
-        AuthStorage.setToken(token);
-        AuthStorage.setSettings(settings);
-      });
+    socket.on('server:login_success', (data) => {
+      const { username, token, settings } = data;
+      socket.emit('client:get_todos');
+      setAuthMode('auth');
+      setAuthState('');
+      AuthStorage.setUsername(username);
+      AuthStorage.setToken(token);
+      AuthStorage.setSettings(settings);
     });
 
-    InteractionManager.runAfterInteractions(() => {
-      socket.on('server:all_todos', (serverTodos) => {
+    socket.on('server:all_todos', (serverTodos) => {
+      InteractionManager.runAfterInteractions(() => {
+        let startOfToday = new Date().setHours(...timeToReset);
+        let needEmitReset = false;
+
+        if (startOfToday > Date.now()) {
+          startOfToday -= 86400000;
+        }
         setTodoList(localTodos => {
           const merged = [...localTodos];
           let hasChanges = false;
+
           serverTodos.forEach(sItem => {
-            const localIndex = merged.findIndex(l => l.id === sItem.id);
+            let processedItem = { ...sItem };
+            
+            if(processedItem.type === 'daily' && processedItem.updatedAt < startOfToday) {
+              processedItem.progressNow = 0;
+              processedItem.completed = false;
+              processedItem.updatedAt = startOfToday;
+              needEmitReset = true;
+            }
+  
+            const localIndex = merged.findIndex(l => l.id === processedItem.id);
             if (localIndex === -1) {
-              merged.push(sItem);
+              merged.push(processedItem);
               hasChanges = true;
             } else {
               const lItem = merged[localIndex];
-              if (sItem.updatedAt > (lItem.updatedAt || 0)) {
-                merged[localIndex] = sItem;
+              if (processedItem.updatedAt > (lItem.updatedAt || 0)) {
+                merged[localIndex] = processedItem;
                 hasChanges = true;
-              } else if ((lItem.updatedAt || 0) > sItem.updatedAt) {
+              } else if ((lItem.updatedAt || 0) > processedItem.updatedAt) {
                 socket.emit('client:sync_todo', lItem);
               }
             }
           });
-          return hasChanges ? [...merged] : localTodos;
+          return hasChanges ? merged : localTodos;
         });
+        if(needEmitReset){
+          socket.emit('client:confirm_reset', 'daily');
+        }
       });
     });
 
-    InteractionManager.runAfterInteractions(() => {
-      socket.on('server:todo_updated', (updatedTodo) => {
+    socket.on('server:todo_updated', (updatedTodo) => {
+      InteractionManager.runAfterInteractions(() => {
         setTodoList(prev => {
           const index = prev.findIndex(t => t.id === updatedTodo.id);
           if (index !== -1) {
@@ -193,14 +211,14 @@ export default function App() {
       });
     });
 
-    InteractionManager.runAfterInteractions(() => {
-      socket.on('server:todo_deleted', (deletedId) => {
+    socket.on('server:todo_deleted', (deletedId) => {
+      InteractionManager.runAfterInteractions(() => {
         setTodoList(prev => prev.filter(todo => todo.id !== deletedId));
       });
     });
 
-    InteractionManager.runAfterInteractions(() => {
-      socket.on('server:register_success', () => {
+    socket.on('server:register_success', () => {
+      InteractionManager.runAfterInteractions(() => {
         setAuthMode('');
         setAuthState('login');
       });
@@ -439,7 +457,8 @@ export default function App() {
             )}
             {currentTab ==='daily' && (
               <DailyTab
-                todoList={todoList} 
+                todoList={todoList}
+                setTodoList={setTodoList}
                 onAdd={addTask}
                 statusChangeTask={statusChangeTask}
                 deleteTodo={deleteToRecycle}
@@ -566,8 +585,9 @@ const TodoTab = memo(({
           style={styles.input}
           value={task}
           onChangeText={setTask}
-          placeholder="Что нужно сделать?"
+          placeholder=" Что планируешь?"
           placeholderTextColor="#94A3B8"
+          cursorColor='#3B82F6'
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
           <MaterialCommunityIcons
@@ -692,8 +712,6 @@ const SettingsTab = ({ authMode, setAuthMode, authState, setAuthState }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setPasswordVisible] = useState(false);
-
-  
 
   useEffect(() => {
     if (!authMode){
@@ -884,7 +902,7 @@ const FillProgress = memo(({ progressNow, progressEnd }) => {
             key={index} 
             style={[
               styles.segment, 
-              index === segments.length - 1 ? { borderRightWidth: 0 } : {}
+              index === segments.length - 1 ? { height: '100%' } : {}
             ]} 
           />
         ))}
@@ -927,7 +945,11 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
           progressEnd={item.progressEnd} 
         />
         <Text  
-          style={[styles.todoText, { backgroundColor: 'transparent' }, item.completed && styles.completedText]}
+          style={[
+            styles.todoText, 
+            { backgroundColor: 'transparent'}, 
+            item.completed && styles.completedTextDaily
+          ]}
           onPress={handlePress}
         >
           {item.text}
@@ -943,6 +965,7 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
             borderBottomRightRadius: 15, 
             borderTopRightRadius: 15,
             width: 50,
+            borderLeftColor: '#000000',
           }}
         >
           <Ionicons
@@ -959,7 +982,7 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   );
 });
 
-const DailyTab = memo(({ todoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
+const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
   const [task, setTask] = useState('');
   const [progressEnd, setProgressEnd] = useState(1);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -968,6 +991,42 @@ const DailyTab = memo(({ todoList, onAdd, statusChangeTask, deleteTodo, leftActi
     todoList.filter(item => item.type === 'daily' && !item.deleted), 
     [todoList]
   );
+
+  useEffect(() => {
+    let timerId;
+
+    const scheduleNextReset = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      
+      tomorrow.setHours(...timeToReset);
+
+      if (tomorrow <= now) {
+        tomorrow.setDate(tomorrow.getDate() + 1);
+      } 
+      const msUntilMidnight = tomorrow.getTime() - now.getTime();
+      let toUpdatedAt = Date.now();
+
+      timerId = setTimeout(() => {
+     
+      toUpdatedAt = Date.now();
+        setTodoList(prev => prev.map(item => 
+          item.type === 'daily' 
+            ? { ...item, progressNow: 0, completed: false, updatedAt: toUpdatedAt }
+            : item
+        ));
+        socket.emit('client:confirm_reset', 'daily', toUpdatedAt);
+
+        scheduleNextReset(); 
+      }, msUntilMidnight);
+    };
+
+    scheduleNextReset();
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [socket]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
@@ -990,8 +1049,13 @@ const DailyTab = memo(({ todoList, onAdd, statusChangeTask, deleteTodo, leftActi
 
   const progress = useMemo(() => {
     if (dailies.length === 0) return 0;
-    const completed = dailies.filter(d => d.completed).length;
-    return Math.round((completed / dailies.length) * 100);
+    const {needProgress, nowProgress} = dailies.reduce((acc, item) => {
+      acc.needProgress += (item.progressEnd || 0);
+      acc.nowProgress += (item.progressNow || 0);
+      return acc;
+    }, {needProgress: 0, nowProgress: 0});
+
+    return Math.round((nowProgress / needProgress) * 100);
   }, [dailies]);
 
   const handleAdd = useCallback(() => {
@@ -1012,18 +1076,14 @@ const DailyTab = memo(({ todoList, onAdd, statusChangeTask, deleteTodo, leftActi
 
   return (
     <View style={styles.todoWrapper}>
-      <View style={styles.progressContainer}>
-        <Text style={styles.progressText}>Прогресс дня: {progress}%</Text>
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
-        </View>
-      </View>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Новая ежедневка..."
           value={task}
           onChangeText={setTask}
+          placeholder=" Что планируешь?"
+          placeholderTextColor="#94A3B8"
+          cursorColor='#3B82F6'
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
           <MaterialCommunityIcons name="plus-thick" size={24} color="#3B82F6" />
@@ -1034,7 +1094,7 @@ const DailyTab = memo(({ todoList, onAdd, statusChangeTask, deleteTodo, leftActi
         data={dailies}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        keyboardShouldPersistTaps="always"
+        contentContainerStyle={{ paddingBottom: 6 }}
       />
       <View style={[styles.floatingContainer, { 
         bottom: keyboardHeight - 71,
@@ -1054,7 +1114,12 @@ const DailyTab = memo(({ todoList, onAdd, statusChangeTask, deleteTodo, leftActi
           <Ionicons name="add-circle-outline" size={30} color="#3B82F6" />
         </TouchableOpacity>
       </View>
+      <View style={styles.progressContainer}>
+        <Text style={[styles.progressText, progress === 100 && styles.progressTextCompleted]}>Прогресс дня: {progress}%</Text>
+        <View style={styles.progressBarBg}>
+          <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+        </View>
+      </View>
     </View>
   );
 });
-

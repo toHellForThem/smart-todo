@@ -20,11 +20,16 @@ export const styles = StyleSheet.create({
     height: 70,
     flexDirection: 'row',
     backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee'
   },
-  tab: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  activeTab: { backgroundColor: '#f0f0f0', borderTopWidth: 2, borderTopColor: 'blue' },
+  tab: {
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    borderTopColor: '#eee', 
+    backgroundColor: '#fff', 
+    borderTopWidth: 2 
+  },
+  activeTab: { borderTopColor: '#3B82F6', backgroundColor: '#f0f0f0',},
   tabText: { fontWeight: 'bold', fontSize: 12 },
   scoreContainer: {
     flex: 1,
@@ -200,9 +205,16 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'none',
   },
-  progressContainer: { marginBottom: 20 },
-  progressText: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
-  progressBarBg: { height: 10, backgroundColor: '#E0E7FF', borderRadius: 5 },
+  progressContainer: {
+    paddingBottom: 10, 
+    paddingHorizontal: 20, 
+    borderTopWidth: 2, 
+    borderColor: '#3B82F6',
+    backgroundColor: '#d9e7fd',
+  },
+  progressText: { fontSize: 18, marginVertical: 6, textAlign: 'center'},
+  progressTextCompleted: { color: '#3B82F6', fontWeight: 'bold'},
+  progressBarBg: { height: 10, backgroundColor: '#fff', borderRadius: 5 },
   progressBarFill: { height: 10, backgroundColor: '#3B82F6', borderRadius: 5 },
   inputWrapper: { flexDirection: 'row', marginBottom: 20 },
   item: { 
@@ -214,9 +226,8 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
     elevation: 2 
   },
-  itemCompleted: { opacity: 0.6 },
+  itemCompleted: { opacity: 0.6, textDecorationLine: 'line-through' },
   itemText: { marginLeft: 10, fontSize: 16 },
-  textCompleted: { textDecorationLine: 'line-through' },
   backgroundContainer: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
@@ -237,7 +248,7 @@ export const styles = StyleSheet.create({
   fill: {
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    backgroundColor: '#d9e7fd',
   },
   floatingContainer: {
     position: 'absolute',
@@ -257,8 +268,12 @@ export const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
-    height: '100%',
+    height: 18,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(59, 130, 246, 0.08)',
+    borderRightColor: 'rgba(59, 130, 246, 0.4)',
+  },
+  completedTextDaily: {
+    color: '#3B82F6',
+    fontWeight: 'bold',
   }
 });

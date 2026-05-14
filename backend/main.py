@@ -77,16 +77,23 @@ async def lifespan(app: FastAPI):
     yield
 
 
+origins = [
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+]
+
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 app = FastAPI(lifespan=lifespan)
-socket_app = socketio.ASGIApp(sio, app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+socket_app = socketio.ASGIApp(sio, app)
 
 
 async def db_query(query, params=(), is_select=False):
@@ -307,7 +314,7 @@ async def handle_sync(sid, data):
         (todo_id, user_id),
         is_select=True,
     )
-    if not row or client_updated_at > row[0][0]:
+    if not row or client_updated_at > row[0]["updated_at"]:
         await db_query(
             """
             INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at, type, progress_now, progress_end, user_id)
@@ -355,3 +362,23 @@ async def handle_logout(sid):
 
     await sio.leave_room(sid, user_id)
     await sio.save_session(sid, {})
+
+
+@sio.on("client:confirm_reset")
+async def handle_reset_todos(sid, todo_type, update_time):
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id")
+
+    if not user_id:
+        return
+
+    await db_query(
+        """
+        UPDATE todos 
+        SET progress_now = 0, completed = ?, updated_at = ? 
+        WHERE user_id = ? AND type = ?
+    """,
+        (False, update_time, user_id, todo_type),
+    )
+    print(f"Пользователь {user_id} обновил задачи.")
+    await handle_get_todos(sid)
