@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { InteractionManager } from 'react-native';
+import { useEffect, startTransition } from 'react';
 import Toast from 'react-native-toast-message';
 import { socket } from '../utils/socket';
 import { AuthStorage } from '../utils/storage';
@@ -23,13 +22,14 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
     });
 
     socket.on('server:all_todos', (serverTodos) => {
-      InteractionManager.runAfterInteractions(() => {
-        let startOfToday = new Date().setHours(...timeToReset);
-        let needEmitReset = false;
+      let startOfToday = new Date().setHours(...timeToReset);
+      let needEmitReset = false;
 
-        if (startOfToday > Date.now()) {
-          startOfToday -= 86400000;
-        }
+      if (startOfToday > Date.now()) {
+        startOfToday -= 86400000;
+      }
+
+      startTransition(() => {
         setTodoList(localTodos => {
           const merged = [...localTodos];
           let hasChanges = false;
@@ -60,14 +60,15 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
           });
           return hasChanges ? merged : localTodos;
         });
-        if (needEmitReset) {
-          socket.emit('client:confirm_reset', 'daily');
-        }
       });
+
+      if (needEmitReset) {
+        socket.emit('client:confirm_reset', 'daily');
+      }
     });
 
     socket.on('server:todo_updated', (updatedTodo) => {
-      InteractionManager.runAfterInteractions(() => {
+      startTransition(() => {
         setTodoList(prev => {
           const index = prev.findIndex(t => t.id === updatedTodo.id);
           if (index !== -1) {
@@ -85,20 +86,20 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
     });
 
     socket.on('server:todo_deleted', (deletedId) => {
-      InteractionManager.runAfterInteractions(() => {
+      startTransition(() => {
         setTodoList(prev => prev.filter(todo => todo.id !== deletedId));
       });
     });
 
     socket.on('server:register_success', () => {
-      InteractionManager.runAfterInteractions(() => {
+      startTransition(() => {
         setAuthMode('');
         setAuthState('login');
       });
     });
 
     socket.on('server:auth_expired', () => {
-      InteractionManager.runAfterInteractions(() => {
+      startTransition(() => {
         AuthStorage.logout();
         setAuthMode('local');
         setAuthState('login');
