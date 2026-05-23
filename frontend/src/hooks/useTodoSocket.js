@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { InteractionManager } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { socket } from '../utils/socket';
 import { AuthStorage } from '../utils/storage';
 
@@ -96,6 +97,20 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
       });
     });
 
+    socket.on('server:auth_expired', () => {
+      InteractionManager.runAfterInteractions(() => {
+        AuthStorage.logout();
+        setAuthMode('local');
+        setAuthState('login');
+        Toast.show({
+          type: 'error',
+          text1: 'Сессия истекла',
+          text2: 'Пожалуйста, авторизуйтесь заново',
+          visibilityTime: 4000
+        });
+      });
+    });
+
     return () => {
       socket.off('connect');
       socket.off('server:all_todos');
@@ -103,6 +118,7 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
       socket.off('server:todo_deleted');
       socket.off('server:login_success');
       socket.off('server:register_success');
+      socket.off('server:auth_expired');
     };
   }, [setTodoList, setAuthMode, setAuthState]);
 };

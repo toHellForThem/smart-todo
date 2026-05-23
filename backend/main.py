@@ -67,14 +67,22 @@ async def init_db():
             """)
             await db.commit()
         except Exception as e:
-            print(f"Ошибка базы данных{e}")
+            print(f"Ошибка базы данных: {e}")
             raise e
+
+
+db_conn = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global db_conn
     await init_db()
+    db_conn = await aiosqlite.connect("tasks.db", timeout=10)
+    db_conn.row_factory = aiosqlite.Row
+    await db_conn.execute("PRAGMA journal_mode=WAL;")
     yield
+    await db_conn.close()
 
 
 origins = [
@@ -97,21 +105,17 @@ socket_app = socketio.ASGIApp(sio, app)
 
 
 async def db_query(query, params=(), is_select=False):
-    async with aiosqlite.connect("tasks.db", timeout=10) as db:
-        db.row_factory = aiosqlite.Row
-        await db.execute("PRAGMA journal_mode=WAL;")
+    try:
+        async with db_conn.execute(query, params) as cursor:
+            if is_select:
+                res = await cursor.fetchall()
+                return res
 
-        try:
-            async with db.execute(query, params) as cursor:
-                if is_select:
-                    res = await cursor.fetchall()
-                    return res
-
-                await db.commit()
-                return None
-        except Exception as e:
-            print(f"Ошибка базы данных {e}")
-            raise e
+            await db_conn.commit()
+            return None
+    except Exception as e:
+        print(f"Ошибка базы данных {e}")
+        raise e
 
 
 class Todo(BaseModel):
@@ -240,12 +244,17 @@ async def connect(sid, environ, auth):
 
     if user_id:
         if len(user_id) > 1:
-            token = create_access_token(user_id[0])
-            print("Токен переиздан")
+            print(f"Сессия пользователя {user_id[0]} истекла. Требуется повторный вход.")
+            await sio.emit("server:auth_expired", room=sid)
+            return True
 
         user = await db_query(
             "SELECT * FROM users WHERE id = ?", (user_id[0],), is_select=True
         )
+        if not user:
+            print(f"Пользователь с ID {user_id[0]} не найден в базе данных.")
+            return True
+
         user = user[0]
 
         await sio.save_session(sid, {"user_id": user["id"]})
