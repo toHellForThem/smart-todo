@@ -2,7 +2,8 @@ import { memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { styles } from '../../styles';
+import { styles } from '../styles/item.styles';
+import { theme } from '../theme/theme';
 import { socket } from '../utils/socket';
 
 const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
@@ -55,9 +56,9 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
             alignSelf: 'stretch',
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: '#d9e7fd',
-            borderBottomRightRadius: 15,
-            borderTopRightRadius: 15,
+            backgroundColor: theme.colors.icon.bg,
+            borderBottomRightRadius: theme.radius.xl,
+            borderTopRightRadius: theme.radius.xl,
             width: 50,
           }}
         >
@@ -67,7 +68,7 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
             }}
             name={'arrow-undo-outline'}
             size={25}
-            color={'#3B82F6'}
+            color={theme.colors.icon.primary}
           />
         </TouchableOpacity>
       </View>

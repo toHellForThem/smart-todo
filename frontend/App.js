@@ -8,7 +8,7 @@ import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { renderLeftAction } from './src/utils/swipe';
 
-import { styles } from './styles';
+import { styles } from './App.styles';
 import { TodoTab } from './src/tabs/TodoTab';
 import { RecycleTab } from './src/tabs/RecycleTab';
 import { DailyTab } from './src/tabs/DailyTab';

@@ -1,5 +1,6 @@
 import { View, Animated, Text } from 'react-native';
-import { styles } from '../../styles';
+import { styles } from '../styles/item.styles';
+import { theme } from '../theme/theme';
 
 export const renderLeftAction = (prog, drag, mode) => {
   const isRecycle = mode === 'hardDelete';
@@ -29,7 +30,7 @@ export const renderLeftAction = (prog, drag, mode) => {
           opacity: opacity,
           marginRight: -190,
           transform: [{ translateX: translateX }],
-          backgroundColor: isRecycle ? '#EF4444' : '#3B82F6'
+          backgroundColor: isRecycle ? theme.colors.danger : theme.colors.primary,
         }
       ]}>
         <Text style={{ color: 'white', fontWeight: 'bold' }}>

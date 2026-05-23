@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { TextInput as PaperInput, PaperProvider, Surface } from 'react-native-paper';
 import Toast from 'react-native-toast-message';
-import { styles } from '../../styles';
+import { styles } from './SettingsTab.styles';
 import { AuthStorage } from '../utils/storage';
 import { socket } from '../utils/socket';
+import { theme } from '../theme/theme';
 
 export const SettingsTab = ({ authMode, setAuthMode, authState, setAuthState }) => {
   const [username, setUsername] = useState('');
@@ -101,16 +102,16 @@ export const SettingsTab = ({ authMode, setAuthMode, authState, setAuthState }) 
                   onChangeText={setUsername}
                   style={styles.authInput}
                   mode="outlined"
-                  outlineColor="#E2E8F0"
-                  textColor="#1A202C"
+                  outlineColor={theme.colors.border.light}
+                  textColor={theme.colors.text.primary}
                   theme={{
-                    roundness: 12,
+                    roundness: theme.radius.lg,
                     colors: {
-                      primary: '#3B82F6',
+                      primary: theme.colors.icon.primary,
                     },
                   }}
-                  left={<PaperInput.Icon icon="account" color="#3B82F6" />}
-                  placeholderTextColor={'#aaaaaa'}
+                  left={<PaperInput.Icon icon="account" color={theme.colors.icon.primary} />}
+                  placeholderTextColor={theme.colors.text.muted}
                 />
               </Surface>
               <Surface style={styles.surfaceAuth}>
@@ -119,30 +120,30 @@ export const SettingsTab = ({ authMode, setAuthMode, authState, setAuthState }) 
                   value={password}
                   onChangeText={setPassword}
                   mode="outlined"
-                  outlineColor="#E2E8F0"
-                  textColor="#1A202C"
+                  outlineColor={theme.colors.border.light}
+                  textColor={theme.colors.text.primary}
                   theme={{
-                    roundness: 12,
+                    roundness: theme.radius.lg,
                     colors: {
-                      primary: '#3B82F6',
+                      primary: theme.colors.icon.primary,
                     },
                   }}
                   left={
                     <PaperInput.Icon
                       icon="lock-outline"
-                      color="#3B82F6"
+                      color={theme.colors.icon.primary}
                     />
                   }
                   right={
                     <PaperInput.Icon
                       icon={isPasswordVisible ? "eye" : "eye-off"}
                       onPress={() => setPasswordVisible(!isPasswordVisible)}
-                      color="#3B82F6"
+                      color={theme.colors.icon.primary}
                     />
                   }
                   secureTextEntry={!isPasswordVisible}
                   style={styles.authInput}
-                  placeholderTextColor={'#aaaaaa'}
+                  placeholderTextColor={theme.colors.text.muted}
                 />
               </Surface>
             </View>

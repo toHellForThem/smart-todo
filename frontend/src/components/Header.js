@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { GestureDetector } from 'react-native-gesture-handler';
 import ReAnimated from 'react-native-reanimated';
-import { styles } from '../../styles';
+import { styles } from './Header.styles';
+import { theme } from '../theme/theme';
 
 export const Header = memo(({
   panGesture,
@@ -22,10 +23,10 @@ export const Header = memo(({
     <View style={styles.header}>
       <TouchableOpacity>
         <MaterialCommunityIcons
-          style={{ padding: 2, marginRight: 5, borderRadius: 10, backgroundColor: '#d9e7fd' }}
+          style={{ padding: 2, marginRight: 5, borderRadius: 10, backgroundColor: theme.colors.icon.bg }}
           name={'clock-edit-outline'}
           size={45}
-          color={'#3B82F6'}
+          color={theme.colors.icon.primary}
         />
       </TouchableOpacity>
 
@@ -47,7 +48,7 @@ export const Header = memo(({
               <Ionicons
                 name={'caret-down'}
                 size={20}
-                color={'#3b83f6'}
+                color={theme.colors.icon.primary}
               />
             </View>
           </ReAnimated.View>
@@ -62,11 +63,11 @@ export const Header = memo(({
             padding: 2,
             marginRight: 5,
             borderRadius: 10,
-            backgroundColor: activeView === 'recycle' ? '#3B82F6' : '#d9e7fd'
+            backgroundColor: activeView === 'recycle' ? theme.colors.icon.bgActive : theme.colors.icon.bg
           }}
           name={'trash-outline'}
           size={45}
-          color={activeView === 'recycle' ? '#FFFFFF' : '#3B82F6'}
+          color={activeView === 'recycle' ? theme.colors.icon.active : theme.colors.icon.primary}
         />
       </TouchableOpacity>
 
@@ -87,11 +88,11 @@ export const Header = memo(({
           style={{
             padding: 2,
             borderRadius: 10,
-            backgroundColor: activeView === 'settings' ? '#3B82F6' : '#d9e7fd'
+            backgroundColor: activeView === 'settings' ? theme.colors.icon.bgActive : theme.colors.icon.bg
           }}
           name={'settings-outline'}
           size={45}
-          color={activeView === 'settings' ? '#FFFFFF' : '#3B82F6'}
+          color={activeView === 'settings' ? theme.colors.icon.active : theme.colors.icon.primary}
         />
       </TouchableOpacity>
     </View>

@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
-import { styles } from '../../styles';
+import { styles } from './TabBar.styles';
 
 export const TabBar = memo(({ currentTab, setCurrentTab }) => {
   return (

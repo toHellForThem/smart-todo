@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useMemo } from 'react';
 import { View, Animated } from 'react-native';
-import { styles } from '../../styles';
+import { styles } from './FillProgress.styles';
 
 export const FillProgress = memo(({ progressNow, progressEnd }) => {
   const scaleX = useRef(new Animated.Value(0)).current;

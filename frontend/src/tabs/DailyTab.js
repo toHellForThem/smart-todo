@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { View, TextInput, TouchableOpacity, FlatList, Text, Keyboard, LayoutAnimation } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { styles } from '../../styles';
+import { styles } from './DailyTab.styles';
+import { styles as itemStyles } from '../styles/item.styles';
+import { theme } from '../theme/theme';
 import { socket } from '../utils/socket';
 import { FillProgress } from '../components/FillProgress';
 
@@ -35,14 +37,14 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
         backgroundColor: 'transparent',
       }}
     >
-      <View style={styles.todoItem}>
+      <View style={itemStyles.todoItem}>
         <FillProgress
           progressNow={item.progressNow}
           progressEnd={item.progressEnd}
         />
         <Text
           style={[
-            styles.todoText,
+            itemStyles.todoText,
             { backgroundColor: 'transparent' },
             item.completed && styles.completedTextDaily
           ]}
@@ -57,11 +59,10 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
             alignSelf: 'stretch',
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: '#d9e7fd',
-            borderBottomRightRadius: 15,
-            borderTopRightRadius: 15,
+            backgroundColor: theme.colors.icon.bg,
+            borderBottomRightRadius: theme.radius.xl,
+            borderTopRightRadius: theme.radius.xl,
             width: 50,
-            borderLeftColor: '#000000',
           }}
         >
           <Ionicons
@@ -70,7 +71,7 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
             }}
             name={item.completed ? 'flash-sharp' : 'flash-outline'}
             size={25}
-            color={'#3B82F6'}
+            color={theme.colors.icon.primary}
           />
         </TouchableOpacity>
       </View>
@@ -177,11 +178,11 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
           value={task}
           onChangeText={setTask}
           placeholder=" Что планируешь?"
-          placeholderTextColor="#94A3B8"
-          cursorColor='#3B82F6'
+          placeholderTextColor={theme.colors.text.muted}
+          cursorColor={theme.colors.primary}
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-          <MaterialCommunityIcons name="plus-thick" size={24} color="#3B82F6" />
+          <MaterialCommunityIcons name="plus-thick" size={24} color={theme.colors.icon.primary} />
         </TouchableOpacity>
       </View>
       <FlatList
@@ -198,7 +199,7 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
         <TouchableOpacity hitSlop={20} onPress={() => {
           setProgressEnd(progressEnd === 1 ? 1 : progressEnd - 1);
         }}>
-          <Ionicons name="remove-circle-outline" size={30} color="#3B82F6" />
+          <Ionicons name="remove-circle-outline" size={30} color={theme.colors.icon.primary} />
         </TouchableOpacity>
         <Text style={{ fontSize: 18, fontWeight: 'bold', marginHorizontal: 5 }}>
           {progressEnd}
@@ -206,7 +207,7 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
         <TouchableOpacity hitSlop={20} onPress={() => {
           setProgressEnd(progressEnd === 20 ? 20 : progressEnd + 1);
         }}>
-          <Ionicons name="add-circle-outline" size={30} color="#3B82F6" />
+          <Ionicons name="add-circle-outline" size={30} color={theme.colors.icon.primary} />
         </TouchableOpacity>
       </View>
       <View style={styles.progressContainer}>

@@ -2,7 +2,9 @@ import { memo, useCallback, useMemo } from 'react';
 import { View, TextInput, TouchableOpacity, FlatList, Text } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { styles } from '../../styles';
+import { styles } from './TodoTab.styles';
+import { styles as itemStyles } from '../styles/item.styles';
+import { theme } from '../theme/theme';
 
 const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   const handlePress = useCallback(() => {
@@ -31,24 +33,24 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
         backgroundColor: 'transparent',
       }}
     >
-      <View style={styles.todoItem}>
+      <View style={itemStyles.todoItem}>
         <TouchableOpacity
           delayPressIn={150}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 100 }}
           onPress={handlePress}
-          style={[styles.checkbox, item.completed && styles.checked]}
+          style={[itemStyles.checkbox, item.completed && itemStyles.checked]}
         >
           {item.completed && (
             <MaterialCommunityIcons
-              style={{ borderRadius: 4, backgroundColor: '#d9e7fd' }}
+              style={{ borderRadius: theme.radius.xs, backgroundColor: theme.colors.icon.bg }}
               name={'check-bold'}
               size={20}
-              color={'#3B82F6'}
+              color={theme.colors.icon.primary}
             />
           )}
         </TouchableOpacity>
         <Text
-          style={[styles.todoText, item.completed && styles.completedText]}
+          style={[itemStyles.todoText, item.completed && itemStyles.completedText]}
           onPress={handlePress}
         >
           {item.text}
@@ -97,15 +99,15 @@ export const TodoTab = memo(({
           value={task}
           onChangeText={setTask}
           placeholder=" Что планируешь?"
-          placeholderTextColor="#94A3B8"
-          cursorColor='#3B82F6'
+          placeholderTextColor={theme.colors.text.muted}
+          cursorColor={theme.colors.primary}
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
           <MaterialCommunityIcons
-            style={{ borderRadius: 10, backgroundColor: '#d9e7fd' }}
+            style={{ borderRadius: 10, backgroundColor: theme.colors.icon.bg }}
             name={'plus-thick'}
             size={24}
-            color={'#3B82F6'}
+            color={theme.colors.icon.primary}
           />
         </TouchableOpacity>
       </View>
