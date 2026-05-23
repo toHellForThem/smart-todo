@@ -3,7 +3,7 @@ import { StyleSheet, Dimensions } from 'react-native';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F1F5F9', zIndex: 51},
+  container: { flex: 1, backgroundColor: '#F1F5F9', zIndex: 51 },
   header: {
     marginTop: 10,
     height: 60,
@@ -22,14 +22,14 @@ export const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   tab: {
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    borderTopColor: '#eee', 
-    backgroundColor: '#fff', 
-    borderTopWidth: 2 
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderTopColor: '#eee',
+    backgroundColor: '#fff',
+    borderTopWidth: 2
   },
-  activeTab: { borderTopColor: '#3B82F6', backgroundColor: '#f0f0f0',},
+  activeTab: { borderTopColor: '#3B82F6', backgroundColor: '#f0f0f0', },
   tabText: { fontWeight: 'bold', fontSize: 12 },
   scoreContainer: {
     flex: 1,
@@ -42,16 +42,16 @@ export const styles = StyleSheet.create({
     fontSize: 40,
     flex: 1
   },
-  pullIcon: { 
-    color: '#94A3B8', 
-    fontSize: 18, 
+  pullIcon: {
+    color: '#94A3B8',
+    fontSize: 18,
     fontWeight: 'bold',
     zIndex: 50,
   },
   scoreShade: {
     position: 'absolute',
     top: 34,
-    left: 0, 
+    left: 0,
     right: 0,
     height: 20,
     backgroundColor: '#d9e7fd',
@@ -66,9 +66,9 @@ export const styles = StyleSheet.create({
   },
   contentPlaceholder: {
     position: 'absolute',
-    flex: 1, 
+    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center', 
+    alignItems: 'center',
     width: '101%',
     overflow: 'hidden',
     top: 60,
@@ -85,9 +85,9 @@ export const styles = StyleSheet.create({
     zIndex: 49,
     backgroundColor: 'rgba(0,0,0,0)',
   },
-  moodMeter: { 
+  moodMeter: {
     top: 0,
-    alignItems:'center',
+    alignItems: 'center',
     transform: [{ translateY: -230 }],
     justifyContent: 'space-evenly',
     backgroundColor: '#F8FAFC',
@@ -96,7 +96,7 @@ export const styles = StyleSheet.create({
     elevation: 1,
   },
   todoWrapper: {
-   flex: 1,
+    flex: 1,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -125,14 +125,14 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 3,
   },
-  addButtonText: { 
-    color: '#FFF', 
-    fontSize: 24, 
+  addButtonText: {
+    color: '#FFF',
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 3,
     textAlign: 'center',
   },
-  
+
   todoItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -154,7 +154,7 @@ export const styles = StyleSheet.create({
   },
   checked: { backgroundColor: '#3B82F6' },
   checkMark: { color: '#FFF', fontSize: 14, fontWeight: 'bold' },
-  todoText: { flex: 1, fontSize: 16, color: '#1E293B', margin: 15},
+  todoText: { flex: 1, fontSize: 16, color: '#1E293B', margin: 15 },
   completedText: { textDecorationLine: 'line-through', color: '#94A3B8' },
   deleteIcon: { fontSize: 20, marginLeft: 10 },
   deleteBack: {
@@ -167,13 +167,13 @@ export const styles = StyleSheet.create({
     borderBottomLeftRadius: 15,
     borderTopLeftRadius: 15,
   },
-  containerColumn: { flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'},
+  containerColumn: { flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' },
   baseText: {
     color: '#666',
     fontSize: 14,
     textAlign: 'center',
     marginTop: 15,
-    
+
   },
   linkText: {
     color: '#007AFF',
@@ -190,7 +190,7 @@ export const styles = StyleSheet.create({
   },
   authButtonText: {
     color: '#3B82F6',
-    fontSize: 20, 
+    fontSize: 20,
     fontWeight: 'bold',
   },
   authInput: {
@@ -200,31 +200,31 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   surfaceAuth: {
-    width: '75%',  
+    width: '75%',
     marginBottom: 10,
     borderRadius: 12,
     backgroundColor: 'none',
   },
   progressContainer: {
-    paddingBottom: 10, 
-    paddingHorizontal: 20, 
-    borderTopWidth: 2, 
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+    borderTopWidth: 2,
     borderColor: '#3B82F6',
     backgroundColor: '#d9e7fd',
   },
-  progressText: { fontSize: 18, marginVertical: 6, textAlign: 'center'},
-  progressTextCompleted: { color: '#3B82F6', fontWeight: 'bold'},
+  progressText: { fontSize: 18, marginVertical: 6, textAlign: 'center' },
+  progressTextCompleted: { color: '#3B82F6', fontWeight: 'bold' },
   progressBarBg: { height: 10, backgroundColor: '#fff', borderRadius: 5 },
   progressBarFill: { height: 10, backgroundColor: '#3B82F6', borderRadius: 5 },
   inputWrapper: { flexDirection: 'row', marginBottom: 20 },
-  item: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: '#fff', 
-    padding: 15, 
-    borderRadius: 12, 
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 12,
     marginBottom: 10,
-    elevation: 2 
+    elevation: 2
   },
   itemCompleted: { opacity: 0.6, textDecorationLine: 'line-through' },
   itemText: { marginLeft: 10, fontSize: 16 },

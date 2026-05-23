@@ -1,1125 +1,155 @@
-import { useState, useRef, useEffect, useCallback, memo, useMemo } from 'react';
+import { useState } from 'react';
 import {
-  Text, 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
-  FlatList, 
-  Pressable,
-  ViewBase,
-  InteractionManager,
-  Animated,
-  StyleSheet,
-  Keyboard,
-  TouchableWithoutFeedback,
-  LayoutAnimation,
-  Platform, 
+  View,
+  Platform,
   UIManager
 } from 'react-native';
-import { SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
-import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
-import ReAnimated, { 
-  useAnimatedProps,
-  useAnimatedStyle, 
-  useDerivedValue,
-  useSharedValue,
-  withTiming,
-  withSpring,
-  interpolate
-} from 'react-native-reanimated';
-import { styles } from './styles';
-import { TodoStorage, AuthStorage } from './src/utils/storage';
-import { socket } from './src/utils/socket';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { TextInput as PaperInput, PaperProvider, Surface } from 'react-native-paper';
-import { MaterialCommunityIcons, Ionicons, MaterialIcons } from '@expo/vector-icons'; 
-import socketIo from 'socket.io-client/dist/socket.io.js';
-import Toast from 'react-native-toast-message';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { renderLeftAction } from './src/utils/swipe';
 
+import { styles } from './styles';
+import { TodoTab } from './src/tabs/TodoTab';
+import { RecycleTab } from './src/tabs/RecycleTab';
+import { DailyTab } from './src/tabs/DailyTab';
+import { SettingsTab } from './src/tabs/SettingsTab';
+import { TabBar } from './src/components/TabBar';
+import { Header } from './src/components/Header';
+
+import { useTodoActions } from './src/hooks/useTodoActions';
+import { useTodoSocket } from './src/hooks/useTodoSocket';
+import { useMoodSheet } from './src/hooks/useMoodSheet';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const MAX_PULL = 396;
-const timeToReset = [18, 45, 0, 0];
 const moods = [
-    { value: 1, icon: 'emoticon-dead-outline', color: '#4B4B4B' },
-    { value: 2, icon: 'emoticon-sad-outline', color: '#FF5252' },
-    { value: 3, icon: 'emoticon-neutral-outline', color: '#FFC107' },
-    { value: 4, icon: 'emoticon-happy-outline', color: '#8BC34A' }, 
-    { value: 5, icon: 'emoticon-excited-outline', color: '#4CAF50' },
+  { value: 1, icon: 'emoticon-dead-outline', color: '#4B4B4B' },
+  { value: 2, icon: 'emoticon-sad-outline', color: '#FF5252' },
+  { value: 3, icon: 'emoticon-neutral-outline', color: '#FFC107' },
+  { value: 4, icon: 'emoticon-happy-outline', color: '#8BC34A' },
+  { value: 5, icon: 'emoticon-excited-outline', color: '#4CAF50' },
 ];
+
+const TAB_VIEWS = {
+  todo: {
+    list: (props) => (
+      <TodoTab
+        task={props.task}
+        setTask={props.setTask}
+        onAdd={props.onAdd}
+        todoList={props.todoList}
+        statusChangeTask={props.statusChangeTask}
+        deleteTodo={props.deleteToRecycle}
+        leftAction={props.leftAction}
+      />
+    ),
+  },
+  daily: {
+    list: (props) => (
+      <DailyTab
+        todoList={props.todoList}
+        setTodoList={props.setTodoList}
+        onAdd={props.onAdd}
+        statusChangeTask={props.statusChangeTask}
+        deleteTodo={props.deleteToRecycle}
+        leftAction={props.leftAction}
+      />
+    ),
+  },
+};
+
+const GLOBAL_VIEWS = {
+  settings: (props) => (
+    <SettingsTab
+      authMode={props.authMode}
+      setAuthMode={props.setAuthMode}
+      authState={props.authState}
+      setAuthState={props.setAuthState}
+    />
+  ),
+  recycle: (props) => (
+    <RecycleTab
+      context={props.mainTab}
+      todoList={props.todoList}
+      deleteTodo={props.deleteTodo}
+      leftAction={props.leftAction}
+      setTodoList={props.setTodoList}
+    />
+  ),
+};
 
 export default function App() {
   const [task, setTask] = useState('');
-  const [todoList, setTodoList] = useState(() => TodoStorage.getAll());
-  const [currentTab, setCurrentTab] = useState('todo');
+  const [mainTab, setMainTab] = useState('todo');
+  const [activeView, setActiveView] = useState('list');
   const [authMode, setAuthMode] = useState('local');
   const [authState, setAuthState] = useState('');
-  const translateY = useSharedValue(0);
-  const context = useSharedValue(0);
-  const isActive = useSharedValue(0);
 
-  const panGesture = Gesture.Pan()
-    .onStart((event) => {
-      context.value = translateY.value;
-    })
-    .onUpdate((event) => {
-      let newValue = context.value + event.translationY;
+  const {
+    todoList,
+    setTodoList,
+    addTask,
+    deleteToRecycle,
+    statusChangeTask,
+    deleteTodo,
+  } = useTodoActions(mainTab);
 
-      if (newValue < 0) newValue = 0;
-      if (newValue > MAX_PULL) newValue = MAX_PULL;
-      translateY.value = newValue;
-    })
-    .onEnd((event) => {
-      const swipeVelocity = event.velocityY;
-      if (swipeVelocity > 500 || event.translationY > MAX_PULL * 0.4) {
-        translateY.value = withSpring(MAX_PULL);
-        isActive.value = 1;
-      } else if (swipeVelocity < -500 || event.translationY < -100) {
-        translateY.value = withSpring(0);
-        isActive.value = 0;
-      } else {
-        if(translateY.value > MAX_PULL / 2){
-          translateY.value = withSpring(MAX_PULL)
-          isActive.value = 1;
-        } else {
-          translateY.value = withSpring(0)
-          isActive.value = 0;
-        }
-      }
-    })
-    .hitSlop({ vertical: 17 });
-    
+  useTodoSocket(setTodoList, setAuthMode, setAuthState);
 
-  const onHandlerStateChange = (event) => {
-    if (event.nativeEvent.state === 5) {
-      if (translateY.value > 100) { 
-        translateY.value = withSpring(MAX_PULL);
-      } else {
-        translateY.value = withSpring(0);
-      }
-    }
-  };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const tailStyle = useAnimatedStyle(() => ({
-    backgroundColor: withTiming(isActive.value === 1 ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0)'),
-    pointerEvents: isActive.value === 1 ? 'auto' : 'none',
-  }));
-
-  const contentAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateY: interpolate(
-            translateY.value,
-            [0, MAX_PULL],
-            [-400, 0]
-          ),
-        },
-      ],
-    };
-  });
-
-  const contentPointerEvents = useDerivedValue(() => {
-    return translateY.value > 20 ? 'auto' : 'none';
-  });
-
-  const animatedContentProps = useAnimatedProps(() => ({
-    pointerEvents: contentPointerEvents.value,
-  }));
-
-  useEffect(() => {
-    socket.on('connect', () => {
-      console.log('Connected to Server!');
-    });
-
-    socket.on('server:login_success', (data) => {
-      const { username, token, settings } = data;
-      socket.emit('client:get_todos');
-      setAuthMode('auth');
-      setAuthState('');
-      AuthStorage.setUsername(username);
-      AuthStorage.setToken(token);
-      AuthStorage.setSettings(settings);
-    });
-
-    socket.on('server:all_todos', (serverTodos) => {
-      InteractionManager.runAfterInteractions(() => {
-        let startOfToday = new Date().setHours(...timeToReset);
-        let needEmitReset = false;
-
-        if (startOfToday > Date.now()) {
-          startOfToday -= 86400000;
-        }
-        setTodoList(localTodos => {
-          const merged = [...localTodos];
-          let hasChanges = false;
-
-          serverTodos.forEach(sItem => {
-            let processedItem = { ...sItem };
-            
-            if(processedItem.type === 'daily' && processedItem.updatedAt < startOfToday) {
-              processedItem.progressNow = 0;
-              processedItem.completed = false;
-              processedItem.updatedAt = startOfToday;
-              needEmitReset = true;
-            }
-  
-            const localIndex = merged.findIndex(l => l.id === processedItem.id);
-            if (localIndex === -1) {
-              merged.push(processedItem);
-              hasChanges = true;
-            } else {
-              const lItem = merged[localIndex];
-              if (processedItem.updatedAt > (lItem.updatedAt || 0)) {
-                merged[localIndex] = processedItem;
-                hasChanges = true;
-              } else if ((lItem.updatedAt || 0) > processedItem.updatedAt) {
-                socket.emit('client:sync_todo', lItem);
-              }
-            }
-          });
-          return hasChanges ? merged : localTodos;
-        });
-        if(needEmitReset){
-          socket.emit('client:confirm_reset', 'daily');
-        }
-      });
-    });
-
-    socket.on('server:todo_updated', (updatedTodo) => {
-      InteractionManager.runAfterInteractions(() => {
-        setTodoList(prev => {
-          const index = prev.findIndex(t => t.id === updatedTodo.id);
-          if (index !== -1) {
-            const existing = prev[index];
-            if (updatedTodo.updatedAt > (existing.updatedAt || 0)) {
-              const newList = [...prev];
-              newList[index] = updatedTodo;
-              return newList;
-            }
-            return prev;
-          } 
-          return [...prev, updatedTodo];
-        });
-      });
-    });
-
-    socket.on('server:todo_deleted', (deletedId) => {
-      InteractionManager.runAfterInteractions(() => {
-        setTodoList(prev => prev.filter(todo => todo.id !== deletedId));
-      });
-    });
-
-    socket.on('server:register_success', () => {
-      InteractionManager.runAfterInteractions(() => {
-        setAuthMode('');
-        setAuthState('login');
-      });
-    });
-      
-    return () => {
-      socket.off('connect');
-      socket.off('server:all_todos');
-      socket.off('server:todo_updated');
-      socket.off('server:todo_deleted');
-      socket.off('server:login_success');
-      socket.off('server:register_success');
-    };
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      TodoStorage.saveAll(todoList);
-    }, 1000);
-  }, [todoList]);
-
-  const addTask = useCallback((task, progressEnd=1)=> {
-    if (task.trim()) {
-      const newTodo = { 
-        id: Date.now().toString(), 
-        text: task,
-        completed: false,
-        deleted: false,
-        updatedAt: Date.now(),
-        type: currentTab,
-        progressNow: 0,
-        progressEnd: progressEnd,
-      };
-      setTodoList(prev => [newTodo, ...prev]);
-      socket.emit('client:sync_todo', newTodo);
-    }
-  }, [task, socket, currentTab])
-
-  const deleteToRecycle = useCallback((id) => {
-    let updated = null;
-    setTodoList(prev => {
-      return prev.map(todo => {
-        if (todo.id === id) {
-          updated = { ...todo, deleted: true, updatedAt: Date.now() };
-          return updated;
-        }
-        return todo;
-      });
-    });
-    if (updated) {
-      socket.emit('client:sync_todo', updated);
-    }
-  },[socket])
-
-  const statusChangeTask = useCallback((id) => {
-    let updated = null;
-    setTodoList(prev => {
-      return prev.map(todo => {
-        if (todo.id === id) {
-          if(todo.completed){
-            updated = { 
-              ...todo, 
-              progressNow: 0,
-              completed: false, 
-              updatedAt: Date.now()
-            };
-            return updated;
-          } else {
-            if (todo.progressEnd > 1) {
-              const nextProgress = todo.progressNow + 1;
-              updated = { 
-                ...todo, 
-                progressNow: nextProgress,
-                completed: nextProgress === todo.progressEnd, 
-                updatedAt: Date.now()
-              };
-              return updated;
-            }
-            updated = { 
-              ...todo,
-              progressNow: 1,
-              completed: true, 
-              updatedAt: Date.now() 
-            };
-            return updated;
-          }
-        }
-        return todo;
-      });
-    });
-    if (updated) {
-      socket.emit('client:sync_todo', updated);
-    }
-  },[socket])
-
-  const leftAction = useCallback((prog, drag, mode) => {
-    const isRecycle = mode === 'hardDelete';
-
-    const opacity = drag.interpolate({
-      inputRange: [0, 30, 77 - (isRecycle ? 2 : -6)],
-      outputRange: [0, 0.4, 1],
-      extrapolate: 'clamp',
-    });
-
-    const translateX = drag.interpolate({
-      inputRange: [0, 65, 77 - (isRecycle ? 2 : -6)],
-      outputRange: [-59 + (isRecycle ? 2 : -6), 6 + (isRecycle ? 2 : -6), 18],
-      extrapolate: 'clamp',
-    });
-
-    return (
-      <View style={{ 
-        height: '100%', 
-        justifyContent: 'center', 
-        paddingTop: 8,
-        paddingBottom: 2,
-      }}>
-        <Animated.View style={[
-          styles.deleteBack, 
-          {
-            opacity: opacity,
-            marginRight: -190,
-            transform: [{ translateX: translateX}],
-            backgroundColor: isRecycle ? '#EF4444' : '#3B82F6'
-          }
-        ]}>
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>
-            {isRecycle ? 'Удалить':'В корзину'}
-          </Text>
-        </Animated.View> 
-      </View>
-    );
-  },[]);
-
-  const deleteTodo = useCallback((id) => {
-    setTodoList(prev => {
-      const todoToDelete = prev.find(item => item.id === id);
-      if (todoToDelete) {
-        socket.emit('client:delete_todo', id);
-      }
-      return prev.filter(item => item.id !== id);
-    });
-  }, [socket]);
+  const moodSheet = useMoodSheet();
 
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaView style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity>
-              <MaterialCommunityIcons 
-                style={{padding: 2, marginRight: 5, borderRadius: 10, backgroundColor: '#d9e7fd'}} 
-                name={'clock-edit-outline'} 
-                size={45} 
-                color={'#3B82F6'}
-              />
-            </TouchableOpacity>
-            <GestureDetector gesture={panGesture}>
-              <View style={styles.scoreContainer}>
-                <Text style={{fontSize: 20}}>Как твои делишки?</Text>
-                <ReAnimated.View style={[styles.contentPlaceholder, animatedContentProps]}>
-                    <ReAnimated.View style={[styles.moodMeter, contentAnimatedStyle]}>
-                      {moods.map((mood) => (
-                        <TouchableOpacity key={mood.value} onPress={() => console.log(mood.value)}>
-                          <MaterialCommunityIcons name={mood.icon} size={50} color={mood.color} />
-                        </TouchableOpacity>
-                      ))}
-                    </ReAnimated.View>
-                  </ReAnimated.View>
-                <ReAnimated.View style={[styles.invisibleShade, tailStyle]}/>
-                <ReAnimated.View style={[styles.scoreShade, animatedStyle, { cursor: 'grab' }]}>
-                  <View>
-                    <Ionicons
-                      name={'caret-down'} 
-                      size={20} 
-                      color={'#3b83f6'}
-                    />
-                  </View>
-                </ReAnimated.View>
-              </View>
-            </GestureDetector>
-            <TouchableOpacity
-              onPress={() => setCurrentTab('recycle')}
-            >
-              <Ionicons 
-                style={{padding: 2, marginRight: 5, borderRadius: 10, backgroundColor: '#d9e7fd'}} 
-                name={'trash-outline'} 
-                size={45} 
-                color={'#3B82F6'}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setCurrentTab('settings')
-                setAuthState('');
-                if (!authMode){
-                  setAuthMode('local');
-                }
-              }}
-            >
-              <Ionicons 
-                style={{padding: 2, borderRadius: 10, backgroundColor: '#d9e7fd'}} 
-                name={'settings-outline'} 
-                size={45} 
-                color={'#3B82F6'}
-              />
-            </TouchableOpacity>
-          </View>
+          <Header
+            {...moodSheet}
+            moods={moods}
+            activeView={activeView}
+            setActiveView={setActiveView}
+            setAuthState={setAuthState}
+            setAuthMode={setAuthMode}
+            authMode={authMode}
+          />
           <View style={styles.main}>
-            {currentTab === 'todo' && (
-              <TodoTab 
-                task={task}
-                setTask={setTask} 
-                onAdd={addTask} 
-                todoList={todoList} 
-                statusChangeTask={statusChangeTask} 
-                deleteTodo={deleteToRecycle}
-                leftAction={leftAction}
-              />
-            )}
-            {currentTab === 'recycle' && (
-              <RecycleTab 
-                todoList={todoList} 
-                deleteTodo={deleteTodo}
-                leftAction={leftAction}
-                setTodoList={setTodoList}
-              />
-            )}
-            {currentTab === 'settings' && (
-              <SettingsTab
-                authMode={authMode}
-                setAuthMode={setAuthMode}
-                authState={authState}
-                setAuthState={setAuthState}
-              />
-            )}
-            {currentTab ==='daily' && (
-              <DailyTab
-                todoList={todoList}
-                setTodoList={setTodoList}
-                onAdd={addTask}
-                statusChangeTask={statusChangeTask}
-                deleteTodo={deleteToRecycle}
-                leftAction={leftAction}
-              />
+            {GLOBAL_VIEWS[activeView] ? (
+              GLOBAL_VIEWS[activeView]({
+                mainTab,
+                todoList,
+                deleteTodo,
+                leftAction: renderLeftAction,
+                setTodoList,
+                authMode,
+                setAuthMode,
+                authState,
+                setAuthState,
+              })
+            ) : (
+              TAB_VIEWS[mainTab]?.list ? (
+                TAB_VIEWS[mainTab].list({
+                  task,
+                  setTask,
+                  onAdd: addTask,
+                  todoList,
+                  setTodoList,
+                  statusChangeTask,
+                  deleteToRecycle,
+                  leftAction: renderLeftAction,
+                })
+              ) : null
             )}
           </View>
-          <View style={styles.footer}>
-            <TouchableOpacity 
-              style={[styles.tab, currentTab === 'rpg' && styles.activeTab]} 
-              onPress={() => setCurrentTab('rpg')}
-            >
-              <Text style={styles.tabText}>РПГ</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.tab, currentTab === 'todo' && styles.activeTab]} 
-              onPress={() => setCurrentTab('todo')}
-            >
-              <Text style={styles.tabText}>To do</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.tab, currentTab === 'daily' && styles.activeTab]} 
-              onPress={() => setCurrentTab('daily')}
-            >
-              <Text style={styles.tabText}>ЕЖЕДНЕВКИ</Text>
-            </TouchableOpacity>
-          </View>
+          <TabBar
+            currentTab={mainTab}
+            setCurrentTab={(tab) => {
+              setMainTab(tab);
+              setActiveView('list');
+            }}
+          />
         </SafeAreaView>
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );
 }
-
-const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
-
-  const handlePress = useCallback(() => {
-    statusChangeTask(item.id, 1);
-  }, [item.id, item.completed, statusChangeTask]);
-
-  const handleDelete = useCallback(() => {
-    deleteTodo(item.id);
-  }, [item.id, deleteTodo]);
-
-  const renderLeft = useCallback((prog, drag) => {
-    return leftAction(prog, drag, 'toRecycle');
-  }, [leftAction]);
-  
-  return (
-    <Swipeable
-      friction={1.6}
-      leftThreshold={78}
-      overshootLeft={true}
-      renderLeftActions={renderLeft}
-      onSwipeableLeftOpen={handleDelete}
-      containerStyle={{
-        paddingTop: 8,
-        paddingBottom: 2,
-        paddingHorizontal: 20,
-        backgroundColor: 'transparent', 
-      }}
-    >
-      <View style={styles.todoItem}>
-        <TouchableOpacity 
-          delayPressIn={150}
-          hitSlop={{ top: 20, bottom: 20, left: 20, right: 100 }}
-          onPress={handlePress}
-          style={[styles.checkbox, item.completed && styles.checked]}
-        >
-          {item.completed && (
-            <MaterialCommunityIcons
-              style={{borderRadius: 4, backgroundColor: '#d9e7fd'}} 
-              name={'check-bold'} 
-              size={20} 
-              color={'#3B82F6'}
-            />
-          )}
-        </TouchableOpacity>
-        <Text  
-          style={[styles.todoText, item.completed && styles.completedText]}
-          onPress={handlePress}
-        >
-          {item.text}
-        </Text>
-      </View>
-    </Swipeable>
-  );
-});
-
-const TodoTab = memo(({
-   todoList, 
-   task, 
-   setTask, 
-   onAdd, 
-   deleteTodo, 
-   statusChangeTask, 
-   leftAction,
-}) => {
-  
-  const activeTodos = useMemo(() => 
-    todoList.filter(item => item.type === 'todo' && !item.deleted), 
-    [todoList]
-  );
-
-  const handleAdd = useCallback(() => {
-    if (task.trim()) {
-      onAdd(task, 1);
-      setTask('');
-    }
-  });
-
-  const renderItem = useCallback(({ item }) => (
-    <TodoItem 
-      item={item}
-      statusChangeTask={statusChangeTask}
-      deleteTodo={deleteTodo}
-      leftAction={leftAction}
-    />
-  ), [statusChangeTask, deleteTodo, leftAction]);
-
-  return (
-    <View style={styles.todoWrapper}>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={task}
-          onChangeText={setTask}
-          placeholder=" Что планируешь?"
-          placeholderTextColor="#94A3B8"
-          cursorColor='#3B82F6'
-        />
-        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-          <MaterialCommunityIcons
-            style={{borderRadius: 10, backgroundColor: '#d9e7fd'}} 
-            name={'plus-thick'} 
-            size={24} 
-            color={'#3B82F6'}
-          />
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        removeClippedSubviews={true}
-        data={activeTodos}
-        overScrollMode="never"
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 10 }}
-      />
-    </View>
-  );
-});
-
-const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
-  const handleDelete = useCallback(() => {
-    deleteTodo(item.id);
-  }, [item.id, deleteTodo]);
-
-  const renderLeft = useCallback((prog, drag) => {
-    return leftAction(prog, drag, 'hardDelete')
-  }, [leftAction]);
-
-  const restoreTask = useCallback(() => {
-    let updated = null;
-    setTodoList(prev => {
-      return prev.map(todo => {
-        if (todo.id === item.id) {
-          updated = { ...todo, deleted: !todo.deleted, updatedAt: Date.now() };
-          return updated;
-        }
-        return todo;
-      });
-    });
-    if (updated) {
-      socket.emit('client:sync_todo', updated);
-    }
-  },[socket])
-
-  return (
-    <Swipeable
-      friction={1.6}
-      leftThreshold={70}
-      overshootLeft={true}
-      renderLeftActions={renderLeft}
-      onSwipeableLeftOpen={handleDelete}
-      containerStyle={{
-        paddingTop: 8,
-        paddingBottom: 2,
-        paddingHorizontal: 20,
-        backgroundColor: 'transparent', 
-      }}
-    >
-      <View style={styles.todoItem}>
-        <Text style={[styles.todoText, item.completed && styles.completedText]}>
-          {item.text}
-        </Text>
-        <TouchableOpacity 
-          onPress={restoreTask}
-          style={{
-            marginLeft: 'auto', 
-            alignSelf: 'stretch', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            backgroundColor: '#d9e7fd',
-            borderBottomRightRadius: 15, 
-            borderTopRightRadius: 15,
-            width: 50,
-          }}
-        >
-          <Ionicons
-            style={{
-              alignItems: 'center'
-            }}
-            name={'arrow-undo-outline'} 
-            size={25} 
-            color={'#3B82F6'}
-          />
-        </TouchableOpacity>
-      </View>
-    </Swipeable>
-  );
-});
-
-const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList }) => {
-
-  const activeTodos = useMemo(() => 
-    todoList.filter(item => item.deleted), 
-    [todoList]
-  );
-
-  const renderItem = useCallback(({ item }) => (
-    <RecycleItem 
-      setTodoList={setTodoList}
-      item={item}
-      deleteTodo={deleteTodo}
-      leftAction={leftAction}
-    />
-  ), [deleteTodo, leftAction]);
-
-  return (
-    <FlatList
-      removeClippedSubviews={true}
-      data={activeTodos}
-      overScrollMode="never"
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      contentContainerStyle={{ paddingBottom: 10 }}
-    />
-  );
-});
-
-const SettingsTab = ({ authMode, setAuthMode, authState, setAuthState }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isPasswordVisible, setPasswordVisible] = useState(false);
-
-  useEffect(() => {
-    if (!authMode){
-      setAuthMode('local');
-    }
-
-    socket.on('server:auth_message', (data)=>{
-      if (data.status === 'success'){
-        setUsername('');
-        setPassword('');
-      }
-
-      Toast.show({
-        type: data.status,
-        text1: data.message,
-        visibilityTime: 3000
-      })
-    })
-
-    return () => socket.off('server:auth_message');
-  }, []);
-
-  const handleLogin = () => {
-    if (username && password) {
-      Keyboard.dismiss()
-      socket.emit('client:login', { username, password });
-    }
-  };
-
-  const handleRegister = () => {
-    if (username && password) {
-      Keyboard.dismiss()
-      socket.emit('client:register', { username, password });
-    }
-  };
-
-  const handleLogout = () => {
-    AuthStorage.logout();
-    setAuthMode('local');
-    setAuthState('');
-    setUsername('');
-    setPassword('');
-    socket.emit('client:logout');
-  }
-
-  return (
-      <PaperProvider>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <View style={styles.containerColumn}>
-            {authMode === 'local' && (
-              <View style={{alignItems: 'center'}}>
-                <TouchableOpacity 
-                  style={styles.authButton}
-                  onPress={() => {
-                    setAuthState('login');
-                    setAuthMode('');
-                    setUsername('');
-                    setPassword('');
-                  }}
-                >
-                  <Text style={styles.authButtonText}>Войти</Text>
-                </TouchableOpacity>
-                <Text style={styles.baseText}>
-                  Нет аккаунта?{' '}
-                  <Text 
-                    style={styles.linkText} 
-                    onPress={() => {
-                      setAuthState('register');
-                      setAuthMode('');
-                      setUsername('');
-                      setPassword('');
-                  }}>
-                    Зарегистрироваться
-                  </Text>
-                </Text>
-              </View>
-            )}
-            {authMode === 'auth' && (
-              <TouchableOpacity onPress={handleLogout} style={styles.authButton}>
-                <Text style={styles.authButtonText}>Выйти</Text>
-              </TouchableOpacity>
-            )}
-            {authState !='' && (
-              <View style={{alignItems: 'center', flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
-                <Surface style={styles.surfaceAuth}>
-                  <PaperInput
-                    placeholder='Логин'
-                    value={username}
-                    onChangeText={setUsername}
-                    style={styles.authInput}
-                    mode="outlined"
-                    outlineColor="#E2E8F0"
-                    textColor="#1A202C"
-                    theme={{
-                      roundness: 12,
-                      colors: {
-                        primary: '#3B82F6',
-                      },
-                    }}
-                    left={<PaperInput.Icon icon="account" color="#3B82F6"/>} 
-                    placeholderTextColor={'#aaaaaa'}
-                  />
-                </Surface>
-                <Surface style={styles.surfaceAuth}>
-                  <PaperInput
-                    placeholder='Пароль'
-                    value={password}
-                    onChangeText={setPassword}
-                    mode="outlined"
-                    outlineColor="#E2E8F0"
-                    textColor="#1A202C"
-                    theme={{
-                      roundness: 12,
-                      colors: {
-                        primary: '#3B82F6',
-                      },
-                    }}
-                    left={
-                      <PaperInput.Icon
-                        icon="lock-outline"
-                        color="#3B82F6"
-                      />
-                    }
-                    right={
-                      <PaperInput.Icon 
-                        icon={isPasswordVisible ? "eye" : "eye-off"} 
-                        onPress={() => setPasswordVisible(!isPasswordVisible)}
-                        color="#3B82F6"
-                      />
-                    }
-                    secureTextEntry={!isPasswordVisible}
-                    style={styles.authInput}
-                    placeholderTextColor={'#aaaaaa'}
-                  />
-                </Surface>
-              </View>
-            )}
-            {authState === 'login' && (
-              <TouchableOpacity onPress={handleLogin} style={styles.authButton}>
-                <Text style={styles.authButtonText}>Войти</Text>
-              </TouchableOpacity>
-            )}
-            {authState === 'register' && (
-              <TouchableOpacity onPress={handleRegister} style={styles.authButton}>
-                <Text style={styles.authButtonText}>Зарегистрироваться</Text>
-              </TouchableOpacity>
-            )}
-            <Toast />
-          </View>
-        </TouchableWithoutFeedback>
-      </PaperProvider>
-  );
-};
-
-const FillProgress = memo(({ progressNow, progressEnd }) => {
-  const scaleX = useRef(new Animated.Value(0)).current;
-  const segments = useMemo(() => Array.from({ length: progressEnd }), [progressEnd]);
-
-  useEffect(() => {
-    Animated.timing(scaleX, {
-      toValue: progressNow / progressEnd,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  }, [progressNow, progressEnd]);
-
-  return (
-    <View style={styles.backgroundContainer}>
-      <Animated.View 
-        style={[
-          styles.fill, 
-          { 
-            transform: [
-              { translateX: -135 },
-              { scaleX: scaleX.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 1],
-                }) 
-              },
-              { translateX: 135 }
-            ] 
-          }
-        ]} 
-      />
-      <View style={styles.grid}>
-        {segments.map((_, index) => (
-          <View 
-            key={index} 
-            style={[
-              styles.segment, 
-              index === segments.length - 1 ? { height: '100%' } : {}
-            ]} 
-          />
-        ))}
-      </View>
-    </View>
-  );
-});
-
-const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
-
-  const handlePress = useCallback(() => {
-    statusChangeTask(item.id);
-  }, [item.id, item.completed, statusChangeTask]);
-
-  const handleDelete = useCallback(() => {
-    deleteTodo(item.id);
-  }, [item.id, item.deleted, deleteTodo]);
-
-  const renderLeft = (prog, drag) => {
-    return leftAction(prog, drag, 'toRecycle');
-  };
-  
-  return (
-    <Swipeable
-      friction={1.6}
-      leftThreshold={78}
-      overshootLeft={true}
-      renderLeftActions={renderLeft}
-      onSwipeableLeftOpen={handleDelete}
-      containerStyle={{
-        paddingTop: 8,
-        paddingBottom: 2,
-        paddingHorizontal: 20,
-        backgroundColor: 'transparent', 
-      }}
-    >
-      <View style={styles.todoItem}>
-        <FillProgress 
-          progressNow={item.progressNow} 
-          progressEnd={item.progressEnd} 
-        />
-        <Text  
-          style={[
-            styles.todoText, 
-            { backgroundColor: 'transparent'}, 
-            item.completed && styles.completedTextDaily
-          ]}
-          onPress={handlePress}
-        >
-          {item.text}
-        </Text>
-        <TouchableOpacity 
-          onPress={handlePress}
-          style={{
-            marginLeft: 'auto', 
-            alignSelf: 'stretch', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            backgroundColor: '#d9e7fd',
-            borderBottomRightRadius: 15, 
-            borderTopRightRadius: 15,
-            width: 50,
-            borderLeftColor: '#000000',
-          }}
-        >
-          <Ionicons
-            style={{
-              alignItems: 'center'
-            }}
-            name={ item.completed ? 'flash-sharp' : 'flash-outline' } 
-            size={25} 
-            color={'#3B82F6'}
-          />
-        </TouchableOpacity>
-      </View>
-    </Swipeable>
-  );
-});
-
-const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
-  const [task, setTask] = useState('');
-  const [progressEnd, setProgressEnd] = useState(1);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const dailies = useMemo(() => 
-    todoList.filter(item => item.type === 'daily' && !item.deleted), 
-    [todoList]
-  );
-
-  useEffect(() => {
-    let timerId;
-
-    const scheduleNextReset = () => {
-      const now = new Date();
-      const tomorrow = new Date(now);
-      
-      tomorrow.setHours(...timeToReset);
-
-      if (tomorrow <= now) {
-        tomorrow.setDate(tomorrow.getDate() + 1);
-      } 
-      const msUntilMidnight = tomorrow.getTime() - now.getTime();
-      let toUpdatedAt = Date.now();
-
-      timerId = setTimeout(() => {
-     
-      toUpdatedAt = Date.now();
-        setTodoList(prev => prev.map(item => 
-          item.type === 'daily' 
-            ? { ...item, progressNow: 0, completed: false, updatedAt: toUpdatedAt }
-            : item
-        ));
-        socket.emit('client:confirm_reset', 'daily', toUpdatedAt);
-
-        scheduleNextReset(); 
-      }, msUntilMidnight);
-    };
-
-    scheduleNextReset();
-
-    return () => {
-      if (timerId) clearTimeout(timerId);
-    };
-  }, [socket]);
-
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
-      setKeyboardHeight(e.endCoordinates.height);
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setKeyboardVisible(true);
-    });
-
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardVisible(false);
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setKeyboardHeight(0);
-    });
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
-
-  const progress = useMemo(() => {
-    if (dailies.length === 0) return 0;
-    const {needProgress, nowProgress} = dailies.reduce((acc, item) => {
-      acc.needProgress += (item.progressEnd || 0);
-      acc.nowProgress += (item.progressNow || 0);
-      return acc;
-    }, {needProgress: 0, nowProgress: 0});
-
-    return Math.round((nowProgress / needProgress) * 100);
-  }, [dailies]);
-
-  const handleAdd = useCallback(() => {
-    if (task.trim()) {
-      onAdd(task, progressEnd);
-      setTask('');
-    }
-  });
-
-  const renderItem = useCallback(({ item }) => (
-    <DailyItem 
-      item={item}
-      statusChangeTask={statusChangeTask}
-      deleteTodo={deleteTodo}
-      leftAction={leftAction}
-    />
-  ), [statusChangeTask, deleteTodo, leftAction]);
-
-  return (
-    <View style={styles.todoWrapper}>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={task}
-          onChangeText={setTask}
-          placeholder=" Что планируешь?"
-          placeholderTextColor="#94A3B8"
-          cursorColor='#3B82F6'
-        />
-        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-          <MaterialCommunityIcons name="plus-thick" size={24} color="#3B82F6" />
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        style
-        data={dailies}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 6 }}
-      />
-      <View style={[styles.floatingContainer, { 
-        bottom: keyboardHeight - 71,
-        opacity: isKeyboardVisible ? 1 : 0
-      }]}>
-        <TouchableOpacity hitSlop={20} onPress={() => {
-          setProgressEnd(progressEnd === 1 ? 1 : progressEnd - 1);
-        }}>
-          <Ionicons name="remove-circle-outline" size={30} color="#3B82F6" />
-        </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', marginHorizontal: 5 }}>
-          {progressEnd}
-        </Text>
-        <TouchableOpacity hitSlop={20} onPress={() => {
-          setProgressEnd(progressEnd === 20 ? 20 : progressEnd + 1);
-        }}>
-          <Ionicons name="add-circle-outline" size={30} color="#3B82F6" />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.progressContainer}>
-        <Text style={[styles.progressText, progress === 100 && styles.progressTextCompleted]}>Прогресс дня: {progress}%</Text>
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
-        </View>
-      </View>
-    </View>
-  );
-});
