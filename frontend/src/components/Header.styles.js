@@ -19,6 +19,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     height: '100%',
     marginRight: theme.spacing.xs,
+    zIndex: 10,
   },
   icon: {
     fontSize: 40,

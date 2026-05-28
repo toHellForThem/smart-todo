@@ -39,8 +39,8 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
       renderLeftActions={renderLeft}
       onSwipeableLeftOpen={handleDelete}
       containerStyle={{
-        paddingTop: 8,
-        paddingBottom: 2,
+        paddingTop: 2,
+        paddingBottom: 8,
         paddingHorizontal: 20,
         backgroundColor: 'transparent',
       }}
@@ -76,12 +76,29 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
   );
 });
 
-export const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList, context }) => {
+export const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList, context, rpgSubtab }) => {
 
-  const activeTodos = useMemo(() =>
-    todoList.filter(item => item.deleted && item.type === context),
-    [todoList, context]
-  );
+  const activeTodos = useMemo(() => {
+    return todoList.filter(item => {
+      if (!item.deleted) return false;
+
+      if (context === 'rpg') {
+        if (rpgSubtab === 'habits') {
+          return item.type === 'habit';
+        }
+        if (rpgSubtab === 'piggy_bank') {
+          return item.type === 'piggy_bank';
+        }
+        if (rpgSubtab === 'tv_shows') {
+          return item.type === 'tv_show' || item.type === 'movie';
+        }
+        // Если мы на главном дашборде RPG, показываем все удаленные RPG-элементы вместе
+        return item.type === 'habit' || item.type === 'piggy_bank' || item.type === 'tv_show' || item.type === 'movie';
+      }
+
+      return item.type === context;
+    });
+  }, [todoList, context, rpgSubtab]);
 
   const renderItem = useCallback(({ item }) => (
     <RecycleItem
@@ -96,10 +113,11 @@ export const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList,
     <FlatList
       removeClippedSubviews={true}
       data={activeTodos}
+      bounces={false}
       overScrollMode="never"
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
-      contentContainerStyle={{ paddingBottom: 10 }}
+      contentContainerStyle={{ marginBottom: 16, paddingTop: 10 }}
     />
   );
 });

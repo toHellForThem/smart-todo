@@ -23,12 +23,13 @@ export const renderLeftAction = (prog, drag, mode) => {
       justifyContent: 'center',
       paddingTop: 8,
       paddingBottom: 2,
+      width: 90
     }}>
       <Animated.View style={[
         styles.deleteBack,
         {
           opacity: opacity,
-          marginRight: -190,
+          marginRight: -130,
           transform: [{ translateX: translateX }],
           backgroundColor: isRecycle ? theme.colors.danger : theme.colors.primary,
         }

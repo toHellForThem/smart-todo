@@ -1,5 +1,5 @@
-import { memo, useCallback, useMemo } from 'react';
-import { View, TextInput, TouchableOpacity, FlatList, Text } from 'react-native';
+import { memo, useCallback, useMemo, useEffect } from 'react';
+import { View, TextInput, TouchableOpacity, FlatList, Text, Keyboard } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { styles } from './TodoTab.styles';
@@ -27,8 +27,8 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
       renderLeftActions={renderLeft}
       onSwipeableLeftOpen={handleDelete}
       containerStyle={{
-        paddingTop: 8,
-        paddingBottom: 2,
+        paddingTop: 2,
+        paddingBottom: 8,
         paddingHorizontal: 20,
         backgroundColor: 'transparent',
       }}
@@ -67,13 +67,23 @@ export const TodoTab = memo(({
   onAdd,
   deleteTodo,
   statusChangeTask,
-  leftAction,
+  leftAction
 }) => {
 
   const activeTodos = useMemo(() =>
     todoList.filter(item => item.type === 'todo' && !item.deleted),
     [todoList]
   );
+
+  useEffect(() => {
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      const activeInput = TextInput.State.currentlyFocusedInput();
+      if (activeInput) {
+        TextInput.State.blurTextInput(activeInput);
+      }
+    });
+    return () => hideSubscription.remove();
+  }, []);
 
   const handleAdd = useCallback(() => {
     if (task.trim()) {
@@ -113,10 +123,11 @@ export const TodoTab = memo(({
       </View>
       <FlatList
         data={activeTodos}
+        bounces={false}
         overScrollMode="never"
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 10 }}
+        contentContainerStyle={{ paddingTop: 6, paddingBottom: 10 }}
       />
     </View>
   );

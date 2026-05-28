@@ -8,7 +8,6 @@ import { theme } from '../theme/theme';
 import { socket } from '../utils/socket';
 import { FillProgress } from '../components/FillProgress';
 
-const timeToReset = [18, 45, 0, 0];
 
 const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   const handlePress = useCallback(() => {
@@ -31,8 +30,8 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
       renderLeftActions={renderLeft}
       onSwipeableLeftOpen={handleDelete}
       containerStyle={{
-        paddingTop: 8,
-        paddingBottom: 2,
+        paddingTop: 2,
+        paddingBottom: 8,
         paddingHorizontal: 20,
         backgroundColor: 'transparent',
       }}
@@ -79,7 +78,7 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   );
 });
 
-export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
+export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction, resetTimeStr = '18:45', resetEnabled = true }) => {
   const [task, setTask] = useState('');
   const [progressEnd, setProgressEnd] = useState(1);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -89,10 +88,19 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
     [todoList]
   );
 
+  const timeToReset = useMemo(() => {
+    const parts = (resetTimeStr || '18:45').split(':').map(Number);
+    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      return [parts[0], parts[1], 0, 0];
+    }
+    return [18, 45, 0, 0];
+  }, [resetTimeStr]);
+
   useEffect(() => {
     let timerId;
 
     const scheduleNextReset = () => {
+      if (!resetEnabled) return;
       const now = new Date();
       const tomorrow = new Date(now);
 
@@ -107,11 +115,12 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
       timerId = setTimeout(() => {
         toUpdatedAt = Date.now();
         setTodoList(prev => prev.map(item =>
-          item.type === 'daily'
+          item.type === 'daily' || item.type === 'habit'
             ? { ...item, progressNow: 0, completed: false, updatedAt: toUpdatedAt }
             : item
         ));
         socket.emit('client:confirm_reset', 'daily', toUpdatedAt);
+        socket.emit('client:confirm_reset', 'habit', toUpdatedAt);
 
         scheduleNextReset();
       }, msUntilMidnight);
@@ -122,7 +131,7 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
     return () => {
       if (timerId) clearTimeout(timerId);
     };
-  }, [setTodoList]);
+  }, [setTodoList, timeToReset, resetEnabled]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
@@ -133,6 +142,13 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
 
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
       setKeyboardVisible(false);
+
+      // Force blur any active TextInput to stop the cursor from blinking
+      const activeInput = TextInput.State.currentlyFocusedInput();
+      if (activeInput) {
+        TextInput.State.blurTextInput(activeInput);
+      }
+
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setKeyboardHeight(0);
     });
@@ -187,10 +203,11 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
       </View>
       <FlatList
         data={dailies}
+        bounces={false}
         overScrollMode="never"
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 10 }}
+        contentContainerStyle={{ paddingTop: 6, paddingBottom: 10 }}
       />
       <View style={[styles.floatingContainer, {
         bottom: keyboardHeight - 71,

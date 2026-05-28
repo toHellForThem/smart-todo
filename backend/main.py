@@ -58,13 +58,39 @@ async def init_db():
                     deleted BOOLEAN DEFAULT FALSE,
                     updated_at INTEGER DEFAULT 0,
                     type TEXT DEFAULT 'todo',
-                    progress_now INTEGER DEFAULT 0,
-                    progress_end INTEGER DEFAULT 1,
+                    progress_now TEXT DEFAULT '0',
+                    progress_end TEXT DEFAULT '1',
                     user_id INTEGER,
+                    contribution INTEGER DEFAULT 0,
                     PRIMARY KEY (id, user_id),
                     FOREIGN KEY (user_id) REFERENCES users (id)
                 )
             """)
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS daily_history (
+                    user_id INTEGER,
+                    date TEXT,
+                    mood INTEGER,
+                    daily_progress REAL,
+                    pos_points INTEGER,
+                    neg_points INTEGER,
+                    PRIMARY KEY (user_id, date),
+                    FOREIGN KEY (user_id) REFERENCES users (id)
+                )
+            """)
+            
+            # Migration to add contribution column if not exists
+            try:
+                await db.execute("ALTER TABLE todos ADD COLUMN contribution INTEGER DEFAULT 0")
+            except Exception:
+                pass
+
+            # Migration to add habits_detail column if not exists
+            try:
+                await db.execute("ALTER TABLE daily_history ADD COLUMN habits_detail TEXT")
+            except Exception:
+                pass
+
             await db.commit()
         except Exception as e:
             print(f"Ошибка базы данных: {e}")
@@ -118,6 +144,8 @@ async def db_query(query, params=(), is_select=False):
         raise e
 
 
+from typing import Union
+
 class Todo(BaseModel):
     id: str
     text: str
@@ -125,8 +153,9 @@ class Todo(BaseModel):
     deleted: bool = False
     updatedAt: int = 0
     type: str = "todo"
-    progressNow: int = 0
-    progressEnd: int = 1
+    progressNow: Union[int, str] = 0
+    progressEnd: Union[int, str] = 1
+    contribution: int = 0
 
 
 @sio.on("client:register")
@@ -296,6 +325,7 @@ async def handle_get_todos(sid):
             type=r["type"],
             progressNow=r["progress_now"],
             progressEnd=r["progress_end"],
+            contribution=r["contribution"] if "contribution" in r.keys() else 0
         )
         todos.append(todo_obj.model_dump())
 
@@ -326,8 +356,8 @@ async def handle_sync(sid, data):
     if not row or client_updated_at > row[0]["updated_at"]:
         await db_query(
             """
-            INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at, type, progress_now, progress_end, user_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at, type, progress_now, progress_end, user_id, contribution)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             (
                 data["id"],
@@ -336,9 +366,10 @@ async def handle_sync(sid, data):
                 data["deleted"],
                 client_updated_at,
                 data["type"],
-                data["progressNow"],
-                data["progressEnd"],
+                str(data["progressNow"]),
+                str(data["progressEnd"]),
                 user_id,
+                data.get("contribution", 0)
             ),
         )
         await sio.emit("server:todo_updated", data, room=user_id, skip_sid=sid)
@@ -391,3 +422,58 @@ async def handle_reset_todos(sid, todo_type, update_time):
     )
     print(f"Пользователь {user_id} обновил задачи.")
     await handle_get_todos(sid)
+
+
+@sio.on("client:get_month_history")
+async def handle_get_month_history(sid, month_str):
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id")
+    if not user_id:
+        return
+
+    like_pattern = f"{month_str}-%"
+    history_rows = await db_query(
+        "SELECT date, mood, daily_progress, pos_points, neg_points, habits_detail FROM daily_history WHERE user_id = ? AND date LIKE ?",
+        (user_id, like_pattern),
+        is_select=True,
+    )
+
+    history = []
+    for r in history_rows:
+        history.append(
+            {
+                "date": r["date"],
+                "mood": r["mood"],
+                "daily_progress": r["daily_progress"],
+                "pos_points": r["pos_points"],
+                "neg_points": r["neg_points"],
+                "habits_detail": r["habits_detail"] if "habits_detail" in r.keys() else "[]",
+            }
+        )
+
+    await sio.emit("server:month_history", {"month": month_str, "history": history}, room=sid)
+
+
+@sio.on("client:sync_daily_history")
+async def handle_sync_daily_history(sid, data):
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id")
+    if not user_id:
+        return
+
+    date = data["date"]
+    mood = data.get("mood")
+    daily_progress = data.get("daily_progress", 0.0)
+    pos_points = data.get("pos_points", 0)
+    neg_points = data.get("neg_points", 0)
+    habits_detail = data.get("habits_detail", "[]")
+
+    await db_query(
+        """
+        INSERT OR REPLACE INTO daily_history (user_id, date, mood, daily_progress, pos_points, neg_points, habits_detail)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """,
+        (user_id, date, mood, daily_progress, pos_points, neg_points, habits_detail),
+    )
+    await sio.emit("server:daily_history_updated", data, room=user_id, skip_sid=sid)
+

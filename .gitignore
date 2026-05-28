@@ -48,3 +48,6 @@ frontend/android/
 
 # database
 backend/tasks.db
+backend/tasks.db-shm
+backend/tasks.db-wal
+backend/tasks.db-journal

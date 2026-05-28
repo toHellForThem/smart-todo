@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Platform,
-  UIManager
+  UIManager,
+  BackHandler
 } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -13,23 +14,25 @@ import { TodoTab } from './src/tabs/TodoTab';
 import { RecycleTab } from './src/tabs/RecycleTab';
 import { DailyTab } from './src/tabs/DailyTab';
 import { SettingsTab } from './src/tabs/SettingsTab';
+import { RpgTab } from './src/tabs/RpgTab';
 import { TabBar } from './src/components/TabBar';
 import { Header } from './src/components/Header';
 
 import { useTodoActions } from './src/hooks/useTodoActions';
 import { useTodoSocket } from './src/hooks/useTodoSocket';
 import { useMoodSheet } from './src/hooks/useMoodSheet';
+import { AuthStorage } from './src/utils/storage';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 const moods = [
-  { value: 1, icon: 'emoticon-dead-outline', color: '#4B4B4B' },
-  { value: 2, icon: 'emoticon-sad-outline', color: '#FF5252' },
-  { value: 3, icon: 'emoticon-neutral-outline', color: '#FFC107' },
-  { value: 4, icon: 'emoticon-happy-outline', color: '#8BC34A' },
-  { value: 5, icon: 'emoticon-excited-outline', color: '#4CAF50' },
+  { value: 1, icon: 'emoticon-dead-outline', color: '#64748B' },
+  { value: 2, icon: 'emoticon-sad-outline', color: '#F43F5E' },
+  { value: 3, icon: 'emoticon-neutral-outline', color: '#D98A2F' },
+  { value: 4, icon: 'emoticon-happy-outline', color: '#10B981' },
+  { value: 5, icon: 'emoticon-excited-outline', color: '#8B5CF6' },
 ];
 
 const TAB_VIEWS = {
@@ -41,7 +44,7 @@ const TAB_VIEWS = {
         onAdd={props.onAdd}
         todoList={props.todoList}
         statusChangeTask={props.statusChangeTask}
-        deleteTodo={props.deleteToRecycle}
+        deleteTodo={props.handleDeleteTodo}
         leftAction={props.leftAction}
       />
     ),
@@ -53,8 +56,27 @@ const TAB_VIEWS = {
         setTodoList={props.setTodoList}
         onAdd={props.onAdd}
         statusChangeTask={props.statusChangeTask}
-        deleteTodo={props.deleteToRecycle}
+        deleteTodo={props.handleDeleteTodo}
         leftAction={props.leftAction}
+        resetTimeStr={props.settings?.reset_time || '18:45'}
+        resetEnabled={props.settings?.reset_enabled !== false}
+      />
+    ),
+  },
+  rpg: {
+    list: (props) => (
+      <RpgTab
+        rpgHistory={props.rpgHistory}
+        setRpgHistory={props.setRpgHistory}
+        todoList={props.todoList}
+        leftAction={props.leftAction}
+        deleteToRecycle={props.handleDeleteTodo}
+        addTask={props.addTask}
+        statusChangeTask={props.statusChangeTask}
+        subtab={props.rpgSubtab}
+        setSubtab={props.setRpgSubtab}
+        isCalendarVisible={props.isCalendarVisible}
+        setCalendarVisible={props.setCalendarVisible}
       />
     ),
   },
@@ -67,11 +89,14 @@ const GLOBAL_VIEWS = {
       setAuthMode={props.setAuthMode}
       authState={props.authState}
       setAuthState={props.setAuthState}
+      settings={props.settings}
+      setSettings={props.setSettings}
     />
   ),
   recycle: (props) => (
     <RecycleTab
       context={props.mainTab}
+      rpgSubtab={props.rpgSubtab}
       todoList={props.todoList}
       deleteTodo={props.deleteTodo}
       leftAction={props.leftAction}
@@ -82,10 +107,23 @@ const GLOBAL_VIEWS = {
 
 export default function App() {
   const [task, setTask] = useState('');
-  const [mainTab, setMainTab] = useState('todo');
+  const [settings, setSettings] = useState(() => AuthStorage.getSettings());
+  const [mainTab, setMainTab] = useState(() => {
+    const localSettings = AuthStorage.getSettings();
+    return localSettings.main_page || 'todo';
+  });
   const [activeView, setActiveView] = useState('list');
   const [authMode, setAuthMode] = useState('local');
   const [authState, setAuthState] = useState('');
+  const [rpgSubtab, setRpgSubtab] = useState(() => {
+    const localSettings = AuthStorage.getSettings();
+    const savedSubtab = localSettings.rpg_subtab;
+    if (savedSubtab === 'habits' || savedSubtab === 'piggy_bank' || savedSubtab === 'tv_shows') {
+      return savedSubtab;
+    }
+    return 'habits';
+  });
+  const [isCalendarVisible, setCalendarVisible] = useState(false);
 
   const {
     todoList,
@@ -94,11 +132,65 @@ export default function App() {
     deleteToRecycle,
     statusChangeTask,
     deleteTodo,
+
+    // RPG State
+    rpgHistory,
+    setRpgHistory,
+
+    // RPG Actions
+    handleMoodChange,
   } = useTodoActions(mainTab);
 
-  useTodoSocket(setTodoList, setAuthMode, setAuthState);
+  const handleDeleteTodo = (id) => {
+    if (settings.soft_delete) {
+      deleteToRecycle(id);
+    } else {
+      deleteTodo(id);
+    }
+  };
 
-  const moodSheet = useMoodSheet();
+  useTodoSocket(setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings);
+
+  const [isMoodSheetOpen, setIsMoodSheetOpen] = useState(false);
+  const moodSheet = useMoodSheet(setIsMoodSheetOpen);
+
+  // Handle Android physical back button navigation
+  useEffect(() => {
+    const backAction = () => {
+      // 1. If mood sheet (шторка) is open, close it (highest priority global overlay)
+      if (moodSheet.isActive && moodSheet.isActive.value === 1) {
+        moodSheet.closeSheet();
+        return true;
+      }
+
+      // 2. If calendar modal is open, close it
+      if (isCalendarVisible) {
+        setCalendarVisible(false);
+        return true;
+      }
+
+      // 3. If we are in settings or recycle bin, go back to main list view
+      if (activeView !== 'list') {
+        setActiveView('list');
+        return true;
+      }
+
+      // 4. If we are in RPG tab and in a subtab (habits, piggy_bank, tv_shows), go back to dashboard
+      if (mainTab === 'rpg' && rpgSubtab !== 'dashboard') {
+        setRpgSubtab('dashboard');
+        return true;
+      }
+
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, [mainTab, rpgSubtab, activeView, isCalendarVisible, moodSheet]);
 
   return (
     <SafeAreaProvider>
@@ -112,11 +204,20 @@ export default function App() {
             setAuthState={setAuthState}
             setAuthMode={setAuthMode}
             authMode={authMode}
+            onMoodChange={handleMoodChange}
+            rpgHistory={rpgHistory}
+            onOpenCalendar={() => {
+              setMainTab('rpg');
+              setRpgSubtab('dashboard');
+              setCalendarVisible(true);
+              setActiveView('list');
+            }}
           />
-          <View style={styles.main}>
+          <View style={styles.main} pointerEvents={isMoodSheetOpen ? 'none' : 'auto'}>
             {GLOBAL_VIEWS[activeView] ? (
               GLOBAL_VIEWS[activeView]({
                 mainTab,
+                rpgSubtab,
                 todoList,
                 deleteTodo,
                 leftAction: renderLeftAction,
@@ -125,6 +226,8 @@ export default function App() {
                 setAuthMode,
                 authState,
                 setAuthState,
+                settings,
+                setSettings,
               })
             ) : (
               TAB_VIEWS[mainTab]?.list ? (
@@ -135,8 +238,17 @@ export default function App() {
                   todoList,
                   setTodoList,
                   statusChangeTask,
-                  deleteToRecycle,
+                  deleteToRecycle: handleDeleteTodo,
+                  handleDeleteTodo,
                   leftAction: renderLeftAction,
+                  rpgHistory,
+                  setRpgHistory,
+                  addTask,
+                  rpgSubtab,
+                  setRpgSubtab,
+                  isCalendarVisible,
+                  setCalendarVisible,
+                  settings,
                 })
               ) : null
             )}
@@ -144,9 +256,14 @@ export default function App() {
           <TabBar
             currentTab={mainTab}
             setCurrentTab={(tab) => {
+              if (tab === 'rpg') {
+                setRpgSubtab('dashboard');
+              }
               setMainTab(tab);
               setActiveView('list');
             }}
+            rpgSubtab={rpgSubtab}
+            activeView={activeView}
           />
         </SafeAreaView>
       </GestureHandlerRootView>

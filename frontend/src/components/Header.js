@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { GestureDetector } from 'react-native-gesture-handler';
 import ReAnimated from 'react-native-reanimated';
@@ -17,11 +17,18 @@ export const Header = memo(({
   setActiveView,
   setAuthState,
   setAuthMode,
-  authMode
+  authMode,
+  onMoodChange,
+  onOpenCalendar,
+  rpgHistory
 }) => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayEntry = rpgHistory?.find(item => item.date === todayStr);
+  const currentMoodValue = todayEntry ? todayEntry.mood : null;
+
   return (
     <View style={styles.header}>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={onOpenCalendar} style={{ zIndex: 1 }}>
         <MaterialCommunityIcons
           style={{ padding: 2, marginRight: 5, borderRadius: 10, backgroundColor: theme.colors.icon.bg }}
           name={'clock-edit-outline'}
@@ -31,15 +38,30 @@ export const Header = memo(({
       </TouchableOpacity>
 
       <GestureDetector gesture={panGesture}>
-        <View style={styles.scoreContainer}>
+        <View style={styles.scoreContainer} onPress={() => { }}>
           <Text style={{ fontSize: 20 }}>Как твои делишки?</Text>
           <ReAnimated.View style={[styles.contentPlaceholder, animatedContentProps]}>
             <ReAnimated.View style={[styles.moodMeter, contentAnimatedStyle]}>
-              {moods.map((mood) => (
-                <TouchableOpacity key={mood.value} onPress={() => console.log(mood.value)}>
-                  <MaterialCommunityIcons name={mood.icon} size={50} color={mood.color} />
-                </TouchableOpacity>
-              ))}
+              {moods.map((mood) => {
+                const isSelected = currentMoodValue === mood.value;
+                const isAnySelected = currentMoodValue !== null && currentMoodValue !== undefined;
+                const opacity = isSelected ? 1.0 : (isAnySelected ? 0.35 : 0.65);
+
+                return (
+                  <TouchableOpacity
+                    key={mood.value}
+                    onPress={() => onMoodChange && onMoodChange(mood.value)}
+                    style={{
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: opacity,
+                      transform: [{ scale: isSelected ? 1.3 : 1.0 }],
+                    }}
+                  >
+                    <MaterialCommunityIcons name={mood.icon} size={50} color={mood.color} />
+                  </TouchableOpacity>
+                );
+              })}
             </ReAnimated.View>
           </ReAnimated.View>
           <ReAnimated.View style={[styles.invisibleShade, tailStyle]} />
@@ -57,6 +79,7 @@ export const Header = memo(({
 
       <TouchableOpacity
         onPress={() => setActiveView(prev => prev === 'recycle' ? 'list' : 'recycle')}
+        style={{ zIndex: 1 }}
       >
         <Ionicons
           style={{
@@ -83,6 +106,7 @@ export const Header = memo(({
             }
           }
         }}
+        style={{ zIndex: 1 }}
       >
         <Ionicons
           style={{

@@ -38,6 +38,14 @@ export const TodoStorage = {
   }
 };
 
+export const RpgStorage = {
+  saveHistory: (history) => core.set('rpg_history', JSON.stringify(history)),
+  getHistory: () => {
+    const data = core.get('rpg_history');
+    return data ? JSON.parse(data) : [];
+  }
+};
+
 export const AuthStorage = {
   setUsername: (username) => core.set('username', username),
   getUsername: () => core.get('username'),
@@ -48,7 +56,8 @@ export const AuthStorage = {
   setSettings: (settings) => core.set('user_settings', JSON.stringify(settings)),
   getSettings: () => {
     const data = core.get('user_settings');
-    return data ? JSON.parse(data) : { theme: 'dark' };
+    const defaultSettings = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '18:45', rpg_subtab: 'dashboard', reset_enabled: true };
+    return data ? { ...defaultSettings, ...JSON.parse(data) } : defaultSettings;
   },
   
   logout: () => {

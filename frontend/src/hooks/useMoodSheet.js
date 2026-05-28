@@ -6,12 +6,13 @@ import {
   useDerivedValue,
   withTiming,
   withSpring,
-  interpolate
+  interpolate,
+  runOnJS
 } from 'react-native-reanimated';
 
 const MAX_PULL = 396;
 
-export const useMoodSheet = () => {
+export const useMoodSheet = (onStateChange) => {
   const translateY = useSharedValue(0);
   const context = useSharedValue(0);
   const isActive = useSharedValue(0);
@@ -19,6 +20,7 @@ export const useMoodSheet = () => {
   const panGesture = Gesture.Pan()
     .onStart((event) => {
       context.value = translateY.value;
+      if (onStateChange) runOnJS(onStateChange)(true);
     })
     .onUpdate((event) => {
       let newValue = context.value + event.translationY;
@@ -32,16 +34,20 @@ export const useMoodSheet = () => {
       if (swipeVelocity > 500 || event.translationY > MAX_PULL * 0.4) {
         translateY.value = withSpring(MAX_PULL);
         isActive.value = 1;
+        if (onStateChange) runOnJS(onStateChange)(true);
       } else if (swipeVelocity < -500 || event.translationY < -100) {
         translateY.value = withSpring(0);
         isActive.value = 0;
+        if (onStateChange) runOnJS(onStateChange)(false);
       } else {
         if (translateY.value > MAX_PULL / 2) {
           translateY.value = withSpring(MAX_PULL);
           isActive.value = 1;
+          if (onStateChange) runOnJS(onStateChange)(true);
         } else {
           translateY.value = withSpring(0);
           isActive.value = 0;
+          if (onStateChange) runOnJS(onStateChange)(false);
         }
       }
     })
@@ -78,11 +84,24 @@ export const useMoodSheet = () => {
     pointerEvents: contentPointerEvents.value,
   }));
 
+  const tailProps = useAnimatedProps(() => ({
+    pointerEvents: translateY.value > 20 ? 'auto' : 'none',
+  }));
+
+  const closeSheet = () => {
+    translateY.value = withSpring(0);
+    isActive.value = 0;
+    if (onStateChange) onStateChange(false);
+  };
+
   return {
     panGesture,
     animatedStyle,
     tailStyle,
+    tailProps,
     contentAnimatedStyle,
     animatedContentProps,
+    closeSheet,
+    isActive,
   };
 };

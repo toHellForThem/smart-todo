@@ -1,29 +1,45 @@
 import { useEffect, startTransition } from 'react';
 import Toast from 'react-native-toast-message';
 import { socket } from '../utils/socket';
-import { AuthStorage } from '../utils/storage';
+import { AuthStorage, RpgStorage } from '../utils/storage';
 
 const timeToReset = [18, 45, 0, 0];
 
-export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
+export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings) => {
   useEffect(() => {
     socket.on('connect', () => {
       console.log('Connected to Server!');
     });
 
     socket.on('server:login_success', (data) => {
-      const { username, token, settings } = data;
+      const { username, token, settings: serverSettings } = data;
       socket.emit('client:get_todos');
+      
+      // Smart Month History Loading: only fetch if not already present in storage
+      const curMonth = new Date().toISOString().split('T')[0].substring(0, 7);
+      const localHistory = RpgStorage.getHistory();
+      const hasMonthCached = localHistory.some(log => log.date.startsWith(curMonth));
+      if (!hasMonthCached) {
+        socket.emit('client:get_month_history', curMonth);
+      }
+      
       setAuthMode('auth');
       setAuthState('');
       AuthStorage.setUsername(username);
       AuthStorage.setToken(token);
-      AuthStorage.setSettings(settings);
+      AuthStorage.setSettings(serverSettings);
+      setSettings(serverSettings);
     });
 
     socket.on('server:all_todos', (serverTodos) => {
+      const resetTimeStr = settings?.reset_time || '18:45';
+      const parts = resetTimeStr.split(':').map(Number);
+      const timeToReset = (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1]))
+        ? [parts[0], parts[1], 0, 0]
+        : [18, 45, 0, 0];
+
       let startOfToday = new Date().setHours(...timeToReset);
-      let needEmitReset = false;
+      const resetTypes = new Set();
 
       if (startOfToday > Date.now()) {
         startOfToday -= 86400000;
@@ -37,11 +53,12 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
           serverTodos.forEach(sItem => {
             let processedItem = { ...sItem };
 
-            if (processedItem.type === 'daily' && processedItem.updatedAt < startOfToday) {
+            if (settings?.reset_enabled !== false && (processedItem.type === 'daily' || processedItem.type === 'habit') && processedItem.updatedAt < startOfToday) {
               processedItem.progressNow = 0;
               processedItem.completed = false;
               processedItem.updatedAt = startOfToday;
-              needEmitReset = true;
+              resetTypes.add(processedItem.type);
+              hasChanges = true;
             }
 
             const localIndex = merged.findIndex(l => l.id === processedItem.id);
@@ -62,8 +79,10 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
         });
       });
 
-      if (needEmitReset) {
-        socket.emit('client:confirm_reset', 'daily');
+      if (resetTypes.size > 0) {
+        resetTypes.forEach(type => {
+          socket.emit('client:confirm_reset', type, startOfToday);
+        });
       }
     });
 
@@ -112,6 +131,40 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
       });
     });
 
+    socket.on('server:month_history', (data) => {
+      startTransition(() => {
+        if (data && data.history) {
+          setRpgHistory(prev => {
+            // merge server month logs with local logs
+            const merged = [...prev];
+            data.history.forEach(srvLog => {
+              const localIdx = merged.findIndex(h => h.date === srvLog.date);
+              if (localIdx === -1) {
+                merged.push(srvLog);
+              } else {
+                merged[localIdx] = srvLog;
+              }
+            });
+            return merged;
+          });
+        }
+      });
+    });
+
+    socket.on('server:daily_history_updated', (data) => {
+      startTransition(() => {
+        setRpgHistory(prev => {
+          const index = prev.findIndex(h => h.date === data.date);
+          if (index !== -1) {
+            const newList = [...prev];
+            newList[index] = data;
+            return newList;
+          }
+          return [...prev, data];
+        });
+      });
+    });
+
     return () => {
       socket.off('connect');
       socket.off('server:all_todos');
@@ -120,6 +173,8 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState) => {
       socket.off('server:login_success');
       socket.off('server:register_success');
       socket.off('server:auth_expired');
+      socket.off('server:month_history');
+      socket.off('server:daily_history_updated');
     };
-  }, [setTodoList, setAuthMode, setAuthState]);
+  }, [setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings]);
 };

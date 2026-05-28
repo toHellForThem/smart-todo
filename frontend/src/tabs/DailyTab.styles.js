@@ -51,23 +51,23 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     backgroundColor: theme.colors.primaryLight,
   },
-  progressText: { 
-    fontSize: 18, 
-    marginVertical: theme.spacing.sm, 
+  progressText: {
+    fontSize: 18,
+    marginVertical: theme.spacing.sm,
     textAlign: 'center',
   },
-  progressTextCompleted: { 
-    color: theme.colors.primary, 
+  progressTextCompleted: {
+    color: theme.colors.primary,
     fontWeight: 'bold',
   },
-  progressBarBg: { 
-    height: theme.sizes.progressBar, 
-    backgroundColor: theme.colors.surface, 
+  progressBarBg: {
+    height: theme.sizes.progressBar,
+    backgroundColor: theme.colors.surface,
     borderRadius: 5,
   },
-  progressBarFill: { 
-    height: theme.sizes.progressBar, 
-    backgroundColor: theme.colors.primary, 
+  progressBarFill: {
+    height: theme.sizes.progressBar,
+    backgroundColor: theme.colors.primary,
     borderRadius: 5,
   },
   completedTextDaily: {
