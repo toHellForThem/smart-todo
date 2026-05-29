@@ -5,6 +5,7 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import ReAnimated from 'react-native-reanimated';
 import { styles } from './Header.styles';
 import { theme } from '../theme/theme';
+import { getLogicalDateStr } from '../utils/date';
 
 export const Header = memo(({
   panGesture,
@@ -20,9 +21,10 @@ export const Header = memo(({
   authMode,
   onMoodChange,
   onOpenCalendar,
-  rpgHistory
+  rpgHistory,
+  settings,
 }) => {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLogicalDateStr(settings?.reset_time);
   const todayEntry = rpgHistory?.find(item => item.date === todayStr);
   const currentMoodValue = todayEntry ? todayEntry.mood : null;
 

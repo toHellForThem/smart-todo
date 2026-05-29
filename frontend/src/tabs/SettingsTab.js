@@ -74,7 +74,7 @@ export const SettingsTab = ({
     socket.emit('client:logout');
 
     // Reset to defaults on logout
-    const defaults = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '18:45', reset_enabled: true };
+    const defaults = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '00:00', reset_enabled: true };
     setSettings(defaults);
   };
 
@@ -86,7 +86,7 @@ export const SettingsTab = ({
   };
 
   // Parsing current reset time
-  const resetTimeStr = settings?.reset_time || '18:45';
+  const resetTimeStr = settings?.reset_time || '00:00';
   const [hStr, mStr] = resetTimeStr.split(':');
   const hours = parseInt(hStr, 10) || 0;
   const minutes = parseInt(mStr, 10) || 0;

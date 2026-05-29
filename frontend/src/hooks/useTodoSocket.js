@@ -27,16 +27,18 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
       setAuthState('');
       AuthStorage.setUsername(username);
       AuthStorage.setToken(token);
-      AuthStorage.setSettings(serverSettings);
-      setSettings(serverSettings);
+      const localSettings = AuthStorage.getSettings();
+      const mergedSettings = { ...localSettings, ...serverSettings };
+      AuthStorage.setSettings(mergedSettings);
+      setSettings(mergedSettings);
     });
 
     socket.on('server:all_todos', (serverTodos) => {
-      const resetTimeStr = settings?.reset_time || '18:45';
+      const resetTimeStr = settings?.reset_time || '00:00';
       const parts = resetTimeStr.split(':').map(Number);
       const timeToReset = (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1]))
         ? [parts[0], parts[1], 0, 0]
-        : [18, 45, 0, 0];
+        : [0, 0, 0, 0];
 
       let startOfToday = new Date().setHours(...timeToReset);
       const resetTypes = new Set();

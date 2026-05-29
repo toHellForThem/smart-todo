@@ -58,8 +58,6 @@ const TAB_VIEWS = {
         statusChangeTask={props.statusChangeTask}
         deleteTodo={props.handleDeleteTodo}
         leftAction={props.leftAction}
-        resetTimeStr={props.settings?.reset_time || '18:45'}
-        resetEnabled={props.settings?.reset_enabled !== false}
       />
     ),
   },
@@ -77,6 +75,7 @@ const TAB_VIEWS = {
         setSubtab={props.setRpgSubtab}
         isCalendarVisible={props.isCalendarVisible}
         setCalendarVisible={props.setCalendarVisible}
+        settings={props.settings}
       />
     ),
   },
@@ -139,7 +138,7 @@ export default function App() {
 
     // RPG Actions
     handleMoodChange,
-  } = useTodoActions(mainTab);
+  } = useTodoActions(mainTab, settings);
 
   const handleDeleteTodo = (id) => {
     if (settings.soft_delete) {
@@ -212,6 +211,7 @@ export default function App() {
               setCalendarVisible(true);
               setActiveView('list');
             }}
+            settings={settings}
           />
           <View style={styles.main} pointerEvents={isMoodSheetOpen ? 'none' : 'auto'}>
             {GLOBAL_VIEWS[activeView] ? (

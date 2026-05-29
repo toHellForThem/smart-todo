@@ -5,7 +5,6 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { styles } from './DailyTab.styles';
 import { styles as itemStyles } from '../styles/item.styles';
 import { theme } from '../theme/theme';
-import { socket } from '../utils/socket';
 import { FillProgress } from '../components/FillProgress';
 
 
@@ -78,7 +77,7 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   );
 });
 
-export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction, resetTimeStr = '18:45', resetEnabled = true }) => {
+export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
   const [task, setTask] = useState('');
   const [progressEnd, setProgressEnd] = useState(1);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -87,51 +86,6 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
     todoList.filter(item => item.type === 'daily' && !item.deleted),
     [todoList]
   );
-
-  const timeToReset = useMemo(() => {
-    const parts = (resetTimeStr || '18:45').split(':').map(Number);
-    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-      return [parts[0], parts[1], 0, 0];
-    }
-    return [18, 45, 0, 0];
-  }, [resetTimeStr]);
-
-  useEffect(() => {
-    let timerId;
-
-    const scheduleNextReset = () => {
-      if (!resetEnabled) return;
-      const now = new Date();
-      const tomorrow = new Date(now);
-
-      tomorrow.setHours(...timeToReset);
-
-      if (tomorrow <= now) {
-        tomorrow.setDate(tomorrow.getDate() + 1);
-      }
-      const msUntilMidnight = tomorrow.getTime() - now.getTime();
-      let toUpdatedAt = Date.now();
-
-      timerId = setTimeout(() => {
-        toUpdatedAt = Date.now();
-        setTodoList(prev => prev.map(item =>
-          item.type === 'daily' || item.type === 'habit'
-            ? { ...item, progressNow: 0, completed: false, updatedAt: toUpdatedAt }
-            : item
-        ));
-        socket.emit('client:confirm_reset', 'daily', toUpdatedAt);
-        socket.emit('client:confirm_reset', 'habit', toUpdatedAt);
-
-        scheduleNextReset();
-      }, msUntilMidnight);
-    };
-
-    scheduleNextReset();
-
-    return () => {
-      if (timerId) clearTimeout(timerId);
-    };
-  }, [setTodoList, timeToReset, resetEnabled]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {

@@ -15,6 +15,7 @@ import { MaterialCommunityIcons, Ionicons, FontAwesome5, MaterialIcons } from '@
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { styles } from './RpgTab.styles';
 import { theme } from '../theme/theme';
+import { getLogicalDateStr } from '../utils/date';
 
 const moodConfig = {
   1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#CBD9EF', label: 'Ужасно' },
@@ -46,6 +47,7 @@ export const RpgTab = ({
   setSubtab,
   isCalendarVisible,
   setCalendarVisible,
+  settings,
 }) => {
   const [selectedDayDetail, setSelectedDayDetail] = useState(null);
   const [isHabitsExpanded, setIsHabitsExpanded] = useState(false);
@@ -80,7 +82,7 @@ export const RpgTab = ({
 
   // Date constants
   const today = useMemo(() => new Date(), []);
-  const todayStr = useMemo(() => today.toISOString().split('T')[0], [today]);
+  const todayStr = useMemo(() => getLogicalDateStr(settings?.reset_time), [settings?.reset_time]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {

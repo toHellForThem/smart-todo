@@ -56,7 +56,7 @@ export const AuthStorage = {
   setSettings: (settings) => core.set('user_settings', JSON.stringify(settings)),
   getSettings: () => {
     const data = core.get('user_settings');
-    const defaultSettings = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '18:45', rpg_subtab: 'dashboard', reset_enabled: true };
+    const defaultSettings = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '00:00', rpg_subtab: 'dashboard', reset_enabled: true };
     return data ? { ...defaultSettings, ...JSON.parse(data) } : defaultSettings;
   },
   
