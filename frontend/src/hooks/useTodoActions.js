@@ -107,6 +107,8 @@ export const useTodoActions = (mainTab, settings) => {
 
   // Auto-sync today's history when todoList changes
   useEffect(() => {
+    if (todoList.length === 0) return;
+
     // Find the maximum updatedAt of daily/habit tasks to avoid race conditions during resets
     const maxUpdatedAt = todoList.length > 0
       ? Math.max(...todoList.map(t => t.updatedAt || 0))

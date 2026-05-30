@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import { GestureDetector } from 'react-native-gesture-handler';
 import ReAnimated from 'react-native-reanimated';
 import { getStyles } from './Header.styles';
@@ -32,12 +33,31 @@ export const Header = memo(({
 
   return (
     <View style={styles.header}>
-      <TouchableOpacity onPress={onOpenCalendar} style={{ zIndex: 1 }}>
+      <TouchableOpacity
+        onPress={() => {
+          if (authMode === 'auth') {
+            Toast.show({
+              type: 'success',
+              text1: 'Облако активно',
+              text2: 'Вы успешно подключены к серверу!',
+              visibilityTime: 2500,
+            });
+          } else {
+            Toast.show({
+              type: 'info',
+              text1: 'Локальный режим',
+              text2: 'Подключение к серверу отсутствует.',
+              visibilityTime: 2500,
+            });
+          }
+        }}
+        style={{ zIndex: 1 }}
+      >
         <MaterialCommunityIcons
           style={{ padding: 2, marginRight: 5, borderRadius: 10, backgroundColor: theme.colors.icon.bg }}
-          name={'clock-edit-outline'}
+          name={authMode === 'auth' ? 'cloud' : 'cloud-off-outline'}
           size={45}
-          color={theme.colors.icon.primary}
+          color={authMode === 'auth' ? theme.colors.primary : theme.colors.text.muted}
         />
       </TouchableOpacity>
 

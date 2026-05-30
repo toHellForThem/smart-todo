@@ -7,9 +7,6 @@ export const getLogicalDateStr = (resetTimeStr, customDate) => {
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
 
-  // If the reset is set between 00:01 and 12:00 (late-night / morning reset),
-  // and the current time is today before that reset time,
-  // then logically it belongs to the previous calendar day!
   const isBeforeResetToday = (currentHour < resetHour) || (currentHour === resetHour && currentMinute < resetMinute);
   
   // Case A: Early reset (00:01 - 12:00, e.g. 04:00 AM)
@@ -18,7 +15,11 @@ export const getLogicalDateStr = (resetTimeStr, customDate) => {
     if (isBeforeResetToday) {
       const yesterday = new Date(now);
       yesterday.setDate(now.getDate() - 1);
-      return yesterday.toISOString().split('T')[0];
+      
+      const year = yesterday.getFullYear();
+      const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+      const day = String(yesterday.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
   }
 
@@ -28,9 +29,16 @@ export const getLogicalDateStr = (resetTimeStr, customDate) => {
     if (!isBeforeResetToday) {
       const tomorrow = new Date(now);
       tomorrow.setDate(now.getDate() + 1);
-      return tomorrow.toISOString().split('T')[0];
+      
+      const year = tomorrow.getFullYear();
+      const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+      const day = String(tomorrow.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
   }
 
-  return now.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };

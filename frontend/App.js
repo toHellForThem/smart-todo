@@ -5,6 +5,7 @@ import {
   UIManager,
   BackHandler
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { renderLeftAction } from './src/utils/swipe';
@@ -298,6 +299,7 @@ export default function App() {
               rpgSubtab={rpgSubtab}
               activeView={activeView}
             />
+            <Toast topOffset={120} />
           </SafeAreaView>
         </GestureHandlerRootView>
       </SafeAreaProvider>

@@ -111,6 +111,7 @@ export const RpgTab = ({
 
   const [showTitle, setShowTitle] = useState('');
   const [isMovieInput, setIsMovieInput] = useState(false);
+  const [startEpisode, setStartEpisode] = useState('1');
 
   // Date constants
   const today = useMemo(() => new Date(), []);
@@ -350,9 +351,11 @@ export const RpgTab = ({
   // --- TV SHOWS ACTION WRAPPERS ---
   const handleAddShow = () => {
     if (!showTitle.trim()) return;
-    addTask(showTitle.trim(), 1, isMovieInput ? 'movie' : 'tv_show', isMovieInput ? "0" : "1-1");
+    const startEp = parseInt(startEpisode, 10) || 1;
+    addTask(showTitle.trim(), 1, isMovieInput ? 'movie' : 'tv_show', isMovieInput ? "0" : `1-${startEp}`);
     setShowTitle('');
     setIsMovieInput(false);
+    setStartEpisode('1');
     Keyboard.dismiss();
   };
 
@@ -896,6 +899,37 @@ export const RpgTab = ({
               )}
             </View>
           </TouchableOpacity>
+
+          {/* Vertical Separator */}
+          <View style={{ width: 1, height: 24, backgroundColor: theme.colors.border.light, marginHorizontal: 16 }} />
+
+          {/* Episode Start Input */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: isMovieInput ? 0.35 : 1 }}>
+            <Text style={styles.keyboardSuggestionText}>Серия:</Text>
+            <TextInput
+              style={{
+                width: 48,
+                height: 32,
+                borderRadius: theme.radius.sm,
+                borderWidth: 1.5,
+                borderColor: isMovieInput ? theme.colors.border.light : theme.colors.primary,
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text.primary,
+                textAlign: 'center',
+                fontWeight: 'bold',
+                fontSize: 14,
+                padding: 0,
+              }}
+              value={startEpisode}
+              onChangeText={text => {
+                const digits = text.replace(/[^0-9]/g, '');
+                setStartEpisode(digits);
+              }}
+              keyboardType="numeric"
+              editable={!isMovieInput}
+              selectTextOnFocus={true}
+            />
+          </View>
         </View>
       </View>
     );
