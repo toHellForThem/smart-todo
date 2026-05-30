@@ -50,8 +50,39 @@ export const darkColors = {
   },
 };
 
+export const mintColors = {
+  primary: '#10B981',
+  primaryLight: '#D1FAE5',
+  background: '#F0FDF4',
+  surface: '#FFFFFF',
+  text: {
+    primary: '#064E3B',
+    secondary: '#374151',
+    muted: '#6B7280',
+    white: '#FFFFFF',
+    link: '#10B981',
+  },
+  border: {
+    light: '#E6F4EA',
+    default: '#A7F3D0',
+  },
+  danger: '#EF4444',
+  icon: {
+    primary: '#10B981',
+    active: '#FFFFFF',
+    bg: '#D1FAE5',
+    bgActive: '#10B981',
+  },
+};
+
+
 export const getTheme = (themeName) => {
-  const colors = themeName === 'dark' ? darkColors : defaultColors;
+  let colors = defaultColors;
+  if (themeName === 'dark') {
+    colors = darkColors;
+  } else if (themeName === 'mint') {
+    colors = mintColors;
+  }
   return {
     colors,
     spacing: {
@@ -88,6 +119,9 @@ const getActiveColors = () => {
     const saved = AuthStorage.getSettings();
     if (saved?.theme === 'dark') {
       return darkColors;
+    }
+    if (saved?.theme === 'mint') {
+      return mintColors;
     }
   } catch (e) {
     // Fallback if MMKV is not loaded yet

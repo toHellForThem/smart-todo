@@ -109,13 +109,34 @@ export default function App() {
   const theme = useMemo(() => getTheme(settings?.theme), [settings?.theme]);
   const styles = useMemo(() => getStyles(theme), [theme]);
 
-  const moods = useMemo(() => [
-    { value: 1, icon: 'emoticon-dead-outline', color: isDark ? '#94A3B8' : '#64748B' },
-    { value: 2, icon: 'emoticon-sad-outline', color: isDark ? '#FB7185' : '#F43F5E' },
-    { value: 3, icon: 'emoticon-neutral-outline', color: isDark ? '#F59E0B' : '#D98A2F' },
-    { value: 4, icon: 'emoticon-happy-outline', color: isDark ? '#34D399' : '#10B981' },
-    { value: 5, icon: 'emoticon-excited-outline', color: isDark ? '#C084FC' : '#8B5CF6' },
-  ], [isDark]);
+  const moods = useMemo(() => {
+    const isMint = settings?.theme === 'mint';
+    if (isDark) {
+      return [
+        { value: 1, icon: 'emoticon-dead-outline', color: '#94A3B8' },
+        { value: 2, icon: 'emoticon-sad-outline', color: '#FB7185' },
+        { value: 3, icon: 'emoticon-neutral-outline', color: '#F59E0B' },
+        { value: 4, icon: 'emoticon-happy-outline', color: '#34D399' },
+        { value: 5, icon: 'emoticon-excited-outline', color: '#C084FC' },
+      ];
+    } else if (isMint) {
+      return [
+        { value: 1, icon: 'emoticon-dead-outline', color: '#64748B' },
+        { value: 2, icon: 'emoticon-sad-outline', color: '#F43F5E' },
+        { value: 3, icon: 'emoticon-neutral-outline', color: '#D98A2F' },
+        { value: 4, icon: 'emoticon-happy-outline', color: '#10B981' },
+        { value: 5, icon: 'emoticon-excited-outline', color: '#8B5CF6' },
+      ];
+    } else {
+      return [
+        { value: 1, icon: 'emoticon-dead-outline', color: '#64748B' },
+        { value: 2, icon: 'emoticon-sad-outline', color: '#F43F5E' },
+        { value: 3, icon: 'emoticon-neutral-outline', color: '#D98A2F' },
+        { value: 4, icon: 'emoticon-happy-outline', color: '#10B981' },
+        { value: 5, icon: 'emoticon-excited-outline', color: '#8B5CF6' },
+      ];
+    }
+  }, [isDark, settings?.theme]);
   const [mainTab, setMainTab] = useState(() => {
     const localSettings = AuthStorage.getSettings();
     return localSettings.main_page || 'todo';

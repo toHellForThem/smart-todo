@@ -519,17 +519,34 @@ export const SettingsTab = ({
                 <TouchableOpacity
                   style={[
                     styles.segmentButton,
-                    settings?.theme !== 'dark' && styles.segmentButtonActive
+                    settings?.theme !== 'dark' && settings?.theme !== 'mint' && styles.segmentButtonActive
                   ]}
                   onPress={() => handleThemeChange('default')}
                 >
                   <Text
                     style={[
                       styles.segmentText,
-                      settings?.theme !== 'dark' && styles.segmentTextActive
+                      settings?.theme !== 'dark' && settings?.theme !== 'mint' && styles.segmentTextActive
                     ]}
                   >
                     Голубая
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    settings?.theme === 'mint' && styles.segmentButtonActive
+                  ]}
+                  onPress={() => handleThemeChange('mint')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      settings?.theme === 'mint' && settings?.theme !== 'dark' && styles.segmentTextActive
+                    ]}
+                  >
+                    Мятная
                   </Text>
                 </TouchableOpacity>
 
