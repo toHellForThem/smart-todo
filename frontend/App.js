@@ -90,6 +90,8 @@ const GLOBAL_VIEWS = {
       setAuthState={props.setAuthState}
       settings={props.settings}
       setSettings={props.setSettings}
+      setTodoList={props.setTodoList}
+      setRpgHistory={props.setRpgHistory}
     />
   ),
   recycle: (props) => (
@@ -228,6 +230,7 @@ export default function App() {
                 setAuthState,
                 settings,
                 setSettings,
+                setRpgHistory,
               })
             ) : (
               TAB_VIEWS[mainTab]?.list ? (

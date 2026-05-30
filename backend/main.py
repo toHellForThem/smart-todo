@@ -91,6 +91,12 @@ async def init_db():
             except Exception:
                 pass
 
+            # Migration to add updated_at column if not exists
+            try:
+                await db.execute("ALTER TABLE daily_history ADD COLUMN updated_at INTEGER DEFAULT 0")
+            except Exception:
+                pass
+
             await db.commit()
         except Exception as e:
             print(f"Ошибка базы данных: {e}")
@@ -433,7 +439,7 @@ async def handle_get_month_history(sid, month_str):
 
     like_pattern = f"{month_str}-%"
     history_rows = await db_query(
-        "SELECT date, mood, daily_progress, pos_points, neg_points, habits_detail FROM daily_history WHERE user_id = ? AND date LIKE ?",
+        "SELECT date, mood, daily_progress, pos_points, neg_points, habits_detail, updated_at FROM daily_history WHERE user_id = ? AND date LIKE ?",
         (user_id, like_pattern),
         is_select=True,
     )
@@ -448,6 +454,7 @@ async def handle_get_month_history(sid, month_str):
                 "pos_points": r["pos_points"],
                 "neg_points": r["neg_points"],
                 "habits_detail": r["habits_detail"] if "habits_detail" in r.keys() else "[]",
+                "updatedAt": r["updated_at"] if "updated_at" in r.keys() else 0,
             }
         )
 
@@ -467,13 +474,134 @@ async def handle_sync_daily_history(sid, data):
     pos_points = data.get("pos_points", 0)
     neg_points = data.get("neg_points", 0)
     habits_detail = data.get("habits_detail", "[]")
+    client_updated_at = data.get("updatedAt", 0)
 
-    await db_query(
-        """
-        INSERT OR REPLACE INTO daily_history (user_id, date, mood, daily_progress, pos_points, neg_points, habits_detail)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """,
-        (user_id, date, mood, daily_progress, pos_points, neg_points, habits_detail),
+    # Conflict check based on updated_at
+    row = await db_query(
+        "SELECT updated_at FROM daily_history WHERE user_id = ? AND date = ?",
+        (user_id, date),
+        is_select=True
     )
-    await sio.emit("server:daily_history_updated", data, room=user_id, skip_sid=sid)
+    if not row or client_updated_at > row[0]["updated_at"]:
+        await db_query(
+            """
+            INSERT OR REPLACE INTO daily_history (user_id, date, mood, daily_progress, pos_points, neg_points, habits_detail, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (user_id, date, mood, daily_progress, pos_points, neg_points, habits_detail, client_updated_at),
+        )
+        await sio.emit("server:daily_history_updated", data, room=user_id, skip_sid=sid)
+
+
+@sio.on("client:bulk_sync_todos")
+async def handle_bulk_sync_todos(sid, client_todos):
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id")
+    if not user_id:
+        return
+
+    for todo in client_todos:
+        todo_id = todo["id"]
+        client_updated_at = todo.get("updatedAt", 0)
+        row = await db_query(
+            "SELECT updated_at FROM todos WHERE id = ? AND user_id = ?",
+            (todo_id, user_id),
+            is_select=True,
+        )
+        if not row or client_updated_at > row[0]["updated_at"]:
+            await db_query(
+                """
+                INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at, type, progress_now, progress_end, user_id, contribution)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+                (
+                    todo["id"],
+                    todo["text"],
+                    todo["completed"],
+                    todo["deleted"],
+                    client_updated_at,
+                    todo["type"],
+                    str(todo["progressNow"]),
+                    str(todo["progressEnd"]),
+                    user_id,
+                    todo.get("contribution", 0)
+                ),
+            )
+            await sio.emit("server:todo_updated", todo, room=user_id, skip_sid=sid)
+
+    await handle_get_todos(sid)
+
+
+@sio.on("client:bulk_sync_daily_history")
+async def handle_bulk_sync_daily_history(sid, client_history):
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id")
+    if not user_id:
+        return
+
+    for entry in client_history:
+        date = entry["date"]
+        mood = entry.get("mood")
+        daily_progress = entry.get("daily_progress", 0.0)
+        pos_points = entry.get("pos_points", 0)
+        neg_points = entry.get("neg_points", 0)
+        habits_detail = entry.get("habits_detail", "[]")
+        client_updated_at = entry.get("updatedAt", 0)
+
+        row = await db_query(
+            "SELECT updated_at FROM daily_history WHERE user_id = ? AND date = ?",
+            (user_id, date),
+            is_select=True,
+        )
+        if not row or client_updated_at > row[0]["updated_at"]:
+            await db_query(
+                """
+                INSERT OR REPLACE INTO daily_history (user_id, date, mood, daily_progress, pos_points, neg_points, habits_detail, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+                (user_id, date, mood, daily_progress, pos_points, neg_points, habits_detail, client_updated_at),
+            )
+            await sio.emit("server:daily_history_updated", entry, room=user_id, skip_sid=sid)
+
+    cur_month = datetime.datetime.now().strftime("%Y-%m")
+    await handle_get_month_history(sid, cur_month)
+
+
+@sio.on("client:update_settings")
+async def handle_update_settings(sid, settings_dict):
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id")
+    if not user_id:
+        return
+
+    # Fetch current settings from database to compare updatedAt
+    user = await db_query(
+        "SELECT settings FROM users WHERE id = ?", (user_id,), is_select=True
+    )
+    if user and user[0]["settings"]:
+        current_settings = json.loads(user[0]["settings"])
+        current_updated_at = current_settings.get("updatedAt", 0)
+        client_updated_at = settings_dict.get("updatedAt", 0)
+
+        if client_updated_at > current_updated_at:
+            settings_json = json.dumps(settings_dict)
+            await db_query(
+                "UPDATE users SET settings = ? WHERE id = ?",
+                (settings_json, user_id)
+            )
+            print(f"Пользователь {user_id} обновил настройки (новые).")
+            await sio.emit("server:settings_updated", settings_dict, room=user_id, skip_sid=sid)
+        else:
+            print(f"На сервере настройки новее для пользователя {user_id}.")
+            await sio.emit("server:settings_updated", current_settings, room=sid)
+    else:
+        # If no settings are in DB yet, save the client's settings
+        settings_json = json.dumps(settings_dict)
+        await db_query(
+            "UPDATE users SET settings = ? WHERE id = ?",
+            (settings_json, user_id)
+        )
+        print(f"Пользователь {user_id} инициализировал настройки.")
+        await sio.emit("server:settings_updated", settings_dict, room=user_id, skip_sid=sid)
+
 

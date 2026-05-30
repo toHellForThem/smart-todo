@@ -11,7 +11,7 @@ import { TextInput as PaperInput, PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { styles } from './SettingsTab.styles';
-import { AuthStorage } from '../utils/storage';
+import { AuthStorage, TodoStorage, RpgStorage } from '../utils/storage';
 import { socket } from '../utils/socket';
 import { theme } from '../theme/theme';
 
@@ -21,7 +21,9 @@ export const SettingsTab = ({
   authState,
   setAuthState,
   settings,
-  setSettings
+  setSettings,
+  setTodoList,
+  setRpgHistory
 }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -67,11 +69,21 @@ export const SettingsTab = ({
 
   const handleLogout = () => {
     AuthStorage.logout();
+    socket.auth = {};
     setAuthMode('local');
     setAuthState('');
     setUsername('');
     setPassword('');
     socket.emit('client:logout');
+
+    if (setTodoList) {
+      setTodoList([]);
+      TodoStorage.saveAll([]);
+    }
+    if (setRpgHistory) {
+      setRpgHistory([]);
+      RpgStorage.saveHistory([]);
+    }
 
     // Reset to defaults on logout
     const defaults = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '00:00', reset_enabled: true };
@@ -80,9 +92,12 @@ export const SettingsTab = ({
 
   // Helper to handle settings updates
   const updateSetting = (key, value) => {
-    const updated = { ...settings, [key]: value };
+    const updated = { ...settings, [key]: value, updatedAt: Date.now() };
     setSettings(updated);
     AuthStorage.setSettings(updated);
+    if (authMode === 'auth') {
+      socket.emit('client:update_settings', updated);
+    }
   };
 
   // Parsing current reset time

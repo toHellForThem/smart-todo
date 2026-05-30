@@ -155,7 +155,8 @@ export const useTodoActions = (mainTab, settings) => {
         daily_progress: progress,
         pos_points: positiveCount,
         neg_points: negativeCount,
-        habits_detail: JSON.stringify(habitsSnapshot)
+        habits_detail: JSON.stringify(habitsSnapshot),
+        updatedAt: Date.now()
       };
 
       // Check if anything has actually changed to avoid redundant updates
@@ -393,7 +394,8 @@ export const useTodoActions = (mainTab, settings) => {
         daily_progress: progress,
         pos_points: positiveCount,
         neg_points: negativeCount,
-        habits_detail: JSON.stringify(habitsSnapshot)
+        habits_detail: JSON.stringify(habitsSnapshot),
+        updatedAt: Date.now()
       };
 
       let newHistory;

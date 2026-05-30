@@ -1,36 +1,53 @@
 import { useEffect, startTransition } from 'react';
 import Toast from 'react-native-toast-message';
 import { socket } from '../utils/socket';
-import { AuthStorage, RpgStorage } from '../utils/storage';
+import { AuthStorage, RpgStorage, TodoStorage } from '../utils/storage';
 
 const timeToReset = [18, 45, 0, 0];
 
 export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings) => {
   useEffect(() => {
+    let shouldReplaceTodos = false;
+    let shouldReplaceHistory = false;
+
     socket.on('connect', () => {
       console.log('Connected to Server!');
     });
 
     socket.on('server:login_success', (data) => {
       const { username, token, settings: serverSettings } = data;
-      socket.emit('client:get_todos');
       
-      // Smart Month History Loading: only fetch if not already present in storage
-      const curMonth = new Date().toISOString().split('T')[0].substring(0, 7);
+      // Update socket auth for reconnects
+      socket.auth = { username, token };
+
+      shouldReplaceTodos = true;
+      shouldReplaceHistory = true;
+
+      const localTodos = TodoStorage.getAll();
       const localHistory = RpgStorage.getHistory();
-      const hasMonthCached = localHistory.some(log => log.date.startsWith(curMonth));
-      if (!hasMonthCached) {
-        socket.emit('client:get_month_history', curMonth);
-      }
+
+      socket.emit('client:bulk_sync_todos', localTodos);
+      socket.emit('client:bulk_sync_daily_history', localHistory);
       
       setAuthMode('auth');
       setAuthState('');
       AuthStorage.setUsername(username);
       AuthStorage.setToken(token);
+      
       const localSettings = AuthStorage.getSettings();
-      const mergedSettings = { ...localSettings, ...serverSettings };
-      AuthStorage.setSettings(mergedSettings);
-      setSettings(mergedSettings);
+      const localUpdatedAt = localSettings.updatedAt || 0;
+      const serverUpdatedAt = serverSettings.updatedAt || 0;
+
+      let finalSettings;
+      if (localUpdatedAt > serverUpdatedAt) {
+        finalSettings = localSettings;
+        socket.emit('client:update_settings', finalSettings);
+      } else {
+        finalSettings = { ...localSettings, ...serverSettings };
+      }
+
+      AuthStorage.setSettings(finalSettings);
+      setSettings(finalSettings);
     });
 
     socket.on('server:all_todos', (serverTodos) => {
@@ -45,6 +62,32 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
 
       if (startOfToday > Date.now()) {
         startOfToday -= 86400000;
+      }
+
+      if (shouldReplaceTodos) {
+        shouldReplaceTodos = false;
+        
+        const processedTodos = serverTodos.map(sItem => {
+          let processedItem = { ...sItem };
+          if (settings?.reset_enabled !== false && (processedItem.type === 'daily' || processedItem.type === 'habit') && processedItem.updatedAt < startOfToday) {
+            processedItem.progressNow = 0;
+            processedItem.completed = false;
+            processedItem.updatedAt = startOfToday;
+            resetTypes.add(processedItem.type);
+          }
+          return processedItem;
+        });
+
+        startTransition(() => {
+          setTodoList(processedTodos);
+        });
+
+        if (resetTypes.size > 0) {
+          resetTypes.forEach(type => {
+            socket.emit('client:confirm_reset', type, startOfToday);
+          });
+        }
+        return;
       }
 
       startTransition(() => {
@@ -122,8 +165,13 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
     socket.on('server:auth_expired', () => {
       startTransition(() => {
         AuthStorage.logout();
+        socket.auth = {};
         setAuthMode('local');
         setAuthState('login');
+        setTodoList([]);
+        setRpgHistory([]);
+        TodoStorage.saveAll([]);
+        RpgStorage.saveHistory([]);
         Toast.show({
           type: 'error',
           text1: 'Сессия истекла',
@@ -136,6 +184,12 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
     socket.on('server:month_history', (data) => {
       startTransition(() => {
         if (data && data.history) {
+          if (shouldReplaceHistory) {
+            shouldReplaceHistory = false;
+            setRpgHistory(data.history);
+            return;
+          }
+
           setRpgHistory(prev => {
             // merge server month logs with local logs
             const merged = [...prev];
@@ -167,6 +221,13 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
       });
     });
 
+    socket.on('server:settings_updated', (serverSettings) => {
+      startTransition(() => {
+        AuthStorage.setSettings(serverSettings);
+        setSettings(serverSettings);
+      });
+    });
+
     return () => {
       socket.off('connect');
       socket.off('server:all_todos');
@@ -177,6 +238,7 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
       socket.off('server:auth_expired');
       socket.off('server:month_history');
       socket.off('server:daily_history_updated');
+      socket.off('server:settings_updated');
     };
   }, [setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings]);
 };
