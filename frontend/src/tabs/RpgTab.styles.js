@@ -1,10 +1,9 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import { theme } from '../theme/theme';
 
 const { width, height } = Dimensions.get('window');
 
 // Standardized premium card design tokens
-const CARD_STYLE = {
+const getCardStyle = (theme) => ({
   backgroundColor: theme.colors.surface, // Clean white surface
   borderRadius: theme.radius.xl, // 15
   borderWidth: 1,
@@ -14,9 +13,11 @@ const CARD_STYLE = {
   shadowOpacity: 0.04,
   shadowRadius: 8,
   elevation: 2,
-};
+});
 
-export const styles = StyleSheet.create({
+export const getStyles = (theme) => {
+  const CARD_STYLE = getCardStyle(theme);
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background, // Match light theme slate background (#F1F5F9)
@@ -32,7 +33,7 @@ export const styles = StyleSheet.create({
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.colors.border.light,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: theme.radius.md,
@@ -200,7 +201,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E2E8F0', // Light cell gray
+    backgroundColor: theme.colors.border.light, // Match theme border/divider
   },
   calendarCellText: {
     fontSize: 14,
@@ -244,7 +245,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingBottom: theme.spacing.xl,
     borderBottomWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.colors.border.light,
     flexDirection: 'row',
     gap: 10,
     alignItems: 'center',
@@ -315,7 +316,7 @@ export const styles = StyleSheet.create({
   habitIncrementBtn: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#F1F5F9', // Clean light gray action button
+    backgroundColor: theme.colors.background, // Clean theme background
   },
 
   // Piggy Bank Subtab Styles
@@ -330,7 +331,7 @@ export const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: theme.spacing.xl,
     borderBottomWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.colors.border.light,
     alignItems: 'stretch',
     paddingHorizontal: theme.spacing.xl,
   },
@@ -377,7 +378,7 @@ export const styles = StyleSheet.create({
   },
   progressBarBg: {
     height: 10,
-    backgroundColor: '#E2E8F0', // Soft gray track
+    backgroundColor: theme.colors.border.light, // Soft gray theme track
     borderRadius: 5,
     width: '100%',
     overflow: 'hidden',
@@ -396,7 +397,7 @@ export const styles = StyleSheet.create({
   },
   piggyInput: {
     flex: 1,
-    backgroundColor: '#F8FAFC', // Slightly lighter inputs
+    backgroundColor: theme.colors.background, // Slightly lighter inputs matching theme bg
     borderRadius: theme.radius.md,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -424,7 +425,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: theme.radius.sm,
-    backgroundColor: '#F1F5F9', // Clean gray
+    backgroundColor: theme.colors.background, // Clean theme background gray
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -501,13 +502,13 @@ export const styles = StyleSheet.create({
     elevation: 4,
   },
   showControlLabel: {
-    color: '#1E293B',
+    color: theme.colors.text.secondary,
     fontSize: 9,
     fontWeight: 'bold',
     textTransform: 'uppercase',
   },
   showControlValue: {
-    color: '#1E293B',
+    color: theme.colors.text.primary,
     fontSize: 16,
     fontWeight: 'bold',
     minWidth: 14,
@@ -552,7 +553,7 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF', // Clean white background
+    backgroundColor: theme.colors.surface, // Clean theme surface background
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center', // Center content horizontally
@@ -579,7 +580,7 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.primary, // Blue accent
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
   },
   keyboardSuggestionCheckboxChecked: {
     backgroundColor: theme.colors.primary, // Filled blue when checked
@@ -639,7 +640,7 @@ export const styles = StyleSheet.create({
   },
   piggyCardProgressBarTrack: {
     height: 12, // elegant taller height for high readability
-    backgroundColor: '#FFFFFF', // solid white track background!
+    backgroundColor: theme.colors.background, // theme background track background!
     width: '100%', // full width of the header text area
     borderRadius: 6, // rounded pill shape
     overflow: 'hidden',
@@ -738,7 +739,7 @@ export const styles = StyleSheet.create({
   piggyInputCompact: {
     width: '100%', // stretches to fill the right column flex container beautifully
     height: '100%', // 100% height to match stretched column height
-    backgroundColor: '#FFFFFF', // solid white inviting background when unfocused
+    backgroundColor: theme.colors.surface, // solid theme surface background when unfocused
     borderWidth: 4, // full border restored
     borderColor: theme.colors.icon.bg, // set to icon background color (#d9e7fd)
     borderTopRightRadius: 0,
@@ -792,4 +793,5 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-});
+  });
+};

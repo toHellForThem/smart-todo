@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Platform,
@@ -9,7 +9,9 @@ import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { renderLeftAction } from './src/utils/swipe';
 
-import { styles } from './App.styles';
+import { getStyles } from './App.styles';
+import { getTheme } from './src/theme/theme';
+import { ThemeContext } from './src/theme/ThemeContext';
 import { TodoTab } from './src/tabs/TodoTab';
 import { RecycleTab } from './src/tabs/RecycleTab';
 import { DailyTab } from './src/tabs/DailyTab';
@@ -26,14 +28,6 @@ import { AuthStorage } from './src/utils/storage';
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
-
-const moods = [
-  { value: 1, icon: 'emoticon-dead-outline', color: '#64748B' },
-  { value: 2, icon: 'emoticon-sad-outline', color: '#F43F5E' },
-  { value: 3, icon: 'emoticon-neutral-outline', color: '#D98A2F' },
-  { value: 4, icon: 'emoticon-happy-outline', color: '#10B981' },
-  { value: 5, icon: 'emoticon-excited-outline', color: '#8B5CF6' },
-];
 
 const TAB_VIEWS = {
   todo: {
@@ -92,6 +86,7 @@ const GLOBAL_VIEWS = {
       setSettings={props.setSettings}
       setTodoList={props.setTodoList}
       setRpgHistory={props.setRpgHistory}
+      setMainTab={props.setMainTab}
     />
   ),
   recycle: (props) => (
@@ -109,6 +104,18 @@ const GLOBAL_VIEWS = {
 export default function App() {
   const [task, setTask] = useState('');
   const [settings, setSettings] = useState(() => AuthStorage.getSettings());
+
+  const isDark = settings?.theme === 'dark';
+  const theme = useMemo(() => getTheme(settings?.theme), [settings?.theme]);
+  const styles = useMemo(() => getStyles(theme), [theme]);
+
+  const moods = useMemo(() => [
+    { value: 1, icon: 'emoticon-dead-outline', color: isDark ? '#94A3B8' : '#64748B' },
+    { value: 2, icon: 'emoticon-sad-outline', color: isDark ? '#FB7185' : '#F43F5E' },
+    { value: 3, icon: 'emoticon-neutral-outline', color: isDark ? '#F59E0B' : '#D98A2F' },
+    { value: 4, icon: 'emoticon-happy-outline', color: isDark ? '#34D399' : '#10B981' },
+    { value: 5, icon: 'emoticon-excited-outline', color: isDark ? '#C084FC' : '#8B5CF6' },
+  ], [isDark]);
   const [mainTab, setMainTab] = useState(() => {
     const localSettings = AuthStorage.getSettings();
     return localSettings.main_page || 'todo';
@@ -150,7 +157,7 @@ export default function App() {
     }
   };
 
-  useTodoSocket(setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings);
+  useTodoSocket(setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings, setMainTab);
 
   const [isMoodSheetOpen, setIsMoodSheetOpen] = useState(false);
   const moodSheet = useMoodSheet(setIsMoodSheetOpen);
@@ -194,82 +201,85 @@ export default function App() {
   }, [mainTab, rpgSubtab, activeView, isCalendarVisible, moodSheet]);
 
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView style={styles.container}>
-          <Header
-            {...moodSheet}
-            moods={moods}
-            activeView={activeView}
-            setActiveView={setActiveView}
-            setAuthState={setAuthState}
-            setAuthMode={setAuthMode}
-            authMode={authMode}
-            onMoodChange={handleMoodChange}
-            rpgHistory={rpgHistory}
-            onOpenCalendar={() => {
-              setMainTab('rpg');
-              setRpgSubtab('dashboard');
-              setCalendarVisible(true);
-              setActiveView('list');
-            }}
-            settings={settings}
-          />
-          <View style={styles.main} pointerEvents={isMoodSheetOpen ? 'none' : 'auto'}>
-            {GLOBAL_VIEWS[activeView] ? (
-              GLOBAL_VIEWS[activeView]({
-                mainTab,
-                rpgSubtab,
-                todoList,
-                deleteTodo,
-                leftAction: renderLeftAction,
-                setTodoList,
-                authMode,
-                setAuthMode,
-                authState,
-                setAuthState,
-                settings,
-                setSettings,
-                setRpgHistory,
-              })
-            ) : (
-              TAB_VIEWS[mainTab]?.list ? (
-                TAB_VIEWS[mainTab].list({
-                  task,
-                  setTask,
-                  onAdd: addTask,
-                  todoList,
-                  setTodoList,
-                  statusChangeTask,
-                  deleteToRecycle: handleDeleteTodo,
-                  handleDeleteTodo,
-                  leftAction: renderLeftAction,
-                  rpgHistory,
-                  setRpgHistory,
-                  addTask,
-                  rpgSubtab,
-                  setRpgSubtab,
-                  isCalendarVisible,
-                  setCalendarVisible,
-                  settings,
-                })
-              ) : null
-            )}
-          </View>
-          <TabBar
-            currentTab={mainTab}
-            setCurrentTab={(tab) => {
-              if (tab === 'rpg') {
+    <ThemeContext.Provider value={{ theme, isDark }}>
+      <SafeAreaProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaView style={styles.container}>
+            <Header
+              {...moodSheet}
+              moods={moods}
+              activeView={activeView}
+              setActiveView={setActiveView}
+              setAuthState={setAuthState}
+              setAuthMode={setAuthMode}
+              authMode={authMode}
+              onMoodChange={handleMoodChange}
+              rpgHistory={rpgHistory}
+              onOpenCalendar={() => {
+                setMainTab('rpg');
                 setRpgSubtab('dashboard');
-              }
-              setMainTab(tab);
-              setActiveView('list');
-            }}
-            rpgSubtab={rpgSubtab}
-            activeView={activeView}
-          />
-        </SafeAreaView>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+                setCalendarVisible(true);
+                setActiveView('list');
+              }}
+              settings={settings}
+            />
+            <View style={styles.main} pointerEvents={isMoodSheetOpen ? 'none' : 'auto'}>
+              {GLOBAL_VIEWS[activeView] ? (
+                GLOBAL_VIEWS[activeView]({
+                  mainTab,
+                  rpgSubtab,
+                  todoList,
+                  deleteTodo,
+                  leftAction: (prog, drag, mode) => renderLeftAction(prog, drag, mode, theme),
+                  setTodoList,
+                  authMode,
+                  setAuthMode,
+                  authState,
+                  setAuthState,
+                  settings,
+                  setSettings,
+                  setRpgHistory,
+                  setMainTab,
+                })
+              ) : (
+                TAB_VIEWS[mainTab]?.list ? (
+                  TAB_VIEWS[mainTab].list({
+                    task,
+                    setTask,
+                    onAdd: addTask,
+                    todoList,
+                    setTodoList,
+                    statusChangeTask,
+                    deleteToRecycle: handleDeleteTodo,
+                    handleDeleteTodo,
+                    leftAction: (prog, drag, mode) => renderLeftAction(prog, drag, mode, theme),
+                    rpgHistory,
+                    setRpgHistory,
+                    addTask,
+                    rpgSubtab,
+                    setRpgSubtab,
+                    isCalendarVisible,
+                    setCalendarVisible,
+                    settings,
+                  })
+                ) : null
+              )}
+            </View>
+            <TabBar
+              currentTab={mainTab}
+              setCurrentTab={(tab) => {
+                if (tab === 'rpg') {
+                  setRpgSubtab('dashboard');
+                }
+                setMainTab(tab);
+                setActiveView('list');
+              }}
+              rpgSubtab={rpgSubtab}
+              activeView={activeView}
+            />
+          </SafeAreaView>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    </ThemeContext.Provider>
   );
 }

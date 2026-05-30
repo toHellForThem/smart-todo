@@ -1,8 +1,8 @@
 import { View, Animated, Text } from 'react-native';
-import { styles } from '../styles/item.styles';
-import { theme } from '../theme/theme';
+import { getStyles } from '../styles/item.styles';
 
-export const renderLeftAction = (prog, drag, mode) => {
+export const renderLeftAction = (prog, drag, mode, theme) => {
+  const styles = getStyles(theme);
   const isRecycle = mode === 'hardDelete';
 
   const opacity = drag.interpolate({

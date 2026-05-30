@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { styles } from './RpgTab.styles';
-import { theme } from '../theme/theme';
+import { getStyles } from './RpgTab.styles';
+import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { getLogicalDateStr } from '../utils/date';
 
 const moodConfig = {
@@ -49,6 +49,19 @@ export const RpgTab = ({
   setCalendarVisible,
   settings,
 }) => {
+  const styles = useStyles(getStyles);
+  const { theme } = useAppTheme();
+  const isDark = settings?.theme === 'dark';
+  const activeMoodConfig = useMemo(() => {
+    return {
+      1: { icon: 'emoticon-dead-outline', color: isDark ? '#94A3B8' : '#64748B', glassBg: isDark ? '#334155' : '#EDF2F7', dashboardBg: isDark ? '#1E293B' : '#CBD9EF', label: 'Ужасно' },
+      2: { icon: 'emoticon-sad-outline', color: isDark ? '#FB7185' : '#F43F5E', glassBg: isDark ? '#4c0519' : '#FFE4E6', dashboardBg: isDark ? '#881337' : '#DCD2E9', label: 'Плохо' },
+      3: { icon: 'emoticon-neutral-outline', color: isDark ? '#F59E0B' : '#D98A2F', glassBg: isDark ? '#451a03' : '#FEF3C7', dashboardBg: isDark ? '#78350f' : '#D9DCE4', label: 'Нормально' },
+      4: { icon: 'emoticon-happy-outline', color: isDark ? '#34D399' : '#10B981', glassBg: isDark ? '#064e3b' : '#D1FAE5', dashboardBg: isDark ? '#065f46' : '#C1E1EE', label: 'Хорошо' },
+      5: { icon: 'emoticon-excited-outline', color: isDark ? '#C084FC' : '#8B5CF6', glassBg: isDark ? '#2e1065' : '#EDE9FE', dashboardBg: isDark ? '#4c1d95' : '#CFD6FC', label: 'Отлично' },
+    };
+  }, [isDark]);
+
   const [selectedDayDetail, setSelectedDayDetail] = useState(null);
   const [isHabitsExpanded, setIsHabitsExpanded] = useState(false);
 
@@ -862,10 +875,10 @@ export const RpgTab = ({
   // --- DASHBOARD (DEFAULT VIEW) ---
 
 
-  const hasTodayMood = todayMood && moodConfig[todayMood];
-  const dateBtnBg = hasTodayMood ? moodConfig[todayMood].dashboardBg : '#d9e7fd';
-  const dateBtnBorder = hasTodayMood ? moodConfig[todayMood].color : '#3B82F6';
-  const dateBtnTextColor = hasTodayMood ? moodConfig[todayMood].color : '#3B82F6';
+  const hasTodayMood = todayMood && activeMoodConfig[todayMood];
+  const dateBtnBg = hasTodayMood ? activeMoodConfig[todayMood].dashboardBg : theme.colors.primaryLight;
+  const dateBtnBorder = hasTodayMood ? activeMoodConfig[todayMood].color : theme.colors.primary;
+  const dateBtnTextColor = hasTodayMood ? activeMoodConfig[todayMood].color : theme.colors.primary;
 
   return (
     <View style={styles.container}>
@@ -997,7 +1010,7 @@ export const RpgTab = ({
                 style={{
                   fontSize: 22,
                   fontWeight: 'bold',
-                  color: '#000000',
+                  color: theme.colors.text.primary,
                   textTransform: 'uppercase',
                 }}
               >
@@ -1012,11 +1025,11 @@ export const RpgTab = ({
             <View style={styles.calendarGrid}>
               {calendarCells.map((cell, index) => {
                 const dayLog = cell.dateStr ? rpgHistory.find(h => h.date === cell.dateStr) : null;
-                const hasCellMood = dayLog && moodConfig[dayLog.mood];
+                const hasCellMood = dayLog && activeMoodConfig[dayLog.mood];
 
-                const cellBg = hasCellMood ? moodConfig[dayLog.mood].glassBg : (cell.day ? '#F1F5F9' : 'transparent');
-                const cellBorderColor = hasCellMood ? moodConfig[dayLog.mood].color : 'transparent';
-                const cellTextColor = hasCellMood ? moodConfig[dayLog.mood].color : theme.colors.text.secondary;
+                const cellBg = hasCellMood ? activeMoodConfig[dayLog.mood].glassBg : (cell.day ? theme.colors.border.light : 'transparent');
+                const cellBorderColor = hasCellMood ? activeMoodConfig[dayLog.mood].color : 'transparent';
+                const cellTextColor = hasCellMood ? activeMoodConfig[dayLog.mood].color : theme.colors.text.secondary;
                 const cellBorderWidth = hasCellMood ? 1.5 : 0;
 
                 return (
@@ -1061,9 +1074,9 @@ export const RpgTab = ({
                     <Text style={styles.statLabel}>Настроение</Text>
                     {selectedDayDetail.log.mood ? (
                       <MaterialCommunityIcons
-                        name={moodConfig[selectedDayDetail.log.mood].icon}
+                        name={activeMoodConfig[selectedDayDetail.log.mood].icon}
                         size={28}
-                        color={moodConfig[selectedDayDetail.log.mood].color}
+                        color={activeMoodConfig[selectedDayDetail.log.mood].color}
                         style={{ marginTop: 4 }}
                       />
                     ) : (
@@ -1144,7 +1157,7 @@ export const RpgTab = ({
                               style={{
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                backgroundColor: '#FFFFFF',
+                                backgroundColor: theme.colors.surface,
                                 borderRadius: 10,
                                 paddingVertical: 8,
                                 paddingHorizontal: 12,

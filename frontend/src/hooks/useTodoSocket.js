@@ -5,7 +5,7 @@ import { AuthStorage, RpgStorage, TodoStorage } from '../utils/storage';
 
 const timeToReset = [18, 45, 0, 0];
 
-export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings) => {
+export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings, setMainTab) => {
   useEffect(() => {
     let shouldReplaceTodos = false;
     let shouldReplaceHistory = false;
@@ -48,6 +48,9 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
 
       AuthStorage.setSettings(finalSettings);
       setSettings(finalSettings);
+      if (setMainTab && finalSettings?.main_page) {
+        setMainTab(finalSettings.main_page);
+      }
     });
 
     socket.on('server:all_todos', (serverTodos) => {
@@ -225,6 +228,9 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
       startTransition(() => {
         AuthStorage.setSettings(serverSettings);
         setSettings(serverSettings);
+        if (setMainTab && serverSettings?.main_page) {
+          setMainTab(serverSettings.main_page);
+        }
       });
     });
 
@@ -240,5 +246,5 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
       socket.off('server:daily_history_updated');
       socket.off('server:settings_updated');
     };
-  }, [setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings]);
+  }, [setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings, setMainTab]);
 };

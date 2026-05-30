@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
-import { theme } from '../theme/theme';
 
-export const styles = StyleSheet.create({
+export const getStyles = (theme) => StyleSheet.create({
   header: {
     marginTop: theme.spacing.smd,
     height: theme.sizes.headerHeight,
@@ -73,7 +72,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     transform: [{ translateY: -230 }],
     justifyContent: 'space-evenly',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.surface,
     height: theme.sizes.moodMeterHeight,
     width: '99%',
     elevation: 1,

@@ -2,11 +2,14 @@ import { memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { styles } from '../styles/item.styles';
-import { theme } from '../theme/theme';
+import { getStyles } from '../styles/item.styles';
+import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { socket } from '../utils/socket';
 
 const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
+  const styles = useStyles(getStyles);
+  const { theme } = useAppTheme();
+
   const handleDelete = useCallback(() => {
     deleteTodo(item.id);
   }, [item.id, deleteTodo]);
@@ -77,7 +80,6 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
 });
 
 export const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList, context, rpgSubtab }) => {
-
   const activeTodos = useMemo(() => {
     return todoList.filter(item => {
       if (!item.deleted) return false;

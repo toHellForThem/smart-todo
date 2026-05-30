@@ -1,9 +1,11 @@
 import { memo, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, Text, Animated } from 'react-native';
-import { styles } from './TabBar.styles';
-import { theme } from '../theme/theme';
+import { getStyles } from './TabBar.styles';
+import { useAppTheme, useStyles } from '../theme/ThemeContext';
 
 export const TabBar = memo(({ currentTab, setCurrentTab, rpgSubtab, activeView }) => {
+  const styles = useStyles(getStyles);
+  const { theme } = useAppTheme();
   const isRpgActive = currentTab === 'rpg';
   const isTodoActive = currentTab === 'todo';
   const isDailyActive = currentTab === 'daily';
@@ -64,7 +66,7 @@ export const TabBar = memo(({ currentTab, setCurrentTab, rpgSubtab, activeView }
         onPress={() => setCurrentTab('rpg')}
       >
         {renderActiveIndicator(isRpgActive)}
-        <Text style={styles.tabText}>RPG</Text>
+        <Text style={[styles.tabText, { color: isRpgActive ? theme.colors.primary : theme.colors.text.secondary }]}>RPG</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -76,7 +78,7 @@ export const TabBar = memo(({ currentTab, setCurrentTab, rpgSubtab, activeView }
         onPress={() => setCurrentTab('todo')}
       >
         {renderActiveIndicator(isTodoActive)}
-        <Text style={styles.tabText}>To Do</Text>
+        <Text style={[styles.tabText, { color: isTodoActive ? theme.colors.primary : theme.colors.text.secondary }]}>To Do</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -88,7 +90,7 @@ export const TabBar = memo(({ currentTab, setCurrentTab, rpgSubtab, activeView }
         onPress={() => setCurrentTab('daily')}
       >
         {renderActiveIndicator(isDailyActive)}
-        <Text style={styles.tabText}>Daily</Text>
+        <Text style={[styles.tabText, { color: isDailyActive ? theme.colors.primary : theme.colors.text.secondary }]}>Daily</Text>
       </TouchableOpacity>
     </View>
   );

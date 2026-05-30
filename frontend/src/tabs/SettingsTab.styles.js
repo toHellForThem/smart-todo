@@ -1,7 +1,6 @@
 import { StyleSheet, Platform } from 'react-native';
-import { theme } from '../theme/theme';
 
-export const styles = StyleSheet.create({
+export const getStyles = (theme) => StyleSheet.create({
   scrollContainer: {
     padding: theme.spacing.md,
     paddingBottom: theme.spacing.xxl,

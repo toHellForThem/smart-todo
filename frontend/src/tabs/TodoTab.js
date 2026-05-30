@@ -2,11 +2,15 @@ import { memo, useCallback, useMemo, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, FlatList, Text, Keyboard } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { styles } from './TodoTab.styles';
-import { styles as itemStyles } from '../styles/item.styles';
-import { theme } from '../theme/theme';
+import { getStyles } from './TodoTab.styles';
+import { getStyles as getItemStyles } from '../styles/item.styles';
+import { useAppTheme, useStyles } from '../theme/ThemeContext';
 
 const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
+  const styles = useStyles(getStyles);
+  const itemStyles = useStyles(getItemStyles);
+  const { theme } = useAppTheme();
+
   const handlePress = useCallback(() => {
     statusChangeTask(item.id, 1);
   }, [item.id, item.completed, statusChangeTask]);
@@ -69,6 +73,8 @@ export const TodoTab = memo(({
   statusChangeTask,
   leftAction
 }) => {
+  const styles = useStyles(getStyles);
+  const { theme } = useAppTheme();
 
   const activeTodos = useMemo(() =>
     todoList.filter(item => item.type === 'todo' && !item.deleted),

@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
-import { theme } from '../theme/theme';
 
-export const styles = StyleSheet.create({
+export const getStyles = (theme) => StyleSheet.create({
   todoItem: {
     flexDirection: 'row',
     alignItems: 'center',

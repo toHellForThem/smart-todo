@@ -10,10 +10,10 @@ import {
 import { TextInput as PaperInput, PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
-import { styles } from './SettingsTab.styles';
+import { getStyles } from './SettingsTab.styles';
 import { AuthStorage, TodoStorage, RpgStorage } from '../utils/storage';
 import { socket } from '../utils/socket';
-import { theme } from '../theme/theme';
+import { useAppTheme, useStyles } from '../theme/ThemeContext';
 
 export const SettingsTab = ({
   authMode,
@@ -23,8 +23,11 @@ export const SettingsTab = ({
   settings,
   setSettings,
   setTodoList,
-  setRpgHistory
+  setRpgHistory,
+  setMainTab
 }) => {
+  const styles = useStyles(getStyles);
+  const { theme } = useAppTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setPasswordVisible] = useState(false);
@@ -98,6 +101,18 @@ export const SettingsTab = ({
     if (authMode === 'auth') {
       socket.emit('client:update_settings', updated);
     }
+    if (key === 'main_page' && setMainTab) {
+      setMainTab(value);
+    }
+  };
+
+  const handleThemeChange = (newTheme) => {
+    updateSetting('theme', newTheme);
+    Toast.show({
+      type: 'success',
+      text1: 'Тема успешно изменена',
+      visibilityTime: 2000
+    });
   };
 
   // Parsing current reset time
@@ -489,6 +504,52 @@ export const SettingsTab = ({
                   </View>
                 </View>
               )}
+            </View>
+          )}
+
+          {/* 3.5 Theme Selector Section */}
+          {authState === '' && (
+            <View style={styles.card}>
+              <View style={styles.cardHeaderWithIcon}>
+                <MaterialCommunityIcons name="palette-outline" size={20} color={theme.colors.primary} />
+                <Text style={styles.cardTitle}>Выбор темы оформления</Text>
+              </View>
+
+              <View style={styles.segmentedControl}>
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    settings?.theme !== 'dark' && styles.segmentButtonActive
+                  ]}
+                  onPress={() => handleThemeChange('default')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      settings?.theme !== 'dark' && styles.segmentTextActive
+                    ]}
+                  >
+                    Голубая
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    settings?.theme === 'dark' && styles.segmentButtonActive
+                  ]}
+                  onPress={() => handleThemeChange('dark')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      settings?.theme === 'dark' && styles.segmentTextActive
+                    ]}
+                  >
+                    Темная
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
 

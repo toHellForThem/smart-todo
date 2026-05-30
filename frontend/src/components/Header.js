@@ -1,10 +1,10 @@
 import { memo } from 'react';
-import { View, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { GestureDetector } from 'react-native-gesture-handler';
 import ReAnimated from 'react-native-reanimated';
-import { styles } from './Header.styles';
-import { theme } from '../theme/theme';
+import { getStyles } from './Header.styles';
+import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { getLogicalDateStr } from '../utils/date';
 
 export const Header = memo(({
@@ -24,6 +24,8 @@ export const Header = memo(({
   rpgHistory,
   settings,
 }) => {
+  const styles = useStyles(getStyles);
+  const { theme } = useAppTheme();
   const todayStr = getLogicalDateStr(settings?.reset_time);
   const todayEntry = rpgHistory?.find(item => item.date === todayStr);
   const currentMoodValue = todayEntry ? todayEntry.mood : null;
@@ -41,7 +43,7 @@ export const Header = memo(({
 
       <GestureDetector gesture={panGesture}>
         <View style={styles.scoreContainer} onPress={() => { }}>
-          <Text style={{ fontSize: 20 }}>Как твои делишки?</Text>
+          <Text style={{ fontSize: 20, color: theme.colors.text.primary }}>Как твои делишки?</Text>
           <ReAnimated.View style={[styles.contentPlaceholder, animatedContentProps]}>
             <ReAnimated.View style={[styles.moodMeter, contentAnimatedStyle]}>
               {moods.map((mood) => {

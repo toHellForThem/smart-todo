@@ -1,8 +1,10 @@
 import { memo, useEffect, useRef, useMemo } from 'react';
 import { View, Animated } from 'react-native';
-import { styles } from './FillProgress.styles';
+import { getStyles } from './FillProgress.styles';
+import { useStyles } from '../theme/ThemeContext';
 
 export const FillProgress = memo(({ progressNow, progressEnd }) => {
+  const styles = useStyles(getStyles);
   const scaleX = useRef(new Animated.Value(0)).current;
   const segments = useMemo(() => Array.from({ length: progressEnd }), [progressEnd]);
 

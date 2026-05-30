@@ -2,13 +2,17 @@ import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { View, TextInput, TouchableOpacity, FlatList, Text, Keyboard, LayoutAnimation } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { styles } from './DailyTab.styles';
-import { styles as itemStyles } from '../styles/item.styles';
-import { theme } from '../theme/theme';
+import { getStyles } from './DailyTab.styles';
+import { getStyles as getItemStyles } from '../styles/item.styles';
+import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { FillProgress } from '../components/FillProgress';
 
 
 const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
+  const styles = useStyles(getStyles);
+  const itemStyles = useStyles(getItemStyles);
+  const { theme } = useAppTheme();
+
   const handlePress = useCallback(() => {
     statusChangeTask(item.id);
   }, [item.id, statusChangeTask]);
@@ -78,6 +82,8 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
 });
 
 export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
+  const styles = useStyles(getStyles);
+  const { theme } = useAppTheme();
   const [task, setTask] = useState('');
   const [progressEnd, setProgressEnd] = useState(1);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -172,7 +178,7 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
         }}>
           <Ionicons name="remove-circle-outline" size={30} color={theme.colors.icon.primary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', marginHorizontal: 5 }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', marginHorizontal: 5, color: theme.colors.text.primary }}>
           {progressEnd}
         </Text>
         <TouchableOpacity hitSlop={20} onPress={() => {

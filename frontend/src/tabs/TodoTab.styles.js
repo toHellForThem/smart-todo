@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
-import { theme } from '../theme/theme';
 
-export const styles = StyleSheet.create({
+export const getStyles = (theme) => StyleSheet.create({
   todoWrapper: {
     flex: 1,
   },
@@ -10,7 +9,7 @@ export const styles = StyleSheet.create({
     marginTop: theme.spacing.xl,
     paddingBottom: theme.spacing.xl,
     borderBottomWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.colors.border.light,
     paddingHorizontal: theme.spacing.xl,
   },
   input: {
