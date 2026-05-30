@@ -86,10 +86,17 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
   const { theme } = useAppTheme();
   const [task, setTask] = useState('');
   const [progressEnd, setProgressEnd] = useState(1);
+  const [selectedDays, setSelectedDays] = useState('1111111');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
   const dailies = useMemo(() =>
-    todoList.filter(item => item.type === 'daily' && !item.deleted),
+    todoList.filter(item => {
+      if (item.type !== 'daily' || item.deleted) return false;
+      const todayDayIdx = (new Date().getDay() + 6) % 7;
+      const daysStr = item.days || '1111111';
+      return daysStr[todayDayIdx] === '1';
+    }),
     [todoList]
   );
 
@@ -132,10 +139,11 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
 
   const handleAdd = useCallback(() => {
     if (task.trim()) {
-      onAdd(task, progressEnd);
+      onAdd(task, progressEnd, 'daily', 0, 0, selectedDays);
       setTask('');
+      setSelectedDays('1111111');
     }
-  }, [task, progressEnd, onAdd]);
+  }, [task, progressEnd, selectedDays, onAdd]);
 
   const renderItem = useCallback(({ item }) => (
     <DailyItem
@@ -171,21 +179,67 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
       />
       <View style={[styles.floatingContainer, {
         bottom: keyboardHeight - 71,
-        opacity: isKeyboardVisible ? 1 : 0
+        opacity: isKeyboardVisible ? 1 : 0,
+        flexDirection: 'column',
+        height: 100,
+        paddingVertical: 12,
+        justifyContent: 'space-between',
+        alignItems: 'center',
       }]}>
-        <TouchableOpacity hitSlop={20} onPress={() => {
-          setProgressEnd(progressEnd === 1 ? 1 : progressEnd - 1);
-        }}>
-          <Ionicons name="remove-circle-outline" size={30} color={theme.colors.icon.primary} />
-        </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', marginHorizontal: 5, color: theme.colors.text.primary }}>
-          {progressEnd}
-        </Text>
-        <TouchableOpacity hitSlop={20} onPress={() => {
-          setProgressEnd(progressEnd === 20 ? 20 : progressEnd + 1);
-        }}>
-          <Ionicons name="add-circle-outline" size={30} color={theme.colors.icon.primary} />
-        </TouchableOpacity>
+        {/* Row 1: Weekdays Selector */}
+        <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', width: '100%' }}>
+          {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, idx) => {
+            const isSelected = selectedDays[idx] === '1';
+            return (
+              <TouchableOpacity
+                key={day}
+                onPress={() => {
+                  setSelectedDays(prev => {
+                    const arr = prev.split('');
+                    arr[idx] = arr[idx] === '1' ? '0' : '1';
+                    if (arr.every(x => x === '0')) return prev;
+                    return arr.join('');
+                  });
+                }}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 9,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isSelected ? theme.colors.background : 'transparent',
+                  borderWidth: 1.5,
+                  borderColor: isSelected ? theme.colors.primary : 'transparent',
+                }}
+              >
+                <Text style={{
+                  fontSize: 13,
+                  fontWeight: 'bold',
+                  color: isSelected ? theme.colors.primary : theme.colors.text.secondary
+                }}>
+                  {day}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Row 2: Progress End Selector */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+          <TouchableOpacity hitSlop={15} onPress={() => {
+            setProgressEnd(progressEnd === 1 ? 1 : progressEnd - 1);
+          }}>
+            <Ionicons name="remove-circle-outline" size={24} color={theme.colors.icon.primary} />
+          </TouchableOpacity>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', marginHorizontal: 15, color: theme.colors.text.primary }}>
+            {progressEnd}
+          </Text>
+          <TouchableOpacity hitSlop={15} onPress={() => {
+            setProgressEnd(progressEnd === 20 ? 20 : progressEnd + 1);
+          }}>
+            <Ionicons name="add-circle-outline" size={24} color={theme.colors.icon.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.progressContainer}>
         <Text style={[styles.progressText, progress === 100 && styles.progressTextCompleted]}>Прогресс дня: {progress}%</Text>

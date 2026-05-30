@@ -62,6 +62,7 @@ async def init_db():
                     progress_end TEXT DEFAULT '1',
                     user_id INTEGER,
                     contribution INTEGER DEFAULT 0,
+                    days TEXT DEFAULT '1111111',
                     PRIMARY KEY (id, user_id),
                     FOREIGN KEY (user_id) REFERENCES users (id)
                 )
@@ -91,9 +92,9 @@ async def init_db():
             except Exception:
                 pass
 
-            # Migration to add updated_at column if not exists
+            # Migration to add days column to todos if not exists
             try:
-                await db.execute("ALTER TABLE daily_history ADD COLUMN updated_at INTEGER DEFAULT 0")
+                await db.execute("ALTER TABLE todos ADD COLUMN days TEXT DEFAULT '1111111'")
             except Exception:
                 pass
 
@@ -162,6 +163,7 @@ class Todo(BaseModel):
     progressNow: Union[int, str] = 0
     progressEnd: Union[int, str] = 1
     contribution: int = 0
+    days: str = "1111111"
 
 
 @sio.on("client:register")
@@ -331,7 +333,8 @@ async def handle_get_todos(sid):
             type=r["type"],
             progressNow=r["progress_now"],
             progressEnd=r["progress_end"],
-            contribution=r["contribution"] if "contribution" in r.keys() else 0
+            contribution=r["contribution"] if "contribution" in r.keys() else 0,
+            days=r["days"] if "days" in r.keys() else "1111111"
         )
         todos.append(todo_obj.model_dump())
 
@@ -362,8 +365,8 @@ async def handle_sync(sid, data):
     if not row or client_updated_at > row[0]["updated_at"]:
         await db_query(
             """
-            INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at, type, progress_now, progress_end, user_id, contribution)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at, type, progress_now, progress_end, user_id, contribution, days)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             (
                 data["id"],
@@ -375,7 +378,8 @@ async def handle_sync(sid, data):
                 str(data["progressNow"]),
                 str(data["progressEnd"]),
                 user_id,
-                data.get("contribution", 0)
+                data.get("contribution", 0),
+                data.get("days", "1111111")
             ),
         )
         await sio.emit("server:todo_updated", data, room=user_id, skip_sid=sid)
@@ -511,8 +515,8 @@ async def handle_bulk_sync_todos(sid, client_todos):
         if not row or client_updated_at > row[0]["updated_at"]:
             await db_query(
                 """
-                INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at, type, progress_now, progress_end, user_id, contribution)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO todos (id, text, completed, deleted, updated_at, type, progress_now, progress_end, user_id, contribution, days)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     todo["id"],
@@ -524,7 +528,8 @@ async def handle_bulk_sync_todos(sid, client_todos):
                     str(todo["progressNow"]),
                     str(todo["progressEnd"]),
                     user_id,
-                    todo.get("contribution", 0)
+                    todo.get("contribution", 0),
+                    todo.get("days", "1111111")
                 ),
             )
             await sio.emit("server:todo_updated", todo, room=user_id, skip_sid=sid)

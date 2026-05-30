@@ -369,12 +369,14 @@ export const RpgTab = ({
   const dayHabits = useMemo(() => {
     if (!selectedDayDetail) return [];
     if (selectedDayDetail.dateStr === todayStr) {
-      return allHabits.map(item => ({
-        id: item.id,
-        text: item.text,
-        contribution: item.contribution,
-        progressNow: parseInt(item.progressNow, 10) || 0
-      }));
+      return allHabits
+        .map(item => ({
+          id: item.id,
+          text: item.text,
+          contribution: item.contribution,
+          progressNow: parseInt(item.progressNow, 10) || 0
+        }))
+        .filter(h => h.progressNow !== 0);
     }
     if (!selectedDayDetail.log || !selectedDayDetail.log.habits_detail) {
       return [];
@@ -383,7 +385,15 @@ export const RpgTab = ({
       const parsed = typeof selectedDayDetail.log.habits_detail === 'string'
         ? JSON.parse(selectedDayDetail.log.habits_detail)
         : selectedDayDetail.log.habits_detail;
-      return Array.isArray(parsed) ? parsed : [];
+      const list = Array.isArray(parsed) ? parsed : [];
+      return list
+        .map(h => ({
+          id: h.id,
+          text: h.text,
+          contribution: h.contribution,
+          progressNow: parseInt(h.progressNow, 10) || 0
+        }))
+        .filter(h => h.progressNow !== 0);
     } catch (e) {
       console.log('Error parsing habits_detail:', e);
       return [];

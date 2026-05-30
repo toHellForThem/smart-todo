@@ -185,7 +185,7 @@ export const useTodoActions = (mainTab, settings) => {
   }, [todoList, settings]);
 
   // --- TODO ACTIONS ---
-  const addTask = useCallback((task, progressEnd = 1, type = mainTab, progressNow = 0, contribution = 0) => {
+  const addTask = useCallback((task, progressEnd = 1, type = mainTab, progressNow = 0, contribution = 0, days = '1111111') => {
     if (task.trim()) {
       let defaultContrib = contribution;
       if (defaultContrib === 0) {
@@ -201,6 +201,7 @@ export const useTodoActions = (mainTab, settings) => {
         progressNow: progressNow,
         progressEnd: progressEnd,
         contribution: defaultContrib,
+        days: days,
       };
       setTodoList(prev => [newTodo, ...prev]);
       socket.emit('client:sync_todo', newTodo);
