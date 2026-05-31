@@ -117,6 +117,38 @@ export const RpgTab = ({
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => getLogicalDateStr(settings?.reset_time), [settings?.reset_time]);
 
+  // Calendar active view date state
+  const [viewDate, setViewDate] = useState(() => new Date());
+
+  // Reset calendar to current month when modal becomes visible
+  useEffect(() => {
+    if (isCalendarVisible) {
+      setViewDate(new Date());
+    }
+  }, [isCalendarVisible]);
+
+  const handlePrevMonth = () => {
+    setViewDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(1); // Set to 1st first to prevent 31st day overflow (e.g. May 31 -> June 31/July 1)
+      newDate.setMonth(prev.getMonth() - 1);
+      return newDate;
+    });
+    setSelectedDayDetail(null);
+    setIsHabitsExpanded(false);
+  };
+
+  const handleNextMonth = () => {
+    setViewDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(1); // Set to 1st first to prevent 31st day overflow (e.g. May 31 -> June 31/July 1)
+      newDate.setMonth(prev.getMonth() + 1);
+      return newDate;
+    });
+    setSelectedDayDetail(null);
+    setIsHabitsExpanded(false);
+  };
+
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
       setKeyboardHeight(e.endCoordinates.height);
@@ -269,14 +301,24 @@ export const RpgTab = ({
     ? dailyStats.negativeCount
     : (selectedDayDetail?.log?.neg_points || 0);
 
-  // Helper to get Russian month name
-  const currentMonthName = monthsRU[today.getMonth()];
-  const currentMonthGenitive = monthsGenitiveRU[today.getMonth()];
+  // Today's month name for dashboard button
+  const todayMonthGenitive = useMemo(() => monthsGenitiveRU[today.getMonth()], [today]);
+
+  // Helper to get Russian month name for calendar view
+  const currentMonthName = useMemo(() => monthsRU[viewDate.getMonth()], [viewDate]);
+
+  // Selected day's month name in genitive for detailed block
+  const selectedDayMonthGenitive = useMemo(() => {
+    if (!selectedDayDetail?.dateStr) return '';
+    const parts = selectedDayDetail.dateStr.split('-');
+    const m = parseInt(parts[1], 10) - 1;
+    return monthsGenitiveRU[m] || '';
+  }, [selectedDayDetail]);
 
   // Month Calendar cell definitions
   const calendarCells = useMemo(() => {
-    const year = today.getFullYear();
-    const month = today.getMonth();
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
     const totalDays = new Date(year, month + 1, 0).getDate();
     const firstDayIndex = new Date(year, month, 1).getDay();
     // Monday starting offset
@@ -293,7 +335,7 @@ export const RpgTab = ({
       cells.push({ day, dateStr });
     }
     return cells;
-  }, [today]);
+  }, [viewDate]);
 
   // Handle day tap on calendar
   const handleDayPress = (cell) => {
@@ -960,7 +1002,7 @@ export const RpgTab = ({
               onPress={() => setCalendarVisible(true)}
             >
               <Text style={[styles.dateNumber, { color: dateBtnTextColor }]}>{today.getDate()}</Text>
-              <Text style={[styles.dateMonth, { color: dateBtnTextColor }]}>{currentMonthGenitive}</Text>
+              <Text style={[styles.dateMonth, { color: dateBtnTextColor }]}>{todayMonthGenitive}</Text>
             </TouchableOpacity>
 
             <View style={styles.dashboardStatsColumn}>
@@ -1055,7 +1097,7 @@ export const RpgTab = ({
               />
             </TouchableOpacity>
 
-            {/* Pinned Absolute Month/Year Title */}
+            {/* Pinned Absolute Month/Year Title with Navigation Chevrons */}
             <View
               style={{
                 position: 'absolute',
@@ -1065,35 +1107,87 @@ export const RpgTab = ({
                 backgroundColor: theme.colors.icon.bg,
                 borderBottomRightRadius: 14,
                 borderTopLeftRadius: 14,
-                paddingVertical: 10,
-                paddingHorizontal: 18,
+                paddingVertical: 6,
+                paddingHorizontal: 6,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
               }}
             >
+              <TouchableOpacity
+                onPress={handlePrevMonth}
+                style={{
+                  padding: 4,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="chevron-back" size={28} color={theme.colors.icon.primary} />
+              </TouchableOpacity>
+
               <Text
                 style={{
-                  fontSize: 22,
+                  fontSize: 19,
                   fontWeight: 'bold',
                   color: theme.colors.text.primary,
                   textTransform: 'uppercase',
+                  minWidth: 156,
+                  textAlign: 'center',
                 }}
               >
-                {currentMonthName} {today.getFullYear()}
+                {currentMonthName} {viewDate.getFullYear()}
               </Text>
+
+              <TouchableOpacity
+                onPress={handleNextMonth}
+                style={{
+                  padding: 4,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="chevron-forward" size={28} color={theme.colors.icon.primary} />
+              </TouchableOpacity>
             </View>
 
             {/* Layout spacer to push calendar grid below absolute top header elements */}
-            <View style={{ height: 38 }} />
+            <View style={{ height: 42 }} />
 
             {/* Grid Calendar mapping */}
             <View style={styles.calendarGrid}>
               {calendarCells.map((cell, index) => {
                 const dayLog = cell.dateStr ? rpgHistory.find(h => h.date === cell.dateStr) : null;
                 const hasCellMood = dayLog && activeMoodConfig[dayLog.mood];
+                const isToday = cell.dateStr === todayStr;
+                const isSelected = selectedDayDetail && selectedDayDetail.dateStr === cell.dateStr;
 
-                const cellBg = hasCellMood ? activeMoodConfig[dayLog.mood].glassBg : (cell.day ? theme.colors.border.light : 'transparent');
-                const cellBorderColor = hasCellMood ? activeMoodConfig[dayLog.mood].color : 'transparent';
-                const cellTextColor = hasCellMood ? activeMoodConfig[dayLog.mood].color : theme.colors.text.secondary;
-                const cellBorderWidth = hasCellMood ? 1.5 : 0;
+                let cellBg = 'transparent';
+                let cellBorderColor = 'transparent';
+                let cellTextColor = theme.colors.text.secondary;
+                let cellBorderWidth = 0;
+
+                if (cell.day) {
+                  if (hasCellMood) {
+                    cellBg = activeMoodConfig[dayLog.mood].glassBg;
+                    cellBorderColor = activeMoodConfig[dayLog.mood].color;
+                    cellTextColor = activeMoodConfig[dayLog.mood].color;
+                    cellBorderWidth = isSelected ? 3 : 1.5;
+                  } else {
+                    cellBg = theme.colors.border.light;
+                    if (isToday) {
+                      cellBorderColor = theme.colors.primary;
+                      cellBorderWidth = 1.5;
+                      cellTextColor = theme.colors.primary;
+                    }
+                    if (isSelected) {
+                      cellBorderColor = theme.colors.primary;
+                      cellBorderWidth = 3;
+                      cellTextColor = theme.colors.primary;
+                    }
+                  }
+                }
 
                 return (
                   <TouchableOpacity
@@ -1114,7 +1208,7 @@ export const RpgTab = ({
                         styles.calendarCellText,
                         {
                           color: cellTextColor,
-                          fontWeight: hasCellMood ? 'bold' : '600',
+                          fontWeight: (hasCellMood || isSelected || isToday) ? 'bold' : '600',
                         }
                       ]}>
                         {cell.day}
@@ -1129,7 +1223,7 @@ export const RpgTab = ({
             {selectedDayDetail && (
               <View style={styles.dayDetailBlock}>
                 <Text style={styles.dayDetailTitle}>
-                  Сводка за {selectedDayDetail.day} {currentMonthGenitive}
+                  Сводка за {selectedDayDetail.day} {selectedDayMonthGenitive}
                 </Text>
 
                 <View style={styles.dayDetailGrid}>

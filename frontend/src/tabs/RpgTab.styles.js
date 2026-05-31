@@ -196,8 +196,8 @@ export const getStyles = (theme) => {
     marginBottom: 20,
   },
   calendarCell: {
-    width: (width - 110) / 7,
-    height: (width - 110) / 7,
+    width: (width - 130) / 7,
+    height: (width - 130) / 7,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
