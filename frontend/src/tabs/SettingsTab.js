@@ -12,7 +12,7 @@ import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { getStyles } from './SettingsTab.styles';
 import { AuthStorage, TodoStorage, RpgStorage } from '../utils/storage';
-import { socket } from '../utils/socket';
+import { socket, updateSocketUrlAndReconnect } from '../utils/socket';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
 
 export const SettingsTab = ({
@@ -31,6 +31,49 @@ export const SettingsTab = ({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setPasswordVisible] = useState(false);
+  const [serverUrlInput, setServerUrlInput] = useState(() => AuthStorage.getServerUrl() || '');
+
+  const handleSaveServerUrl = () => {
+    Keyboard.dismiss();
+    const url = serverUrlInput.trim();
+    if (!url) {
+      Toast.show({
+        type: 'error',
+        text1: 'Пожалуйста, введите корректный URL',
+        visibilityTime: 3000
+      });
+      return;
+    }
+
+    // Add http:// if protocol is missing
+    let formattedUrl = url;
+    if (!/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = 'http://' + formattedUrl;
+    }
+
+    updateSocketUrlAndReconnect(formattedUrl);
+    setServerUrlInput(formattedUrl);
+
+    Toast.show({
+      type: 'success',
+      text1: 'Адрес сервера сохранен!',
+      text2: 'Переподключение к ' + formattedUrl,
+      visibilityTime: 3000
+    });
+  };
+
+  const handleResetServerUrl = () => {
+    Keyboard.dismiss();
+    updateSocketUrlAndReconnect('');
+    setServerUrlInput('');
+
+    Toast.show({
+      type: 'success',
+      text1: 'Адрес сброшен по умолчанию!',
+      text2: 'Переподключение к ' + (process.env.EXPO_PUBLIC_SOCKET_URL || ''),
+      visibilityTime: 3000
+    });
+  };
 
   useEffect(() => {
     if (!authMode) {
@@ -191,6 +234,51 @@ export const SettingsTab = ({
                   </View>
                 </View>
               )}
+            </View>
+          )}
+
+          {/* 1.5 Server Configuration Section */}
+          {authState === '' && (
+            <View style={styles.card}>
+              <View style={styles.cardHeaderWithIcon}>
+                <MaterialCommunityIcons name="server" size={20} color={theme.colors.primary} />
+                <Text style={styles.cardTitle}>Подключение к серверу (API)</Text>
+              </View>
+
+              <View style={{ marginTop: 12 }}>
+                <PaperInput
+                  placeholder=" http://192.168.1.50:8000"
+                  value={serverUrlInput}
+                  onChangeText={setServerUrlInput}
+                  mode="outlined"
+                  outlineColor={theme.colors.border.light}
+                  textColor={theme.colors.text.primary}
+                  theme={{
+                    roundness: theme.radius.lg,
+                    colors: {
+                      primary: theme.colors.icon.primary,
+                    },
+                  }}
+                  placeholderTextColor={theme.colors.text.muted}
+                  style={styles.authInput}
+                />
+
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                  <TouchableOpacity
+                    style={[styles.primaryAuthButton, { flex: 1, height: 40, paddingVertical: 0, justifyContent: 'center' }]}
+                    onPress={handleSaveServerUrl}
+                  >
+                    <Text style={styles.primaryAuthButtonText}>Сохранить</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.secondaryAuthButton, { flex: 1, height: 40, paddingVertical: 0, justifyContent: 'center' }]}
+                    onPress={handleResetServerUrl}
+                  >
+                    <Text style={styles.secondaryAuthButtonText}>Сбросить</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
           )}
 

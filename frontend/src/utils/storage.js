@@ -59,10 +59,14 @@ export const AuthStorage = {
     const defaultSettings = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '00:00', rpg_subtab: 'dashboard', reset_enabled: true };
     return data ? { ...defaultSettings, ...JSON.parse(data) } : defaultSettings;
   },
+
+  setServerUrl: (url) => core.set('server_url', url),
+  getServerUrl: () => core.get('server_url'),
   
   logout: () => {
     core.remove('username')
     core.remove('user_token');
     core.remove('user_settings');
+    core.remove('server_url');
   }
 };
