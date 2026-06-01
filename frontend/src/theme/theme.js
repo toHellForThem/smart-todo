@@ -81,8 +81,8 @@ export const pinkColors = {
   background: '#FDF2F8',
   surface: '#FFFFFF',
   text: {
-    primary: '#3F2C35', // Soft, highly readable deep rose-charcoal
-    secondary: '#5C4E55', // Soft warm slate
+    primary: '#3F2C35', 
+    secondary: '#5C4E55', 
     muted: '#94A3B8',
     white: '#FFFFFF',
     link: '#EC4899',
@@ -140,7 +140,6 @@ export const getTheme = (themeName) => {
   };
 };
 
-// Fallback static theme for legacy non-dynamic components
 const getActiveColors = () => {
   try {
     const saved = AuthStorage.getSettings();
@@ -154,7 +153,6 @@ const getActiveColors = () => {
       return pinkColors;
     }
   } catch (e) {
-    // Fallback if MMKV is not loaded yet
   }
   return defaultColors;
 };

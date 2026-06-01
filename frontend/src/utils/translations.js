@@ -1,11 +1,9 @@
 export const translations = {
   ru: {
-    // Navigation / Tabs
     tab_rpg: 'RPG',
     tab_todo: 'To Do',
     tab_daily: 'Daily',
 
-    // Header
     hdr_cloud_active: 'Облако активно',
     hdr_cloud_desc: 'Вы успешно подключены к серверу!',
     hdr_local_mode: 'Локальный режим',
@@ -13,18 +11,15 @@ export const translations = {
     hdr_how_are_things: 'Как твои делишки?',
     hdr_calendar: 'Календарь',
 
-    // TodoTab
     todo_placeholder: ' Добавить задачу...',
     todo_add: 'Добавить',
     swipe_delete: 'Удалить',
     swipe_to_trash: 'В корзину',
 
-    // DailyTab
     daily_placeholder: ' Что планируешь?',
     daily_progress: 'Прогресс дня: {progress}%',
     daily_weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
 
-    // RpgTab
     rpg_menu_habits: 'Привычки',
     rpg_menu_habits_desc: 'Счётчики хороших и плохих дел, которые имеют свойство повторяться',
     rpg_menu_piggy: 'Копилка',
@@ -56,25 +51,21 @@ export const translations = {
     rpg_cal_habits: 'Привычки',
     rpg_cal_no_habits: 'Нет записанных привычек за этот день',
 
-    // Moods
     mood_1: 'Ужасно',
     mood_2: 'Плохо',
     mood_3: 'Нормально',
     mood_4: 'Хорошо',
     mood_5: 'Отлично',
 
-    // Months Nominative
     months: [
       'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
       'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
     ],
-    // Months Genitive
     months_genitive: [
       'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
       'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
     ],
 
-    // SettingsTab
     set_profile: 'Профиль синхронизации',
     set_profile_local: 'Локальный профиль',
     set_profile_cloud: 'Облачный профиль',
@@ -118,12 +109,10 @@ export const translations = {
     set_desc: 'Умный таск-трекер с элементами RPG. Выполняйте дейлики, прокачивайте полезные привычки, копите на мечты в копилке и ведите учет любимых сериалов в одном месте!',
   },
   en: {
-    // Navigation / Tabs
     tab_rpg: 'RPG',
     tab_todo: 'To Do',
     tab_daily: 'Daily',
 
-    // Header
     hdr_cloud_active: 'Cloud Active',
     hdr_cloud_desc: 'Successfully connected to the server!',
     hdr_local_mode: 'Local Mode',
@@ -131,18 +120,15 @@ export const translations = {
     hdr_how_are_things: "How's it going?",
     hdr_calendar: 'Calendar',
 
-    // TodoTab
     todo_placeholder: ' Add task...',
     todo_add: 'Add',
     swipe_delete: 'Delete',
     swipe_to_trash: 'To Trash',
 
-    // DailyTab
     daily_placeholder: ' What are you planning?',
     daily_progress: 'Day Progress: {progress}%',
     daily_weekdays: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
 
-    // RpgTab
     rpg_menu_habits: 'Habits',
     rpg_menu_habits_desc: 'Counters of good and bad deeds that tend to repeat',
     rpg_menu_piggy: 'Piggy Bank',
@@ -174,25 +160,21 @@ export const translations = {
     rpg_cal_habits: 'Habits',
     rpg_cal_no_habits: 'No habits recorded for this day',
 
-    // Moods
     mood_1: 'Awful',
     mood_2: 'Bad',
     mood_3: 'Normal',
     mood_4: 'Good',
     mood_5: 'Excellent',
 
-    // Months Nominative
     months: [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ],
-    // Months Genitive
     months_genitive: [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ],
 
-    // SettingsTab
     set_profile: 'Sync Profile',
     set_profile_local: 'Local Profile',
     set_profile_cloud: 'Cloud Profile',

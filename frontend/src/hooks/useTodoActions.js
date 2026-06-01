@@ -8,7 +8,6 @@ export const useTodoActions = (mainTab, settings) => {
     const local = TodoStorage.getAll();
     const list = Array.isArray(local) ? local : [];
 
-    // Offline/Startup reset check
     const localSettings = AuthStorage.getSettings();
     if (localSettings?.reset_enabled !== false) {
       const resetTimeStr = localSettings?.reset_time || '00:00';
@@ -46,7 +45,6 @@ export const useTodoActions = (mainTab, settings) => {
   });
   const [rpgHistory, setRpgHistory] = useState(() => RpgStorage.getHistory());
 
-  // Save todoList to local storage when changed
   useEffect(() => {
     const timer = setTimeout(() => {
       TodoStorage.saveAll(todoList);
@@ -54,12 +52,10 @@ export const useTodoActions = (mainTab, settings) => {
     return () => clearTimeout(timer);
   }, [todoList]);
 
-  // Save RPG history to local storage when changed
   useEffect(() => {
     RpgStorage.saveHistory(rpgHistory);
   }, [rpgHistory]);
 
-  // Real-time reset timer
   useEffect(() => {
     let timerId;
 
@@ -105,17 +101,14 @@ export const useTodoActions = (mainTab, settings) => {
     };
   }, [settings]);
 
-  // Auto-sync today's history when todoList changes
   useEffect(() => {
     if (todoList.length === 0) return;
 
-    // Find the maximum updatedAt of daily/habit tasks to avoid race conditions during resets
     const maxUpdatedAt = todoList.length > 0
       ? Math.max(...todoList.map(t => t.updatedAt || 0))
       : Date.now();
     const todayStr = getLogicalDateStr(settings?.reset_time, maxUpdatedAt);
 
-    // Calculate current daily progress
     const dailies = todoList.filter(item => item.type === 'daily' && !item.deleted);
     let progress = 0.0;
     if (dailies.length > 0) {
@@ -129,7 +122,6 @@ export const useTodoActions = (mainTab, settings) => {
       progress = needProgress > 0 ? nowProgress / needProgress : 0.0;
     }
 
-    // Find today's habits points
     const positiveCount = todoList
       .filter(item => item.type === 'habit' && item.contribution === 1 && !item.deleted)
       .reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
@@ -137,7 +129,6 @@ export const useTodoActions = (mainTab, settings) => {
       .filter(item => item.type === 'habit' && item.contribution === -1 && !item.deleted)
       .reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
 
-    // Snapshot of today's active habits
     const habitsSnapshot = todoList
       .filter(item => item.type === 'habit' && !item.deleted)
       .map(item => ({
@@ -161,7 +152,6 @@ export const useTodoActions = (mainTab, settings) => {
         updatedAt: Date.now()
       };
 
-      // Check if anything has actually changed to avoid redundant updates
       if (
         existingEntry &&
         existingEntry.daily_progress === progress &&
@@ -186,7 +176,6 @@ export const useTodoActions = (mainTab, settings) => {
     });
   }, [todoList, settings]);
 
-  // --- TODO ACTIONS ---
   const addTask = useCallback((task, progressEnd = 1, type = mainTab, progressNow = 0, contribution = 0, days = '1111111') => {
     if (task.trim()) {
       let defaultContrib = contribution;
@@ -304,7 +293,6 @@ export const useTodoActions = (mainTab, settings) => {
             return updated;
           }
 
-          // Default behavior for other tasks (e.g. main/daily)
           if (todo.completed) {
             updated = {
               ...todo,
@@ -355,11 +343,9 @@ export const useTodoActions = (mainTab, settings) => {
     });
   }, []);
 
-  // --- RPG MOOD / DAILY HISTORY ACTIONS (Unified Calendar History logs) ---
   const handleMoodChange = useCallback((moodValue) => {
     const todayStr = getLogicalDateStr(settings?.reset_time);
 
-    // Calculate current daily progress
     const dailies = todoList.filter(item => item.type === 'daily' && !item.deleted);
     let progress = 0.0;
     if (dailies.length > 0) {
@@ -371,7 +357,6 @@ export const useTodoActions = (mainTab, settings) => {
       progress = nowProgress / needProgress;
     }
 
-    // Find today's habits points
     const positiveCount = todoList
       .filter(item => item.type === 'habit' && item.contribution === 1 && !item.deleted)
       .reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
@@ -379,7 +364,6 @@ export const useTodoActions = (mainTab, settings) => {
       .filter(item => item.type === 'habit' && item.contribution === -1 && !item.deleted)
       .reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
 
-    // Snapshot of today's active habits
     const habitsSnapshot = todoList
       .filter(item => item.type === 'habit' && !item.deleted)
       .map(item => ({
@@ -422,11 +406,9 @@ export const useTodoActions = (mainTab, settings) => {
     statusChangeTask,
     deleteTodo,
 
-    // RPG State
     rpgHistory,
     setRpgHistory,
 
-    // RPG Actions
     handleMoodChange,
   };
 };

@@ -9,8 +9,6 @@ export const getLogicalDateStr = (resetTimeStr, customDate) => {
 
   const isBeforeResetToday = (currentHour < resetHour) || (currentHour === resetHour && currentMinute < resetMinute);
   
-  // Case A: Early reset (00:01 - 12:00, e.g. 04:00 AM)
-  // Time before the reset today belongs to logically yesterday's cycle.
   if (resetHour > 0 && resetHour <= 12) {
     if (isBeforeResetToday) {
       const yesterday = new Date(now);
@@ -23,8 +21,6 @@ export const getLogicalDateStr = (resetTimeStr, customDate) => {
     }
   }
 
-  // Case B: Late reset (12:01 - 23:59, e.g. 23:00 PM)
-  // Time after the reset today belongs to logically tomorrow's cycle.
   if (resetHour > 12) {
     if (!isBeforeResetToday) {
       const tomorrow = new Date(now);

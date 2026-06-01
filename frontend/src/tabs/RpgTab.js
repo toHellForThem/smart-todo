@@ -95,17 +95,15 @@ export const RpgTab = ({
   const [selectedDayDetail, setSelectedDayDetail] = useState(null);
   const [isHabitsExpanded, setIsHabitsExpanded] = useState(false);
 
-  // Keyboard avoidance and suggestion hooks
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  // Inputs for creation
   const [habitName, setHabitName] = useState('');
-  const [pointsOrDeposit, setPointsOrDeposit] = useState('positive'); // 'positive' (Очки) | 'negative' (Вклад)
+  const [pointsOrDeposit, setPointsOrDeposit] = useState('positive'); 
 
   const [piggyGoal, setPiggyGoal] = useState('');
   const [piggyTarget, setPiggyTarget] = useState('');
-  const [piggyInputs, setPiggyInputs] = useState({}); // map of piggy id to input values
+  const [piggyInputs, setPiggyInputs] = useState({}); 
   const [focusedGoalId, setFocusedGoalId] = useState(null);
   const [flashingGoalId, setFlashingGoalId] = useState(null);
   const flashTimerRef = useRef(null);
@@ -124,14 +122,11 @@ export const RpgTab = ({
   const [isMovieInput, setIsMovieInput] = useState(false);
   const [startEpisode, setStartEpisode] = useState('1');
 
-  // Date constants
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => getLogicalDateStr(settings?.reset_time), [settings?.reset_time]);
 
-  // Calendar active view date state
   const [viewDate, setViewDate] = useState(() => new Date());
 
-  // Reset calendar to current month when modal becomes visible
   useEffect(() => {
     if (isCalendarVisible) {
       setViewDate(new Date());
@@ -141,7 +136,7 @@ export const RpgTab = ({
   const handlePrevMonth = () => {
     setViewDate(prev => {
       const newDate = new Date(prev);
-      newDate.setDate(1); // Set to 1st first to prevent 31st day overflow (e.g. May 31 -> June 31/July 1)
+      newDate.setDate(1); 
       newDate.setMonth(prev.getMonth() - 1);
       return newDate;
     });
@@ -152,7 +147,7 @@ export const RpgTab = ({
   const handleNextMonth = () => {
     setViewDate(prev => {
       const newDate = new Date(prev);
-      newDate.setDate(1); // Set to 1st first to prevent 31st day overflow (e.g. May 31 -> June 31/July 1)
+      newDate.setDate(1); 
       newDate.setMonth(prev.getMonth() + 1);
       return newDate;
     });
@@ -172,7 +167,6 @@ export const RpgTab = ({
       setKeyboardHeight(0);
       setFocusedGoalId(null);
 
-      // Force blur any active TextInput to stop the cursor from blinking
       const activeInput = TextInput.State.currentlyFocusedInput();
       if (activeInput) {
         TextInput.State.blurTextInput(activeInput);
@@ -186,7 +180,6 @@ export const RpgTab = ({
     };
   }, []);
 
-  // Filter RPG elements dynamically from todoList
   const positiveHabits = useMemo(() =>
     todoList.filter(item => item.type === 'habit' && item.contribution === 1 && !item.deleted),
     [todoList]
@@ -217,24 +210,20 @@ export const RpgTab = ({
     return piggyGoalItems.findIndex(item => item.id === focusedGoalId);
   }, [focusedGoalId, piggyGoalItems]);
 
-  // Handle auto-scroll of Piggy Bank goals when keyboard opens / closes
   useEffect(() => {
     if (isKeyboardVisible) {
-      // Only scroll if the focused card is the 2nd item or lower (index >= 1)
-      // because the first item is at the top and never gets covered.
       if (focusedIndex >= 1 && flatListRef.current) {
         const timer = setTimeout(() => {
           try {
             flatListRef.current.scrollToIndex({
               index: focusedIndex,
-              viewPosition: 0.2, // Places it nicely in the top part of screen
+              viewPosition: 0.2, 
               animated: true,
             });
           } catch (err) {
-            // Fallback scroll if index not measured
             try {
               flatListRef.current.scrollToOffset({
-                offset: focusedIndex * 70, // rough height of a compact piggy card + margin
+                offset: focusedIndex * 70, 
                 animated: true,
               });
             } catch (innerErr) {
@@ -245,7 +234,6 @@ export const RpgTab = ({
         return () => clearTimeout(timer);
       }
     } else {
-      // Keyboard went away, restore original scroll offset only if there was a scroll (Y > 0)
       if (flatListRef.current && currentScrollY.current > 0) {
         const timer = setTimeout(() => {
           try {
@@ -268,9 +256,7 @@ export const RpgTab = ({
     }
   };
 
-  // Compute daily stats: dailies + habits
   const dailyStats = useMemo(() => {
-    // 1. Dailies from todoList
     const dailies = todoList.filter(item => item.type === 'daily' && !item.deleted);
     let dailiesProgress = 0;
     if (dailies.length > 0) {
@@ -282,7 +268,6 @@ export const RpgTab = ({
       dailiesProgress = Math.round((nowProgress / needProgress) * 100);
     }
 
-    // 2. Habits total count today
     const positiveCount = positiveHabits.reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
     const negativeCount = negativeHabits.reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
     const neutralCount = neutralHabits.reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
@@ -295,7 +280,6 @@ export const RpgTab = ({
     };
   }, [todoList, positiveHabits, negativeHabits, neutralHabits]);
 
-  // Today's mood
   const todayMood = useMemo(() => {
     const todayLog = rpgHistory.find(h => h.date === todayStr);
     return todayLog ? todayLog.mood : null;
@@ -312,13 +296,10 @@ export const RpgTab = ({
     ? dailyStats.negativeCount
     : (selectedDayDetail?.log?.neg_points || 0);
 
-  // Today's month name for dashboard button
   const todayMonthGenitive = useMemo(() => t('months_genitive')[today.getMonth()], [today, t]);
 
-  // Helper to get Russian month name for calendar view
   const currentMonthName = useMemo(() => t('months')[viewDate.getMonth()], [viewDate, t]);
 
-  // Selected day's month name in genitive for detailed block
   const selectedDayMonthGenitive = useMemo(() => {
     if (!selectedDayDetail?.dateStr) return '';
     const parts = selectedDayDetail.dateStr.split('-');
@@ -326,21 +307,17 @@ export const RpgTab = ({
     return t('months_genitive')[m] || '';
   }, [selectedDayDetail, t]);
 
-  // Month Calendar cell definitions
   const calendarCells = useMemo(() => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
     const totalDays = new Date(year, month + 1, 0).getDate();
     const firstDayIndex = new Date(year, month, 1).getDay();
-    // Monday starting offset
     const offset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
 
     const cells = [];
-    // Pad empty cells
     for (let i = 0; i < offset; i++) {
       cells.push({ day: null, dateStr: null });
     }
-    // Add real days
     for (let day = 1; day <= totalDays; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       cells.push({ day, dateStr });
@@ -348,7 +325,6 @@ export const RpgTab = ({
     return cells;
   }, [viewDate]);
 
-  // Handle day tap on calendar
   const handleDayPress = (cell) => {
     if (!cell.dateStr) return;
     const log = rpgHistory.find(h => h.date === cell.dateStr);
@@ -360,7 +336,6 @@ export const RpgTab = ({
     setIsHabitsExpanded(false);
   };
 
-  // --- HABIT ACTION WRAPPERS ---
   const handleAddHabit = () => {
     if (!habitName.trim()) return;
     addTask(
@@ -374,7 +349,6 @@ export const RpgTab = ({
     Keyboard.dismiss();
   };
 
-  // --- PIGGY BANK ACTION WRAPPERS ---
   const handleSavePiggyGoal = () => {
     if (!piggyGoal.trim() || !piggyTarget.trim()) return;
     addTask(piggyGoal.trim(), parseInt(piggyTarget, 10) || 0, 'piggy_bank', 0);
@@ -389,7 +363,6 @@ export const RpgTab = ({
     setPiggyInputs(prev => ({ ...prev, [goalId]: '' }));
     Keyboard.dismiss();
 
-    // Clear any previous active flash timer
     if (flashTimerRef.current) {
       clearTimeout(flashTimerRef.current);
     }
@@ -398,10 +371,9 @@ export const RpgTab = ({
     flashTimerRef.current = setTimeout(() => {
       setFlashingGoalId(null);
       flashTimerRef.current = null;
-    }, 650); // Flash for 750ms (less than a second!)
+    }, 650); 
   };
 
-  // --- TV SHOWS ACTION WRAPPERS ---
   const handleAddShow = () => {
     if (!showTitle.trim()) return;
     const startEp = parseInt(startEpisode, 10) || 1;
@@ -412,7 +384,6 @@ export const RpgTab = ({
     Keyboard.dismiss();
   };
 
-  // Swipe Action Helper
   const renderSwipeLeft = (progress, drag) => {
     return leftAction(progress, drag, 'toRecycle');
   };
@@ -465,7 +436,6 @@ export const RpgTab = ({
       .reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
   }, [selectedDayDetail, todayStr, dailyStats.neutralCount, dayHabits]);
 
-  // --- RENDERING SUBTABS ---
 
   if (subtab === 'habits') {
     return (
@@ -650,13 +620,11 @@ export const RpgTab = ({
                 }}
               >
                 <View style={styles.piggyCardCompact}>
-                  {/* Seamless Header Banner containing the Goal Title and Inset Progress Bar */}
                   <View style={styles.piggyCardHeader}>
                     <Text style={styles.piggyTitleText}>
                       {item.text}
                     </Text>
 
-                    {/* Dynamic Progress Bar Inset inside the Header Banner */}
                     <View style={styles.piggyCardProgressBarTrack}>
                       <View style={[
                         styles.piggyCardProgressBarFill,
@@ -665,9 +633,7 @@ export const RpgTab = ({
                     </View>
                   </View>
 
-                  {/* Card Body */}
                   <View style={styles.piggyCardBody}>
-                    {/* Row 1: Three equal columns (Target badge left, Current blue center, Sum Input right) */}
                     <View style={styles.piggyRowOne}>
                       <View style={styles.piggyLeftColumnCompact}>
                         <View style={styles.piggyTargetBadge}>
@@ -675,7 +641,6 @@ export const RpgTab = ({
                             {item.progressEnd}
                           </Text>
                         </View>
-                        {/* Perfect floating vertical divider that doesn't affect flex layout calculations */}
                         <View style={styles.piggyVerticalDivider} />
                       </View>
 
@@ -702,7 +667,7 @@ export const RpgTab = ({
                             isCompleted && { backgroundColor: theme.colors.icon.bg },
                             flashingGoalId === item.id && { borderColor: theme.colors.icon.primary }
                           ]}
-                          placeholder="" // empty placeholder as we have the coin icon overlay!
+                          placeholder="" 
                           keyboardType="numeric"
                           cursorColor={theme.colors.icon.primary}
                           selectionColor={theme.colors.icon.primary}
@@ -954,7 +919,6 @@ export const RpgTab = ({
             </View>
           </TouchableOpacity>
 
-          {/* Vertical Separator */}
           <View style={{ width: 1, height: 24, backgroundColor: theme.colors.border.light, marginHorizontal: 16 }} />
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: isMovieInput ? 0.35 : 1 }}>
@@ -988,7 +952,6 @@ export const RpgTab = ({
     );
   }
 
-  // --- DASHBOARD (DEFAULT VIEW) ---
 
 
   const hasTodayMood = todayMood && activeMoodConfig[todayMood];
@@ -999,7 +962,6 @@ export const RpgTab = ({
   return (
     <View style={styles.container}>
       <View style={styles.dashboardContainer}>
-        {/* Central Date and Stats Block */}
         <View style={styles.centralDateBlock}>
           <View style={styles.dashboardRow}>
             <TouchableOpacity
@@ -1023,7 +985,7 @@ export const RpgTab = ({
               </View>
               <View style={styles.statItemRow}>
                 <Text style={styles.statLabel}>{t('rpg_stat_habits')}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={styles.statHabitsValueContainer}>
                   <Text style={[styles.statValue, { color: '#34D399' }]}>+{dailyStats.positiveCount}</Text>
                   <Text style={[styles.statValue, { color: '#94A3B8', marginHorizontal: 8 }]}>{dailyStats.neutralCount}</Text>
                   <Text style={[styles.statValue, { color: '#EF4444' }]}>-{dailyStats.negativeCount}</Text>
@@ -1033,7 +995,6 @@ export const RpgTab = ({
           </View>
         </View>
 
-        {/* Dashboard Grid Menu Cards */}
         <View style={styles.gridContainer}>
           <TouchableOpacity style={styles.menuCard} onPress={() => setSubtab('habits')}>
             <View style={styles.menuIconContainer}>
@@ -1067,7 +1028,6 @@ export const RpgTab = ({
         </View>
       </View>
 
-      {/* Month Grid Calendar Modal */}
       <Modal
         visible={isCalendarVisible}
         transparent={true}
@@ -1081,7 +1041,6 @@ export const RpgTab = ({
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
 
-            {/* Pinned Absolute Close Button */}
             <TouchableOpacity
               style={{
                 position: 'absolute',
@@ -1108,7 +1067,6 @@ export const RpgTab = ({
               />
             </TouchableOpacity>
 
-            {/* Pinned Absolute Month/Year Title with Navigation Chevrons */}
             <View
               style={{
                 position: 'absolute',
@@ -1163,10 +1121,8 @@ export const RpgTab = ({
               </TouchableOpacity>
             </View>
 
-            {/* Layout spacer to push calendar grid below absolute top header elements */}
             <View style={{ height: 42 }} />
 
-            {/* Grid Calendar mapping */}
             <View style={styles.calendarGrid}>
               {calendarCells.map((cell, index) => {
                 const dayLog = cell.dateStr ? rpgHistory.find(h => h.date === cell.dateStr) : null;
@@ -1230,7 +1186,6 @@ export const RpgTab = ({
               })}
             </View>
 
-            {/* Day Specific statistics view */}
             {selectedDayDetail && (
               <View style={styles.dayDetailBlock}>
                 <Text style={styles.dayDetailTitle}>
@@ -1292,7 +1247,7 @@ export const RpgTab = ({
                     borderTopColor: theme.colors.border.light,
                     borderBottomWidth: 1,
                     borderBottomColor: theme.colors.border.light,
-                    maxHeight: 206, // set a sleek scrollable limit
+                    maxHeight: 206, 
                   }}>
                     {dayHabits.length > 0 ? (
                       <FlatList

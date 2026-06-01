@@ -49,7 +49,6 @@ export const SettingsTab = ({
       return;
     }
 
-    // Add http:// if protocol is missing
     let formattedUrl = url;
     if (!/^https?:\/\//i.test(formattedUrl)) {
       formattedUrl = 'http://' + formattedUrl;
@@ -145,12 +144,10 @@ export const SettingsTab = ({
       RpgStorage.saveHistory([]);
     }
 
-    // Reset to defaults on logout
     const defaults = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '00:00', reset_enabled: true };
     setSettings(defaults);
   };
 
-  // Helper to handle settings updates
   const updateSetting = (key, value) => {
     const updated = { ...settings, [key]: value, updatedAt: Date.now() };
     setSettings(updated);
@@ -183,7 +180,6 @@ export const SettingsTab = ({
     }, 100);
   };
 
-  // Parsing current reset time
   const resetTimeStr = settings?.reset_time || '00:00';
   const [hStr, mStr] = resetTimeStr.split(':');
   const hours = parseInt(hStr, 10) || 0;
@@ -211,7 +207,6 @@ export const SettingsTab = ({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 1. Account Section */}
           {authState === '' && (
             <View style={styles.card}>
               {authMode === 'auth' ? (
@@ -262,7 +257,6 @@ export const SettingsTab = ({
             </View>
           )}
 
-          {/* 1.5 Server Configuration Section */}
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
@@ -307,7 +301,6 @@ export const SettingsTab = ({
             </View>
           )}
 
-          {/* Authorization Forms */}
           {authState !== '' && (
             <View style={[styles.card, styles.authCard]}>
               <TouchableOpacity
@@ -395,7 +388,6 @@ export const SettingsTab = ({
             </View>
           )}
 
-          {/* 1.6 Language Selector Section */}
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
@@ -441,7 +433,6 @@ export const SettingsTab = ({
             </View>
           )}
 
-          {/* 2. Reset Time Selector */}
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
@@ -451,7 +442,6 @@ export const SettingsTab = ({
 
               <View style={styles.clockCenterContainer}>
                 <View style={styles.compactClock}>
-                  {/* Hours Block */}
                   <View style={styles.compactClockGroup}>
                     <TouchableOpacity
                       onPress={() => changeHours(-1)}
@@ -477,7 +467,6 @@ export const SettingsTab = ({
 
                   <Text style={styles.compactSeparator}>:</Text>
 
-                  {/* Minutes Block */}
                   <View style={styles.compactClockGroup}>
                     <TouchableOpacity
                       onPress={() => changeMinutes(-5)}
@@ -505,7 +494,6 @@ export const SettingsTab = ({
             </View>
           )}
 
-          {/* 3. Startup Screen Section */}
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
@@ -581,7 +569,6 @@ export const SettingsTab = ({
                 </TouchableOpacity>
               </View>
 
-              {/* RPG Subtabs Selection */}
               {settings?.main_page === 'rpg' && (
                 <View style={styles.subtabContainer}>
                   <View style={[styles.cardHeaderWithIcon, { marginTop: 10, marginBottom: 6 }]}>
@@ -666,7 +653,6 @@ export const SettingsTab = ({
             </View>
           )}
 
-          {/* 3.5 Theme Selector Section */}
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
@@ -748,7 +734,6 @@ export const SettingsTab = ({
 
 
 
-          {/* 4. Soft Delete Toggle Section */}
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.switchRow}>
@@ -773,7 +758,6 @@ export const SettingsTab = ({
             </View>
           )}
 
-          {/* 5. Reset Enabled Toggle Section */}
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.switchRow}>
@@ -798,7 +782,6 @@ export const SettingsTab = ({
             </View>
           )}
 
-          {/* 6. About Section */}
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
@@ -830,7 +813,7 @@ export const SettingsTab = ({
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#F59E0B', // Premium Warm Amber/Gold color
+                    backgroundColor: '#F59E0B', 
                     borderRadius: theme.radius.md,
                     paddingVertical: 10,
                     paddingHorizontal: 20,

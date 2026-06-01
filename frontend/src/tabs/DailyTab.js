@@ -112,7 +112,6 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
       setKeyboardVisible(false);
 
-      // Force blur any active TextInput to stop the cursor from blinking
       const activeInput = TextInput.State.currentlyFocusedInput();
       if (activeInput) {
         TextInput.State.blurTextInput(activeInput);
@@ -191,7 +190,6 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
           alignItems: 'center',
         }]}
       >
-        {/* Row 1: Weekdays Selector */}
         <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', width: '100%' }}>
           {t('daily_weekdays').map((day, idx) => {
             const isSelected = selectedDays[idx] === '1';
@@ -229,7 +227,6 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
           })}
         </View>
 
-        {/* Row 2: Progress End Selector */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
           <TouchableOpacity hitSlop={15} onPress={() => {
             setProgressEnd(progressEnd === 1 ? 1 : progressEnd - 1);

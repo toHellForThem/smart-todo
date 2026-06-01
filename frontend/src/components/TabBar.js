@@ -12,14 +12,12 @@ export const TabBar = memo(({ currentTab, setCurrentTab, rpgSubtab, activeView }
   const isTodoActive = currentTab === 'todo';
   const isDailyActive = currentTab === 'daily';
 
-  // The active tab should pulse if inside subtabs, recycle bin, or settings
   const shouldBlink = (isRpgActive && rpgSubtab !== 'dashboard') || activeView === 'recycle' || activeView === 'settings';
 
   const blinkAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (shouldBlink) {
-      // Start looping breathing fade animation using standard React Native Animated loop
       Animated.loop(
         Animated.sequence([
           Animated.timing(blinkAnim, {
@@ -35,7 +33,6 @@ export const TabBar = memo(({ currentTab, setCurrentTab, rpgSubtab, activeView }
         ])
       ).start();
     } else {
-      // Return and stabilize at solid 100% opacity
       blinkAnim.setValue(1);
     }
   }, [shouldBlink]);
@@ -63,7 +60,7 @@ export const TabBar = memo(({ currentTab, setCurrentTab, rpgSubtab, activeView }
         style={[
           styles.tab,
           isRpgActive && styles.activeTab,
-          isRpgActive && { borderTopWidth: 0 } // Let absolute indicator handle top border cleanly
+          isRpgActive && { borderTopWidth: 0 } 
         ]}
         onPress={() => setCurrentTab('rpg')}
       >

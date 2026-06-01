@@ -173,11 +173,9 @@ export default function App() {
     statusChangeTask,
     deleteTodo,
 
-    // RPG State
     rpgHistory,
     setRpgHistory,
 
-    // RPG Actions
     handleMoodChange,
   } = useTodoActions(mainTab, settings);
 
@@ -194,28 +192,23 @@ export default function App() {
   const [isMoodSheetOpen, setIsMoodSheetOpen] = useState(false);
   const moodSheet = useMoodSheet(setIsMoodSheetOpen);
 
-  // Handle Android physical back button navigation
   useEffect(() => {
     const backAction = () => {
-      // 1. If mood sheet (шторка) is open, close it (highest priority global overlay)
       if (moodSheet.isActive && moodSheet.isActive.value === 1) {
         moodSheet.closeSheet();
         return true;
       }
 
-      // 2. If calendar modal is open, close it
       if (isCalendarVisible) {
         setCalendarVisible(false);
         return true;
       }
 
-      // 3. If we are in settings or recycle bin, go back to main list view
       if (activeView !== 'list') {
         setActiveView('list');
         return true;
       }
 
-      // 4. If we are in RPG tab and in a subtab (habits, piggy_bank, tv_shows), go back to dashboard
       if (mainTab === 'rpg' && rpgSubtab !== 'dashboard') {
         setRpgSubtab('dashboard');
         return true;

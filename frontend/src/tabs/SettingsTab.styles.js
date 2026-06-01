@@ -42,7 +42,6 @@ export const getStyles = (theme) => StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
   
-  // Center container for Clock Picker
   clockCenterContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -50,7 +49,6 @@ export const getStyles = (theme) => StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   
-  // Compact Clock Picker (TV Show style capsules)
   compactClock: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -108,7 +106,6 @@ export const getStyles = (theme) => StyleSheet.create({
     alignSelf: 'center',
   },
   
-  // Profile / Auth Status Styles
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -164,7 +161,6 @@ export const getStyles = (theme) => StyleSheet.create({
     marginLeft: 4,
   },
   
-  // Local Profile Container
   localProfileContainer: {
     flexDirection: 'column',
   },
@@ -207,7 +203,6 @@ export const getStyles = (theme) => StyleSheet.create({
     fontSize: 13,
   },
 
-  // Auth Card Forms
   authCard: {
     position: 'relative',
     paddingTop: theme.spacing.sm,
@@ -269,11 +264,10 @@ export const getStyles = (theme) => StyleSheet.create({
     fontSize: 13,
   },
 
-  // Segmented Control Startup Screen (Optimized grey background space)
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.background, // F1F5F9 (Grey area)
-    padding: 5, // More padding to expose the background
+    backgroundColor: theme.colors.background, 
+    padding: 5, 
     borderRadius: theme.radius.lg,
     marginTop: theme.spacing.sm,
   },
@@ -282,9 +276,9 @@ export const getStyles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6, // Reduced paddings for buttons to fit smaller
+    paddingVertical: 6, 
     borderRadius: theme.radius.md,
-    marginHorizontal: 3, // Margins to expose more grey background between options
+    marginHorizontal: 3, 
   },
   segmentButtonActive: {
     backgroundColor: theme.colors.icon.bg,
@@ -317,7 +311,6 @@ export const getStyles = (theme) => StyleSheet.create({
     paddingTop: theme.spacing.smd,
   },
 
-  // Soft Delete Row
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -80,19 +80,16 @@ async def init_db():
                 )
             """)
             
-            # Migration to add contribution column if not exists
             try:
                 await db.execute("ALTER TABLE todos ADD COLUMN contribution INTEGER DEFAULT 0")
             except Exception:
                 pass
 
-            # Migration to add habits_detail column if not exists
             try:
                 await db.execute("ALTER TABLE daily_history ADD COLUMN habits_detail TEXT")
             except Exception:
                 pass
 
-            # Migration to add days column to todos if not exists
             try:
                 await db.execute("ALTER TABLE todos ADD COLUMN days TEXT DEFAULT '1111111'")
             except Exception:
@@ -480,7 +477,6 @@ async def handle_sync_daily_history(sid, data):
     habits_detail = data.get("habits_detail", "[]")
     client_updated_at = data.get("updatedAt", 0)
 
-    # Conflict check based on updated_at
     row = await db_query(
         "SELECT updated_at FROM daily_history WHERE user_id = ? AND date = ?",
         (user_id, date),
@@ -579,7 +575,6 @@ async def handle_update_settings(sid, settings_dict):
     if not user_id:
         return
 
-    # Fetch current settings from database to compare updatedAt
     user = await db_query(
         "SELECT settings FROM users WHERE id = ?", (user_id,), is_select=True
     )
@@ -600,7 +595,6 @@ async def handle_update_settings(sid, settings_dict):
             print(f"На сервере настройки новее для пользователя {user_id}.")
             await sio.emit("server:settings_updated", current_settings, room=sid)
     else:
-        # If no settings are in DB yet, save the client's settings
         settings_json = json.dumps(settings_dict)
         await db_query(
             "UPDATE users SET settings = ? WHERE id = ?",

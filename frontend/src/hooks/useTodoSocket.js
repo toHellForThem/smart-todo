@@ -17,7 +17,6 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
     socket.on('server:login_success', (data) => {
       const { username, token, settings: serverSettings } = data;
       
-      // Update socket auth for reconnects
       socket.auth = { username, token };
 
       shouldReplaceTodos = true;
@@ -194,7 +193,6 @@ export const useTodoSocket = (setTodoList, setAuthMode, setAuthState, setRpgHist
           }
 
           setRpgHistory(prev => {
-            // merge server month logs with local logs
             const merged = [...prev];
             data.history.forEach(srvLog => {
               const localIdx = merged.findIndex(h => h.date === srvLog.date);

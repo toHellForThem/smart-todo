@@ -94,7 +94,6 @@ export const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList,
         if (rpgSubtab === 'tv_shows') {
           return item.type === 'tv_show' || item.type === 'movie';
         }
-        // Если мы на главном дашборде RPG, показываем все удаленные RPG-элементы вместе
         return item.type === 'habit' || item.type === 'piggy_bank' || item.type === 'tv_show' || item.type === 'movie';
       }
 
