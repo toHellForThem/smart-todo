@@ -5,7 +5,9 @@ import {
   TouchableOpacity,
   Keyboard,
   Switch,
-  ScrollView
+  ScrollView,
+  Linking,
+  Image
 } from 'react-native';
 import { TextInput as PaperInput, PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
@@ -72,6 +74,16 @@ export const SettingsTab = ({
       text1: 'Адрес сброшен по умолчанию!',
       text2: 'Переподключение к ' + (process.env.EXPO_PUBLIC_SOCKET_URL || ''),
       visibilityTime: 3000
+    });
+  };
+
+  const handleDonate = () => {
+    Linking.openURL('https://www.donationalerts.com/r/tohellforthem').catch(err => {
+      Toast.show({
+        type: 'error',
+        text1: 'Не удалось открыть ссылку',
+        visibilityTime: 2500
+      });
     });
   };
 
@@ -694,6 +706,63 @@ export const SettingsTab = ({
                   trackColor={{ false: theme.colors.border.light, true: theme.colors.primaryLight }}
                   thumbColor={settings?.reset_enabled !== false ? theme.colors.primary : theme.colors.border.default}
                 />
+              </View>
+            </View>
+          )}
+
+          {/* 6. About Section */}
+          {authState === '' && (
+            <View style={styles.card}>
+              <View style={styles.cardHeaderWithIcon}>
+                <MaterialCommunityIcons name="information-outline" size={20} color={theme.colors.primary} />
+                <Text style={styles.cardTitle}>О программе</Text>
+              </View>
+
+              <View style={{ marginTop: 12, alignItems: 'center' }}>
+                <Image
+                  source={require('../../assets/icon.png')}
+                  style={{ width: 64, height: 64, borderRadius: 14, marginBottom: 8 }}
+                />
+
+                <Text style={{ fontSize: 18, fontWeight: '800', color: theme.colors.text.primary }}>
+                  To Do So Do
+                </Text>
+
+                <Text style={{ fontSize: 12, color: theme.colors.text.muted, marginTop: 2, fontWeight: '600' }}>
+                  Версия 1.0.0
+                </Text>
+
+                <Text style={{ fontSize: 13, color: theme.colors.text.secondary, textAlign: 'center', marginTop: 10, lineHeight: 18, paddingHorizontal: 10 }}>
+                  Умный таск-трекер с элементами RPG. Выполняйте дейлики, прокачивайте полезные привычки, копите на мечты в копилке и ведите учет любимых сериалов в одном месте!
+                </Text>
+
+                <TouchableOpacity
+                  onPress={handleDonate}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#F59E0B', // Premium Warm Amber/Gold color
+                    borderRadius: theme.radius.md,
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                    marginTop: 14,
+                    width: '100%',
+                    elevation: 1,
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons name="heart-pulse" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Поддержать автора
+                  </Text>
+                </TouchableOpacity>
+
+                <View style={{ width: '100%', height: 1, backgroundColor: theme.colors.border.light, marginVertical: 14 }} />
+
+                <Text style={{ fontSize: 11, color: theme.colors.text.muted, fontWeight: '500' }}>
+                  Copyright © 2026 toHellForThem. All rights reserved.
+                </Text>
               </View>
             </View>
           )}

@@ -177,15 +177,18 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
         renderItem={renderItem}
         contentContainerStyle={{ paddingTop: 6, paddingBottom: 10 }}
       />
-      <View style={[styles.floatingContainer, {
-        bottom: keyboardHeight - 71,
-        opacity: isKeyboardVisible ? 1 : 0,
-        flexDirection: 'column',
-        height: 100,
-        paddingVertical: 12,
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }]}>
+      <View
+        pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
+        style={[styles.floatingContainer, {
+          bottom: keyboardHeight - 71,
+          opacity: isKeyboardVisible ? 1 : 0,
+          flexDirection: 'column',
+          height: 100,
+          paddingVertical: 12,
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }]}
+      >
         {/* Row 1: Weekdays Selector */}
         <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', width: '100%' }}>
           {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, idx) => {

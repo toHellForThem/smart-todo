@@ -922,10 +922,13 @@ export const RpgTab = ({
             </Swipeable>
           )}
         />
-        <View style={[styles.keyboardSuggestionBar, {
-          bottom: keyboardHeight - 71,
-          opacity: isKeyboardVisible ? 1 : 0
-        }]}>
+        <View
+          pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
+          style={[styles.keyboardSuggestionBar, {
+            bottom: keyboardHeight - 71,
+            opacity: isKeyboardVisible ? 1 : 0
+          }]}
+        >
           <TouchableOpacity
             style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
             onPress={() => setIsMovieInput(prev => !prev)}
