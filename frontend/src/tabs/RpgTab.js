@@ -1,40 +1,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  FlatList,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-  Keyboard,
-  LayoutAnimation,
-} from 'react-native';
-import { MaterialCommunityIcons, Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { View, Text, TouchableOpacity, Keyboard, LayoutAnimation, Platform, TextInput } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getStyles } from './RpgTab.styles';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { getLogicalDateStr } from '../utils/date';
 import { useTranslation } from '../utils/LanguageContext';
 
-const moodConfig = {
-  1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#CBD9EF', label: 'Ужасно' },
-  2: { icon: 'emoticon-sad-outline', color: '#F43F5E', glassBg: '#FFE4E6', dashboardBg: '#DCD2E9', label: 'Плохо' },
-  3: { icon: 'emoticon-neutral-outline', color: '#D98A2F', glassBg: '#FEF3C7', dashboardBg: '#D9DCE4', label: 'Нормально' },
-  4: { icon: 'emoticon-happy-outline', color: '#10B981', glassBg: '#D1FAE5', dashboardBg: '#C1E1EE', label: 'Хорошо' },
-  5: { icon: 'emoticon-excited-outline', color: '#8B5CF6', glassBg: '#EDE9FE', dashboardBg: '#CFD6FC', label: 'Отлично' },
-};
-
-const monthsRU = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-];
-
-const monthsGenitiveRU = [
-  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-];
+import { CalendarModal } from '../components/CalendarModal';
+import { HabitsSubtab } from './rpg/HabitsSubtab';
+import { PiggyBankSubtab } from './rpg/PiggyBankSubtab';
+import { TvShowsSubtab } from './rpg/TvShowsSubtab';
 
 export const RpgTab = ({
   rpgHistory,
@@ -54,6 +29,7 @@ export const RpgTab = ({
   const { theme } = useAppTheme();
   const { t } = useTranslation();
   const isDark = settings?.theme === 'dark';
+
   const activeMoodConfig = useMemo(() => {
     const isMint = settings?.theme === 'mint';
     const isPink = settings?.theme === 'pink';
@@ -99,11 +75,11 @@ export const RpgTab = ({
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const [habitName, setHabitName] = useState('');
-  const [pointsOrDeposit, setPointsOrDeposit] = useState('positive'); 
+  const [pointsOrDeposit, setPointsOrDeposit] = useState('positive');
 
   const [piggyGoal, setPiggyGoal] = useState('');
   const [piggyTarget, setPiggyTarget] = useState('');
-  const [piggyInputs, setPiggyInputs] = useState({}); 
+  const [piggyInputs, setPiggyInputs] = useState({});
   const [focusedGoalId, setFocusedGoalId] = useState(null);
   const [flashingGoalId, setFlashingGoalId] = useState(null);
   const flashTimerRef = useRef(null);
@@ -136,7 +112,7 @@ export const RpgTab = ({
   const handlePrevMonth = () => {
     setViewDate(prev => {
       const newDate = new Date(prev);
-      newDate.setDate(1); 
+      newDate.setDate(1);
       newDate.setMonth(prev.getMonth() - 1);
       return newDate;
     });
@@ -147,7 +123,7 @@ export const RpgTab = ({
   const handleNextMonth = () => {
     setViewDate(prev => {
       const newDate = new Date(prev);
-      newDate.setDate(1); 
+      newDate.setDate(1);
       newDate.setMonth(prev.getMonth() + 1);
       return newDate;
     });
@@ -217,13 +193,13 @@ export const RpgTab = ({
           try {
             flatListRef.current.scrollToIndex({
               index: focusedIndex,
-              viewPosition: 0.2, 
+              viewPosition: 0.2,
               animated: true,
             });
           } catch (err) {
             try {
               flatListRef.current.scrollToOffset({
-                offset: focusedIndex * 70, 
+                offset: focusedIndex * 70,
                 animated: true,
               });
             } catch (innerErr) {
@@ -371,7 +347,7 @@ export const RpgTab = ({
     flashTimerRef.current = setTimeout(() => {
       setFlashingGoalId(null);
       flashTimerRef.current = null;
-    }, 650); 
+    }, 650);
   };
 
   const handleAddShow = () => {
@@ -436,523 +412,75 @@ export const RpgTab = ({
       .reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
   }, [selectedDayDetail, todayStr, dailyStats.neutralCount, dayHabits]);
 
-
   if (subtab === 'habits') {
     return (
-      <View style={styles.container}>
-        <View style={{ marginTop: 10 }} />
-
-        <View style={styles.inputBlock}>
-          <TouchableOpacity
-            style={[
-              styles.typeToggleButtonCompact,
-              {
-                borderColor: pointsOrDeposit === 'positive'
-                  ? '#34D399'
-                  : pointsOrDeposit === 'neutral'
-                    ? '#94A3B8'
-                    : '#EF4444',
-                backgroundColor: pointsOrDeposit === 'positive'
-                  ? 'rgba(52, 211, 153, 0.15)'
-                  : pointsOrDeposit === 'neutral'
-                    ? 'rgba(148, 163, 184, 0.15)'
-                    : 'rgba(239, 68, 68, 0.15)',
-              }
-            ]}
-            onPress={() => setPointsOrDeposit(prev => {
-              if (prev === 'positive') return 'neutral';
-              if (prev === 'neutral') return 'negative';
-              return 'positive';
-            })}
-          >
-            <MaterialCommunityIcons
-              name={pointsOrDeposit === 'positive' ? 'plus' : pointsOrDeposit === 'neutral' ? 'help' : 'minus'}
-              size={20}
-              color={pointsOrDeposit === 'positive' ? '#34D399' : pointsOrDeposit === 'neutral' ? '#94A3B8' : '#EF4444'}
-            />
-          </TouchableOpacity>
-          <TextInput
-            style={styles.input}
-            placeholder={t('rpg_habit_placeholder')}
-            placeholderTextColor="#94A3B8"
-            cursorColor={theme.colors.icon.primary}
-            selectionColor={theme.colors.icon.primary}
-            value={habitName}
-            onChangeText={setHabitName}
-          />
-          <TouchableOpacity style={styles.addButton} onPress={handleAddHabit}>
-            <MaterialCommunityIcons
-              style={{ borderRadius: 10, backgroundColor: theme.colors.icon.bg }}
-              name={'plus-thick'}
-              size={24}
-              color={theme.colors.icon.primary}
-            />
-          </TouchableOpacity>
-        </View>
-
-        <FlatList
-          data={allHabits}
-          bounces={false}
-          overScrollMode="never"
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.habitList}
-          renderItem={({ item }) => (
-            <Swipeable
-              friction={1.6}
-              leftThreshold={78}
-              overshootLeft={true}
-              renderLeftActions={renderSwipeLeft}
-              onSwipeableLeftOpen={() => deleteToRecycle(item.id)}
-              containerStyle={{
-                paddingTop: 2,
-                paddingBottom: 8,
-                paddingHorizontal: 20,
-                backgroundColor: 'transparent',
-              }}
-            >
-              <View style={styles.habitItem}>
-                <TouchableOpacity
-                  onPress={() => statusChangeTask(item.id, 'reset')}
-                  style={{
-                    alignSelf: 'stretch',
-                    width: 50,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: item.contribution === 1
-                      ? 'rgba(52, 211, 153, 0.15)'
-                      : item.contribution === -1
-                        ? 'rgba(239, 68, 68, 0.15)'
-                        : 'rgba(148, 163, 184, 0.15)',
-                    borderBottomLeftRadius: theme.radius.xl,
-                    borderTopLeftRadius: theme.radius.xl,
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name={item.contribution === 1 ? 'plus' : item.contribution === -1 ? 'minus' : 'help'}
-                    size={25}
-                    color={item.contribution === 1 ? '#34D399' : item.contribution === -1 ? '#EF4444' : '#94A3B8'}
-                  />
-                </TouchableOpacity>
-                <Text style={styles.habitText}>{item.text}</Text>
-                <Text style={styles.habitCount}>{item.progressNow || 0}</Text>
-                <TouchableOpacity
-                  style={{
-                    marginLeft: 'auto',
-                    alignSelf: 'stretch',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: theme.colors.icon.bg,
-                    borderBottomRightRadius: theme.radius.xl,
-                    borderTopRightRadius: theme.radius.xl,
-                    width: 50,
-                  }}
-                  onPress={() => statusChangeTask(item.id)}
-                >
-                  <MaterialCommunityIcons name="check-bold" size={25} color={theme.colors.icon.primary} />
-                </TouchableOpacity>
-              </View>
-            </Swipeable>
-          )}
-        />
-      </View>
+      <HabitsSubtab
+        allHabits={allHabits}
+        habitName={habitName}
+        setHabitName={setHabitName}
+        pointsOrDeposit={pointsOrDeposit}
+        setPointsOrDeposit={setPointsOrDeposit}
+        handleAddHabit={handleAddHabit}
+        statusChangeTask={statusChangeTask}
+        deleteToRecycle={deleteToRecycle}
+        renderSwipeLeft={renderSwipeLeft}
+        styles={styles}
+        theme={theme}
+        t={t}
+      />
     );
   }
 
   if (subtab === 'piggy_bank') {
     return (
-      <View style={styles.container}>
-        <View style={{ marginTop: 10 }} />
-
-        <View style={styles.piggyInputRowContainer}>
-          <View style={styles.piggyInputColumn}>
-            <TextInput
-              style={[styles.input, { flex: 0, width: '100%', marginBottom: 0 }]}
-              placeholder={t('rpg_piggy_title_placeholder')}
-              placeholderTextColor="#94A3B8"
-              cursorColor={theme.colors.icon.primary}
-              selectionColor={theme.colors.icon.primary}
-              value={piggyGoal}
-              onChangeText={setPiggyGoal}
-            />
-            <TextInput
-              style={[styles.input, { flex: 0, width: '100%', marginBottom: 0 }]}
-              placeholder={t('rpg_piggy_target_placeholder')}
-              placeholderTextColor="#94A3B8"
-              cursorColor={theme.colors.icon.primary}
-              selectionColor={theme.colors.icon.primary}
-              keyboardType="numeric"
-              value={piggyTarget}
-              onChangeText={setPiggyTarget}
-            />
-          </View>
-
-          <TouchableOpacity style={styles.piggyCreateRightButton} onPress={handleSavePiggyGoal}>
-            <Text style={styles.piggyCreateRightButtonText}>{t('rpg_piggy_create')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <FlatList
-          ref={flatListRef}
-          data={piggyGoalItems}
-          bounces={false}
-          overScrollMode="never"
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingTop: 6, paddingBottom: isKeyboardVisible ? keyboardHeight : 0 }}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          renderItem={({ item }) => {
-            const isCompleted = (item.progressNow || 0) >= item.progressEnd;
-            const progressPercent = isCompleted
-              ? 100
-              : Math.max(0, Math.min(99, Math.floor(((item.progressNow || 0) / item.progressEnd) * 100)));
-            return (
-              <Swipeable
-                friction={1.6}
-                leftThreshold={78}
-                overshootLeft={true}
-                renderLeftActions={renderSwipeLeft}
-                onSwipeableLeftOpen={() => deleteToRecycle(item.id)}
-                containerStyle={{
-                  paddingTop: 2,
-                  paddingBottom: 8,
-                  paddingHorizontal: 20,
-                  backgroundColor: 'transparent',
-                }}
-              >
-                <View style={styles.piggyCardCompact}>
-                  <View style={styles.piggyCardHeader}>
-                    <Text style={styles.piggyTitleText}>
-                      {item.text}
-                    </Text>
-
-                    <View style={styles.piggyCardProgressBarTrack}>
-                      <View style={[
-                        styles.piggyCardProgressBarFill,
-                        { width: `${progressPercent}%` }
-                      ]} />
-                    </View>
-                  </View>
-
-                  <View style={styles.piggyCardBody}>
-                    <View style={styles.piggyRowOne}>
-                      <View style={styles.piggyLeftColumnCompact}>
-                        <View style={styles.piggyTargetBadge}>
-                          <Text style={styles.piggyTargetTextCompact} numberOfLines={1} adjustsFontSizeToFit={true}>
-                            {item.progressEnd}
-                          </Text>
-                        </View>
-                        <View style={styles.piggyVerticalDivider} />
-                      </View>
-
-                      <View style={styles.piggyCenterColumnCompact}>
-                        <View style={[
-                          styles.piggyCurrentContainerCompact,
-                          isCompleted && styles.piggyCurrentContainerCompactCompleted,
-                          flashingGoalId === item.id && { borderColor: theme.colors.icon.primary }
-                        ]}>
-                          <Text style={[
-                            styles.piggyCurrentTextCompact,
-                            (isCompleted || flashingGoalId === item.id) && { color: theme.colors.icon.primary }
-                          ]} numberOfLines={1} adjustsFontSizeToFit={true}>
-                            {item.progressNow || 0}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View style={styles.piggyRightColumnCompact}>
-                        <TextInput
-                          style={[
-                            styles.piggyInputCompact,
-                            focusedGoalId === item.id && styles.piggyInputCompactFocused,
-                            isCompleted && { backgroundColor: theme.colors.icon.bg },
-                            flashingGoalId === item.id && { borderColor: theme.colors.icon.primary }
-                          ]}
-                          placeholder="" 
-                          keyboardType="numeric"
-                          cursorColor={theme.colors.icon.primary}
-                          selectionColor={theme.colors.icon.primary}
-                          value={piggyInputs[item.id] || ''}
-                          onChangeText={(text) => setPiggyInputs(prev => ({ ...prev, [item.id]: text }))}
-                          onFocus={() => setFocusedGoalId(item.id)}
-                        />
-                        {!piggyInputs[item.id] && focusedGoalId !== item.id && (
-                          <View style={styles.piggyInputCoinsPlaceholder} pointerEvents="none">
-                            {isCompleted ? (
-                              <>
-                                <MaterialIcons name="add-shopping-cart" size={22} color={theme.colors.icon.primary} style={{ marginRight: 2 }} />
-                                <MaterialIcons name="store" size={27} color={theme.colors.icon.primary} />
-                              </>
-                            ) : (
-                              <>
-                                <FontAwesome5 name="plus" size={12} color={theme.colors.icon.bg} style={{ marginRight: 4 }} />
-                                <FontAwesome5 name="coins" size={18} color={theme.colors.icon.bg} />
-                              </>
-                            )}
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              </Swipeable>
-            );
-          }}
-        />
-
-        {isKeyboardVisible && focusedGoalId && (
-          <View style={[styles.piggyFloatingContainer, {
-            bottom: keyboardHeight - 71,
-          }]}>
-            <TouchableOpacity
-              style={[styles.piggyFloatingBtn, { backgroundColor: 'rgba(239, 68, 68, 0.12)', borderColor: '#EF4444' }]}
-              onPress={() => handleUpdatePiggy(focusedGoalId, false)}
-            >
-              <MaterialCommunityIcons name="minus" size={20} color="#EF4444" />
-              <Text style={[styles.piggyFloatingBtnText, { color: '#EF4444' }]}>{t('rpg_piggy_deduct')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.piggyFloatingBtn, { backgroundColor: 'rgba(52, 211, 153, 0.12)', borderColor: '#34D399' }]}
-              onPress={() => handleUpdatePiggy(focusedGoalId, true)}
-            >
-              <MaterialCommunityIcons name="plus" size={20} color="#34D399" />
-              <Text style={[styles.piggyFloatingBtnText, { color: '#34D399' }]}>{t('rpg_piggy_deposit')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      <PiggyBankSubtab
+        piggyGoalItems={piggyGoalItems}
+        piggyGoal={piggyGoal}
+        setPiggyGoal={setPiggyGoal}
+        piggyTarget={piggyTarget}
+        setPiggyTarget={setPiggyTarget}
+        piggyInputs={piggyInputs}
+        setPiggyInputs={setPiggyInputs}
+        focusedGoalId={focusedGoalId}
+        setFocusedGoalId={setFocusedGoalId}
+        flashingGoalId={flashingGoalId}
+        isKeyboardVisible={isKeyboardVisible}
+        keyboardHeight={keyboardHeight}
+        handleSavePiggyGoal={handleSavePiggyGoal}
+        handleUpdatePiggy={handleUpdatePiggy}
+        handleScroll={handleScroll}
+        flatListRef={flatListRef}
+        deleteToRecycle={deleteToRecycle}
+        renderSwipeLeft={renderSwipeLeft}
+        styles={styles}
+        theme={theme}
+        t={t}
+      />
     );
   }
 
   if (subtab === 'tv_shows') {
     return (
-      <View style={styles.container}>
-        <View style={{ marginTop: 10 }} />
-
-        <View style={styles.inputBlock}>
-          <TextInput
-            style={styles.input}
-            placeholder={t('rpg_tv_placeholder')}
-            placeholderTextColor="#94A3B8"
-            cursorColor={theme.colors.icon.primary}
-            selectionColor={theme.colors.icon.primary}
-            value={showTitle}
-            onChangeText={setShowTitle}
-          />
-          <TouchableOpacity style={styles.addButton} onPress={handleAddShow}>
-            <MaterialCommunityIcons
-              style={{ borderRadius: 10, backgroundColor: theme.colors.icon.bg }}
-              name={'plus-thick'}
-              size={24}
-              color={theme.colors.icon.primary}
-            />
-          </TouchableOpacity>
-        </View>
-
-        <FlatList
-          data={activeShows}
-          bounces={false}
-          overScrollMode="never"
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingTop: 6, paddingBottom: 80 }}
-          delaysContentTouches={false}
-          renderItem={({ item }) => (
-            <Swipeable
-              friction={1.6}
-              leftThreshold={78}
-              overshootLeft={true}
-              renderLeftActions={renderSwipeLeft}
-              onSwipeableLeftOpen={() => deleteToRecycle(item.id)}
-              containerStyle={{
-                paddingTop: 2,
-                paddingBottom: 8,
-                paddingHorizontal: 20,
-                backgroundColor: 'transparent',
-              }}
-            >
-              <View style={styles.showCard}>
-                {item.type === 'movie' ? (
-                  <View style={[
-                    styles.showTitleBlock,
-                    { borderBottomLeftRadius: theme.radius.xl, borderBottomRightRadius: theme.radius.xl },
-                    item.completed && { backgroundColor: theme.colors.icon.bg }
-                  ]}>
-                    <Text style={[
-                      styles.showTitle,
-                      { flex: 1, textAlign: 'left', marginRight: 48, marginBottom: 0 }
-                    ]}>
-                      {item.text}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => statusChangeTask(item.id)}
-                      style={{
-                        position: 'absolute',
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: 48,
-                        backgroundColor: theme.colors.icon.bg,
-                        borderTopRightRadius: theme.radius.xl,
-                        borderBottomRightRadius: theme.radius.xl,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                      hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                    >
-                      <MaterialCommunityIcons
-                        name={item.completed ? 'check-bold' : 'check'}
-                        size={22}
-                        color={theme.colors.icon.primary}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <>
-                    <View style={[
-                      styles.showTitleBlock,
-                      item.completed && { backgroundColor: theme.colors.icon.bg }
-                    ]}>
-                      <Text style={[
-                        styles.showTitle,
-                        { flex: 1, textAlign: 'left', marginRight: 48 }
-                      ]}>
-                        {item.text}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => statusChangeTask(item.id, 'toggle_complete')}
-                        style={{
-                          position: 'absolute',
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                          width: 48,
-                          backgroundColor: theme.colors.icon.bg,
-                          borderTopRightRadius: theme.radius.xl,
-                          borderBottomRightRadius: 0,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                        }}
-                        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                      >
-                        <MaterialCommunityIcons
-                          name={item.completed ? 'check-bold' : 'check'}
-                          size={22}
-                          color={theme.colors.icon.primary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    {(() => {
-                      let [season, episode] = (item.progressNow || "1-1").toString().split('-').map(Number);
-                      if (isNaN(season)) season = 1;
-                      if (isNaN(episode)) episode = 1;
-
-                      return (
-                        <View style={styles.showControlsRow}>
-                          <View style={styles.showControlGroupLeft}>
-                            <TouchableOpacity
-                              disabled={item.completed}
-                              onPress={() => statusChangeTask(item.id, -1, 'season')}
-                              style={[styles.showControlBtn, styles.showControlBtnLeft]}
-                            ></TouchableOpacity>
-                            <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-                              <Text style={styles.showControlLabel}>{t('rpg_tv_season')}</Text>
-                              <Text style={styles.showControlValue}>{season}</Text>
-                            </View>
-                            <TouchableOpacity
-                              disabled={item.completed}
-                              onPress={() => statusChangeTask(item.id, 1, 'season')}
-                              style={[styles.showControlBtn, styles.showControlBtnCenterLeft]}
-                            >
-                              <Ionicons name="add" size={22} color={item.completed ? '#94A3B8' : theme.colors.primary} />
-                            </TouchableOpacity>
-                          </View>
-
-                          <View style={styles.showControlGroupRight}>
-                            <TouchableOpacity
-                              disabled={item.completed}
-                              onPress={() => statusChangeTask(item.id, -1, 'episode')}
-                              style={[styles.showControlBtn, styles.showControlBtnCenterRight]}
-                            >
-                              <Ionicons name="remove" size={22} color={item.completed ? '#94A3B8' : theme.colors.primary} />
-                            </TouchableOpacity>
-                            <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-                              <Text style={styles.showControlLabel}>{t('rpg_tv_ep')}</Text>
-                              <Text style={styles.showControlValue}>{episode}</Text>
-                            </View>
-                            <TouchableOpacity
-                              disabled={item.completed}
-                              onPress={() => statusChangeTask(item.id, 1, 'episode')}
-                              style={[styles.showControlBtn, styles.showControlBtnRight]}
-                            >
-                              <Ionicons name="add" size={22} color={item.completed ? '#94A3B8' : theme.colors.primary} />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      );
-                    })()}
-                  </>
-                )}
-              </View>
-            </Swipeable>
-          )}
-        />
-        <View
-          pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
-          style={[styles.keyboardSuggestionBar, {
-            bottom: keyboardHeight - 71,
-            opacity: isKeyboardVisible ? 1 : 0
-          }]}
-        >
-          <TouchableOpacity
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
-            onPress={() => setIsMovieInput(prev => !prev)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.keyboardSuggestionText}>{t('rpg_tv_is_movie')}</Text>
-            <View style={[
-              styles.keyboardSuggestionCheckbox,
-              isMovieInput && styles.keyboardSuggestionCheckboxChecked
-            ]}>
-              {isMovieInput && (
-                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-              )}
-            </View>
-          </TouchableOpacity>
-
-          <View style={{ width: 1, height: 24, backgroundColor: theme.colors.border.light, marginHorizontal: 16 }} />
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: isMovieInput ? 0.35 : 1 }}>
-            <Text style={styles.keyboardSuggestionText}>{t('rpg_tv_episode')}</Text>
-            <TextInput
-              style={{
-                width: 48,
-                height: 32,
-                borderRadius: theme.radius.sm,
-                borderWidth: 1.5,
-                borderColor: isMovieInput ? theme.colors.border.light : theme.colors.primary,
-                backgroundColor: theme.colors.background,
-                color: theme.colors.text.primary,
-                textAlign: 'center',
-                fontWeight: 'bold',
-                fontSize: 14,
-                padding: 0,
-              }}
-              value={startEpisode}
-              onChangeText={text => {
-                const digits = text.replace(/[^0-9]/g, '');
-                setStartEpisode(digits);
-              }}
-              keyboardType="numeric"
-              editable={!isMovieInput}
-              selectTextOnFocus={true}
-            />
-          </View>
-        </View>
-      </View>
+      <TvShowsSubtab
+        activeShows={activeShows}
+        showTitle={showTitle}
+        setShowTitle={setShowTitle}
+        isMovieInput={isMovieInput}
+        setIsMovieInput={setIsMovieInput}
+        startEpisode={startEpisode}
+        setStartEpisode={setStartEpisode}
+        keyboardHeight={keyboardHeight}
+        isKeyboardVisible={isKeyboardVisible}
+        handleAddShow={handleAddShow}
+        statusChangeTask={statusChangeTask}
+        deleteToRecycle={deleteToRecycle}
+        renderSwipeLeft={renderSwipeLeft}
+        styles={styles}
+        theme={theme}
+        t={t}
+      />
     );
   }
-
-
 
   const hasTodayMood = todayMood && activeMoodConfig[todayMood];
   const dateBtnBg = hasTodayMood ? activeMoodConfig[todayMood].dashboardBg : theme.colors.surface;
@@ -1028,316 +556,32 @@ export const RpgTab = ({
         </View>
       </View>
 
-      <Modal
-        visible={isCalendarVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => {
-          setCalendarVisible(false);
-          setSelectedDayDetail(null);
-          setIsHabitsExpanded(false);
-        }}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-
-            <TouchableOpacity
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                zIndex: 10,
-              }}
-              onPress={() => {
-                setCalendarVisible(false);
-                setSelectedDayDetail(null);
-                setIsHabitsExpanded(false);
-              }}
-            >
-              <Ionicons
-                style={{
-                  padding: 4,
-                  borderBottomLeftRadius: 14,
-                  borderTopRightRadius: 14,
-                  backgroundColor: theme.colors.icon.bg,
-                }}
-                name="close"
-                size={40}
-                color={theme.colors.icon.primary}
-              />
-            </TouchableOpacity>
-
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                zIndex: 10,
-                backgroundColor: theme.colors.icon.bg,
-                borderBottomRightRadius: 14,
-                borderTopLeftRadius: 14,
-                paddingVertical: 6,
-                paddingHorizontal: 6,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <TouchableOpacity
-                onPress={handlePrevMonth}
-                style={{
-                  padding: 4,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="chevron-back" size={28} color={theme.colors.icon.primary} />
-              </TouchableOpacity>
-
-              <Text
-                style={{
-                  fontSize: 19,
-                  fontWeight: 'bold',
-                  color: theme.colors.text.primary,
-                  textTransform: 'uppercase',
-                  minWidth: 156,
-                  textAlign: 'center',
-                }}
-              >
-                {currentMonthName} {viewDate.getFullYear()}
-              </Text>
-
-              <TouchableOpacity
-                onPress={handleNextMonth}
-                style={{
-                  padding: 4,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="chevron-forward" size={28} color={theme.colors.icon.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ height: 42 }} />
-
-            <View style={styles.calendarGrid}>
-              {calendarCells.map((cell, index) => {
-                const dayLog = cell.dateStr ? rpgHistory.find(h => h.date === cell.dateStr) : null;
-                const hasCellMood = dayLog && activeMoodConfig[dayLog.mood];
-                const isToday = cell.dateStr === todayStr;
-                const isSelected = selectedDayDetail && selectedDayDetail.dateStr === cell.dateStr;
-
-                let cellBg = 'transparent';
-                let cellBorderColor = 'transparent';
-                let cellTextColor = theme.colors.text.secondary;
-                let cellBorderWidth = 0;
-
-                if (cell.day) {
-                  if (hasCellMood) {
-                    cellBg = activeMoodConfig[dayLog.mood].glassBg;
-                    cellBorderColor = activeMoodConfig[dayLog.mood].color;
-                    cellTextColor = activeMoodConfig[dayLog.mood].color;
-                    cellBorderWidth = isSelected ? 3 : 1.5;
-                  } else {
-                    cellBg = theme.colors.border.light;
-                    if (isToday) {
-                      cellBorderColor = theme.colors.primary;
-                      cellBorderWidth = 1.5;
-                      cellTextColor = theme.colors.primary;
-                    }
-                    if (isSelected) {
-                      cellBorderColor = theme.colors.primary;
-                      cellBorderWidth = 3;
-                      cellTextColor = theme.colors.primary;
-                    }
-                  }
-                }
-
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    disabled={!cell.day}
-                    style={[
-                      styles.calendarCell,
-                      {
-                        backgroundColor: cellBg,
-                        borderColor: cellBorderColor,
-                        borderWidth: cellBorderWidth,
-                      }
-                    ]}
-                    onPress={() => handleDayPress(cell)}
-                  >
-                    {cell.day && (
-                      <Text style={[
-                        styles.calendarCellText,
-                        {
-                          color: cellTextColor,
-                          fontWeight: (hasCellMood || isSelected || isToday) ? 'bold' : '600',
-                        }
-                      ]}>
-                        {cell.day}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {selectedDayDetail && (
-              <View style={styles.dayDetailBlock}>
-                <Text style={styles.dayDetailTitle}>
-                  {t('rpg_cal_summary', { day: selectedDayDetail.day, month: selectedDayMonthGenitive })}
-                </Text>
-
-                <View style={styles.dayDetailGrid}>
-                  <View style={styles.dayDetailItem}>
-                    <Text style={styles.statLabel}>{t('rpg_cal_mood')}</Text>
-                    {selectedDayDetail.log.mood ? (
-                      <MaterialCommunityIcons
-                        name={activeMoodConfig[selectedDayDetail.log.mood].icon}
-                        size={28}
-                        color={activeMoodConfig[selectedDayDetail.log.mood].color}
-                        style={{ marginTop: 4 }}
-                      />
-                    ) : (
-                      <Text style={styles.dayDetailValue}>—</Text>
-                    )}
-                  </View>
-
-                  <View style={styles.dayDetailItem}>
-                    <Text style={styles.statLabel}>{t('rpg_cal_progress')}</Text>
-                    <Text style={[styles.dayDetailValue, { color: theme.colors.primary }]}>
-                      {displayProgress}%
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.dayDetailItem}
-                    onPress={() => setIsHabitsExpanded(prev => !prev)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.statLabel}>{t('rpg_cal_habits')}</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                      <Text style={[styles.dayDetailValue, { color: '#34D399', marginTop: 0 }]}>
-                        +{displayPosPoints}
-                      </Text>
-                      <Text style={[styles.dayDetailValue, { color: '#94A3B8', marginTop: 0, marginHorizontal: 8 }]}>
-                        {displayNeuPoints}
-                      </Text>
-                      <Text style={[styles.dayDetailValue, { color: '#EF4444', marginTop: 0 }]}>
-                        -{displayNegPoints}
-                      </Text>
-                    </View>
-                    <MaterialCommunityIcons
-                      name={isHabitsExpanded ? 'chevron-up' : 'chevron-down'}
-                      size={14}
-                      color="#94A3B8"
-                      style={{ marginTop: 2 }}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                {isHabitsExpanded && (
-                  <View style={{
-                    marginTop: 6,
-                    borderTopWidth: 1,
-                    borderTopColor: theme.colors.border.light,
-                    borderBottomWidth: 1,
-                    borderBottomColor: theme.colors.border.light,
-                    maxHeight: 206, 
-                  }}>
-                    {dayHabits.length > 0 ? (
-                      <FlatList
-                        data={dayHabits}
-                        bounces={false}
-                        overScrollMode="never"
-                        keyExtractor={(habit, idx) => habit.id || idx.toString()}
-                        contentContainerStyle={{ gap: 6, paddingVertical: 6 }}
-                        renderItem={({ item: habit }) => {
-                          const iconBg = habit.contribution === 1
-                            ? 'rgba(52, 211, 153, 0.12)'
-                            : habit.contribution === -1
-                              ? 'rgba(239, 68, 68, 0.12)'
-                              : 'rgba(148, 163, 184, 0.12)';
-
-                          const iconColor = habit.contribution === 1
-                            ? '#34D399'
-                            : habit.contribution === -1
-                              ? '#EF4444'
-                              : '#94A3B8';
-
-                          const iconName = habit.contribution === 1
-                            ? 'plus'
-                            : habit.contribution === -1
-                              ? 'minus'
-                              : 'help';
-
-                          return (
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                backgroundColor: theme.colors.surface,
-                                borderRadius: 10,
-                                paddingVertical: 8,
-                                paddingHorizontal: 12,
-                                borderWidth: 1,
-                                borderColor: theme.colors.border.light,
-                              }}
-                            >
-                              <View style={{
-                                width: 26,
-                                height: 26,
-                                borderRadius: 6,
-                                backgroundColor: iconBg,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginRight: 10,
-                              }}>
-                                <MaterialCommunityIcons name={iconName} size={15} color={iconColor} />
-                              </View>
-                              <Text style={{
-                                flex: 1,
-                                fontSize: 14,
-                                color: theme.colors.text.primary,
-                                fontWeight: '500'
-                              }}>
-                                {habit.text}
-                              </Text>
-                              <Text style={{
-                                fontSize: 14,
-                                fontWeight: 'bold',
-                                color: theme.colors.text.secondary
-                              }}>
-                                {habit.progressNow || 0}
-                              </Text>
-                            </View>
-                          );
-                        }}
-                      />
-                    ) : (
-                      <Text style={{
-                        fontSize: 13,
-                        color: '#94A3B8',
-                        textAlign: 'center',
-                        fontStyle: 'italic',
-                        marginTop: 4
-                      }}>
-                        {t('rpg_cal_no_habits')}
-                      </Text>
-                    )}
-                  </View>
-                )}
-              </View>
-            )}
-
-          </View>
-        </View>
-      </Modal>
-
+      <CalendarModal
+        isCalendarVisible={isCalendarVisible}
+        setCalendarVisible={setCalendarVisible}
+        currentMonthName={currentMonthName}
+        viewDate={viewDate}
+        calendarCells={calendarCells}
+        selectedDayDetail={selectedDayDetail}
+        setSelectedDayDetail={setSelectedDayDetail}
+        isHabitsExpanded={isHabitsExpanded}
+        setIsHabitsExpanded={setIsHabitsExpanded}
+        displayProgress={displayProgress}
+        displayPosPoints={displayPosPoints}
+        displayNegPoints={displayNegPoints}
+        displayNeuPoints={displayNeuPoints}
+        dayHabits={dayHabits}
+        activeMoodConfig={activeMoodConfig}
+        rpgHistory={rpgHistory}
+        todayStr={todayStr}
+        selectedDayMonthGenitive={selectedDayMonthGenitive}
+        handlePrevMonth={handlePrevMonth}
+        handleNextMonth={handleNextMonth}
+        handleDayPress={handleDayPress}
+        styles={styles}
+        theme={theme}
+        t={t}
+      />
     </View>
   );
 };
