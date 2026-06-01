@@ -109,7 +109,18 @@ export const useTodoActions = (mainTab, settings) => {
       : Date.now();
     const todayStr = getLogicalDateStr(settings?.reset_time, maxUpdatedAt);
 
-    const dailies = todoList.filter(item => item.type === 'daily' && !item.deleted);
+    const parts = todayStr.split('-').map(Number);
+    const logicalDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    const logicalDayIdx = (logicalDate.getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+
+    const dailies = todoList.filter(item => {
+      if (item.type !== 'daily' || item.deleted) return false;
+      const daysStr = item.days || '1111111';
+      return daysStr[logicalDayIdx] === '1';
+    });
+
+    const hasAnyDaily = todoList.some(item => item.type === 'daily' && !item.deleted);
+
     let progress = 0.0;
     if (dailies.length > 0) {
       const { needProgress, nowProgress } = dailies.reduce((acc, item) => {
@@ -119,7 +130,9 @@ export const useTodoActions = (mainTab, settings) => {
         acc.nowProgress += now;
         return acc;
       }, { needProgress: 0, nowProgress: 0 });
-      progress = needProgress > 0 ? nowProgress / needProgress : 0.0;
+      progress = needProgress > 0 ? nowProgress / needProgress : 1.0;
+    } else if (hasAnyDaily) {
+      progress = 1.0; // Rest day: all active tasks completed
     }
 
     const positiveCount = todoList
@@ -346,7 +359,18 @@ export const useTodoActions = (mainTab, settings) => {
   const handleMoodChange = useCallback((moodValue) => {
     const todayStr = getLogicalDateStr(settings?.reset_time);
 
-    const dailies = todoList.filter(item => item.type === 'daily' && !item.deleted);
+    const parts = todayStr.split('-').map(Number);
+    const logicalDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    const logicalDayIdx = (logicalDate.getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+
+    const dailies = todoList.filter(item => {
+      if (item.type !== 'daily' || item.deleted) return false;
+      const daysStr = item.days || '1111111';
+      return daysStr[logicalDayIdx] === '1';
+    });
+
+    const hasAnyDaily = todoList.some(item => item.type === 'daily' && !item.deleted);
+
     let progress = 0.0;
     if (dailies.length > 0) {
       const { needProgress, nowProgress } = dailies.reduce((acc, item) => {
@@ -354,7 +378,9 @@ export const useTodoActions = (mainTab, settings) => {
         acc.nowProgress += (item.progressNow || 0);
         return acc;
       }, { needProgress: 0, nowProgress: 0 });
-      progress = nowProgress / needProgress;
+      progress = needProgress > 0 ? nowProgress / needProgress : 1.0;
+    } else if (hasAnyDaily) {
+      progress = 1.0;
     }
 
     const positiveCount = todoList

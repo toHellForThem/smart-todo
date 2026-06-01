@@ -5,6 +5,8 @@ backend/__pycache__/
 frontend/.env
 backend/.env
 .continue
+local.properties
+my-release-key.jks
 
 # dependencies
 frontend/node_modules/

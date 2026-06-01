@@ -233,7 +233,18 @@ export const RpgTab = ({
   };
 
   const dailyStats = useMemo(() => {
-    const dailies = todoList.filter(item => item.type === 'daily' && !item.deleted);
+    const parts = todayStr.split('-').map(Number);
+    const logicalDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    const logicalDayIdx = (logicalDate.getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+
+    const dailies = todoList.filter(item => {
+      if (item.type !== 'daily' || item.deleted) return false;
+      const daysStr = item.days || '1111111';
+      return daysStr[logicalDayIdx] === '1';
+    });
+
+    const hasAnyDaily = todoList.some(item => item.type === 'daily' && !item.deleted);
+
     let dailiesProgress = 0;
     if (dailies.length > 0) {
       const { needProgress, nowProgress } = dailies.reduce((acc, item) => {
@@ -242,6 +253,8 @@ export const RpgTab = ({
         return acc;
       }, { needProgress: 0, nowProgress: 0 });
       dailiesProgress = Math.round((nowProgress / needProgress) * 100);
+    } else if (hasAnyDaily) {
+      dailiesProgress = 100; // Rest day: all active tasks completed
     }
 
     const positiveCount = positiveHabits.reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
@@ -254,7 +267,7 @@ export const RpgTab = ({
       negativeCount,
       neutralCount,
     };
-  }, [todoList, positiveHabits, negativeHabits, neutralHabits]);
+  }, [todoList, positiveHabits, negativeHabits, neutralHabits, todayStr]);
 
   const todayMood = useMemo(() => {
     const todayLog = rpgHistory.find(h => h.date === todayStr);
