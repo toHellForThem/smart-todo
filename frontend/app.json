@@ -14,7 +14,8 @@
     },
     "ios": {
       "jsEngine": "hermes",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,6 +25,7 @@
       "jsEngine": "hermes",
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.ToDoSoDo",
+      "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
