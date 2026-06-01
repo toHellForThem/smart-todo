@@ -1,8 +1,30 @@
-import { Platform } from 'react-native';
+import { Platform, NativeModules } from 'react-native';
 import { createMMKV } from 'react-native-mmkv';
 
 
 const nativeStorage = Platform.OS !== 'web' ? createMMKV() : null;
+
+const getSystemLanguage = () => {
+  try {
+    let locale = '';
+    if (Platform.OS === 'ios') {
+      const settings = NativeModules.SettingsManager?.settings;
+      locale = settings?.AppleLocale || settings?.AppleLanguages?.[0] || '';
+    } else if (Platform.OS === 'android') {
+      locale = NativeModules.I18nManager?.localeIdentifier || '';
+    } else {
+      if (typeof navigator !== 'undefined') {
+        locale = navigator.language || navigator.userLanguage || '';
+      }
+    }
+    if (locale && locale.toLowerCase().startsWith('ru')) {
+      return 'ru';
+    }
+    return 'en';
+  } catch (error) {
+    return 'ru';
+  }
+};
 
 const core = {
   set: (key, value) => {
@@ -56,7 +78,15 @@ export const AuthStorage = {
   setSettings: (settings) => core.set('user_settings', JSON.stringify(settings)),
   getSettings: () => {
     const data = core.get('user_settings');
-    const defaultSettings = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '00:00', rpg_subtab: 'dashboard', reset_enabled: true };
+    const defaultSettings = { 
+      main_page: 'todo', 
+      theme: 'default', 
+      soft_delete: true, 
+      reset_time: '00:00', 
+      rpg_subtab: 'dashboard', 
+      reset_enabled: true,
+      language: getSystemLanguage()
+    };
     return data ? { ...defaultSettings, ...JSON.parse(data) } : defaultSettings;
   },
 

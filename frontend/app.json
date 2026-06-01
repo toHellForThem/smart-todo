@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "toDoSoDo",
-    "slug": "toDoSoDo",
+    "name": "ToDoSoDo",
+    "slug": "ToDoSoDo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,7 +23,7 @@
       },
       "jsEngine": "hermes",
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.toDoSoDo",
+      "package": "com.anonymous.ToDoSoDo",
       "softwareKeyboardLayoutMode": "resize"
     },
     "web": {

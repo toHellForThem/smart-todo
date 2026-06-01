@@ -16,6 +16,7 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { getStyles } from './RpgTab.styles';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { getLogicalDateStr } from '../utils/date';
+import { useTranslation } from '../utils/LanguageContext';
 
 const moodConfig = {
   1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#CBD9EF', label: 'Ужасно' },
@@ -51,44 +52,45 @@ export const RpgTab = ({
 }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
+  const { t } = useTranslation();
   const isDark = settings?.theme === 'dark';
   const activeMoodConfig = useMemo(() => {
     const isMint = settings?.theme === 'mint';
     const isPink = settings?.theme === 'pink';
     if (isDark) {
       return {
-        1: { icon: 'emoticon-dead-outline', color: '#94A3B8', glassBg: '#334155', dashboardBg: '#1E293B', label: 'Ужасно' },
-        2: { icon: 'emoticon-sad-outline', color: '#FB7185', glassBg: '#4c0519', dashboardBg: '#881337', label: 'Плохо' },
-        3: { icon: 'emoticon-neutral-outline', color: '#F59E0B', glassBg: '#451a03', dashboardBg: '#78350f', label: 'Нормально' },
-        4: { icon: 'emoticon-happy-outline', color: '#34D399', glassBg: '#064e3b', dashboardBg: '#065f46', label: 'Хорошо' },
-        5: { icon: 'emoticon-excited-outline', color: '#C084FC', glassBg: '#2e1065', dashboardBg: '#4c1d95', label: 'Отлично' },
+        1: { icon: 'emoticon-dead-outline', color: '#94A3B8', glassBg: '#334155', dashboardBg: '#1E293B', label: t('mood_1') },
+        2: { icon: 'emoticon-sad-outline', color: '#FB7185', glassBg: '#4c0519', dashboardBg: '#881337', label: t('mood_2') },
+        3: { icon: 'emoticon-neutral-outline', color: '#F59E0B', glassBg: '#451a03', dashboardBg: '#78350f', label: t('mood_3') },
+        4: { icon: 'emoticon-happy-outline', color: '#34D399', glassBg: '#064e3b', dashboardBg: '#065f46', label: t('mood_4') },
+        5: { icon: 'emoticon-excited-outline', color: '#C084FC', glassBg: '#2e1065', dashboardBg: '#4c1d95', label: t('mood_5') },
       };
     } else if (isMint) {
       return {
-        1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#E2E8F0', label: 'Ужасно' },
-        2: { icon: 'emoticon-sad-outline', color: '#F43F5E', glassBg: '#FFE4E6', dashboardBg: '#FECDD3', label: 'Плохо' },
-        3: { icon: 'emoticon-neutral-outline', color: '#D98A2F', glassBg: '#FEF3C7', dashboardBg: '#FDE68A', label: 'Нормально' },
-        4: { icon: 'emoticon-happy-outline', color: '#10B981', glassBg: '#D1FAE5', dashboardBg: '#A7F3D0', label: 'Хорошо' },
-        5: { icon: 'emoticon-excited-outline', color: '#8B5CF6', glassBg: '#EDE9FE', dashboardBg: '#DDD6FE', label: 'Отлично' },
+        1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#E2E8F0', label: t('mood_1') },
+        2: { icon: 'emoticon-sad-outline', color: '#F43F5E', glassBg: '#FFE4E6', dashboardBg: '#FECDD3', label: t('mood_2') },
+        3: { icon: 'emoticon-neutral-outline', color: '#D98A2F', glassBg: '#FEF3C7', dashboardBg: '#FDE68A', label: t('mood_3') },
+        4: { icon: 'emoticon-happy-outline', color: '#10B981', glassBg: '#D1FAE5', dashboardBg: '#A7F3D0', label: t('mood_4') },
+        5: { icon: 'emoticon-excited-outline', color: '#8B5CF6', glassBg: '#EDE9FE', dashboardBg: '#DDD6FE', label: t('mood_5') },
       };
     } else if (isPink) {
       return {
-        1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#E2E8F0', label: 'Ужасно' },
-        2: { icon: 'emoticon-sad-outline', color: '#F43F5E', glassBg: '#FFE4E6', dashboardBg: '#FFD2E2', label: 'Плохо' },
-        3: { icon: 'emoticon-neutral-outline', color: '#D98A2F', glassBg: '#FEF3C7', dashboardBg: '#FFEBC4', label: 'Нормально' },
-        4: { icon: 'emoticon-happy-outline', color: '#10B981', glassBg: '#D1FAE5', dashboardBg: '#E6F4EA', label: 'Хорошо' },
-        5: { icon: 'emoticon-excited-outline', color: '#D946EF', glassBg: '#FDF4FF', dashboardBg: '#FAE8FF', label: 'Отлично' },
+        1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#E2E8F0', label: t('mood_1') },
+        2: { icon: 'emoticon-sad-outline', color: '#F43F5E', glassBg: '#FFE4E6', dashboardBg: '#FFD2E2', label: t('mood_2') },
+        3: { icon: 'emoticon-neutral-outline', color: '#D98A2F', glassBg: '#FEF3C7', dashboardBg: '#FFEBC4', label: t('mood_3') },
+        4: { icon: 'emoticon-happy-outline', color: '#10B981', glassBg: '#D1FAE5', dashboardBg: '#E6F4EA', label: t('mood_4') },
+        5: { icon: 'emoticon-excited-outline', color: '#D946EF', glassBg: '#FDF4FF', dashboardBg: '#FAE8FF', label: t('mood_5') },
       };
     } else {
       return {
-        1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#CBD9EF', label: 'Ужасно' },
-        2: { icon: 'emoticon-sad-outline', color: '#F43F5E', glassBg: '#FFE4E6', dashboardBg: '#DCD2E9', label: 'Плохо' },
-        3: { icon: 'emoticon-neutral-outline', color: '#D98A2F', glassBg: '#FEF3C7', dashboardBg: '#D9DCE4', label: 'Нормально' },
-        4: { icon: 'emoticon-happy-outline', color: '#10B981', glassBg: '#D1FAE5', dashboardBg: '#C1E1EE', label: 'Хорошо' },
-        5: { icon: 'emoticon-excited-outline', color: '#8B5CF6', glassBg: '#EDE9FE', dashboardBg: '#CFD6FC', label: 'Отлично' },
+        1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#CBD9EF', label: t('mood_1') },
+        2: { icon: 'emoticon-sad-outline', color: '#F43F5E', glassBg: '#FFE4E6', dashboardBg: '#DCD2E9', label: t('mood_2') },
+        3: { icon: 'emoticon-neutral-outline', color: '#D98A2F', glassBg: '#FEF3C7', dashboardBg: '#D9DCE4', label: t('mood_3') },
+        4: { icon: 'emoticon-happy-outline', color: '#10B981', glassBg: '#D1FAE5', dashboardBg: '#C1E1EE', label: t('mood_4') },
+        5: { icon: 'emoticon-excited-outline', color: '#8B5CF6', glassBg: '#EDE9FE', dashboardBg: '#CFD6FC', label: t('mood_5') },
       };
     }
-  }, [isDark, settings?.theme]);
+  }, [isDark, settings?.theme, t]);
 
   const [selectedDayDetail, setSelectedDayDetail] = useState(null);
   const [isHabitsExpanded, setIsHabitsExpanded] = useState(false);
@@ -311,18 +313,18 @@ export const RpgTab = ({
     : (selectedDayDetail?.log?.neg_points || 0);
 
   // Today's month name for dashboard button
-  const todayMonthGenitive = useMemo(() => monthsGenitiveRU[today.getMonth()], [today]);
+  const todayMonthGenitive = useMemo(() => t('months_genitive')[today.getMonth()], [today, t]);
 
   // Helper to get Russian month name for calendar view
-  const currentMonthName = useMemo(() => monthsRU[viewDate.getMonth()], [viewDate]);
+  const currentMonthName = useMemo(() => t('months')[viewDate.getMonth()], [viewDate, t]);
 
   // Selected day's month name in genitive for detailed block
   const selectedDayMonthGenitive = useMemo(() => {
     if (!selectedDayDetail?.dateStr) return '';
     const parts = selectedDayDetail.dateStr.split('-');
     const m = parseInt(parts[1], 10) - 1;
-    return monthsGenitiveRU[m] || '';
-  }, [selectedDayDetail]);
+    return t('months_genitive')[m] || '';
+  }, [selectedDayDetail, t]);
 
   // Month Calendar cell definitions
   const calendarCells = useMemo(() => {
@@ -501,7 +503,7 @@ export const RpgTab = ({
           </TouchableOpacity>
           <TextInput
             style={styles.input}
-            placeholder=" Новая привычка..."
+            placeholder={t('rpg_habit_placeholder')}
             placeholderTextColor="#94A3B8"
             cursorColor={theme.colors.icon.primary}
             selectionColor={theme.colors.icon.primary}
@@ -595,7 +597,7 @@ export const RpgTab = ({
           <View style={styles.piggyInputColumn}>
             <TextInput
               style={[styles.input, { flex: 0, width: '100%', marginBottom: 0 }]}
-              placeholder=" Название цели"
+              placeholder={t('rpg_piggy_title_placeholder')}
               placeholderTextColor="#94A3B8"
               cursorColor={theme.colors.icon.primary}
               selectionColor={theme.colors.icon.primary}
@@ -604,7 +606,7 @@ export const RpgTab = ({
             />
             <TextInput
               style={[styles.input, { flex: 0, width: '100%', marginBottom: 0 }]}
-              placeholder=" Целевая сумма"
+              placeholder={t('rpg_piggy_target_placeholder')}
               placeholderTextColor="#94A3B8"
               cursorColor={theme.colors.icon.primary}
               selectionColor={theme.colors.icon.primary}
@@ -615,7 +617,7 @@ export const RpgTab = ({
           </View>
 
           <TouchableOpacity style={styles.piggyCreateRightButton} onPress={handleSavePiggyGoal}>
-            <Text style={styles.piggyCreateRightButtonText}>Создать{"\n"}цель</Text>
+            <Text style={styles.piggyCreateRightButtonText}>{t('rpg_piggy_create')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -741,7 +743,7 @@ export const RpgTab = ({
               onPress={() => handleUpdatePiggy(focusedGoalId, false)}
             >
               <MaterialCommunityIcons name="minus" size={20} color="#EF4444" />
-              <Text style={[styles.piggyFloatingBtnText, { color: '#EF4444' }]}>Списать</Text>
+              <Text style={[styles.piggyFloatingBtnText, { color: '#EF4444' }]}>{t('rpg_piggy_deduct')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -749,7 +751,7 @@ export const RpgTab = ({
               onPress={() => handleUpdatePiggy(focusedGoalId, true)}
             >
               <MaterialCommunityIcons name="plus" size={20} color="#34D399" />
-              <Text style={[styles.piggyFloatingBtnText, { color: '#34D399' }]}>Внести</Text>
+              <Text style={[styles.piggyFloatingBtnText, { color: '#34D399' }]}>{t('rpg_piggy_deposit')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -765,7 +767,7 @@ export const RpgTab = ({
         <View style={styles.inputBlock}>
           <TextInput
             style={styles.input}
-            placeholder=" Что смотрим?"
+            placeholder={t('rpg_tv_placeholder')}
             placeholderTextColor="#94A3B8"
             cursorColor={theme.colors.icon.primary}
             selectionColor={theme.colors.icon.primary}
@@ -886,11 +888,9 @@ export const RpgTab = ({
                               disabled={item.completed}
                               onPress={() => statusChangeTask(item.id, -1, 'season')}
                               style={[styles.showControlBtn, styles.showControlBtnLeft]}
-                            >
-                              <Ionicons name="remove" size={22} color={item.completed ? '#94A3B8' : theme.colors.primary} />
-                            </TouchableOpacity>
+                            ></TouchableOpacity>
                             <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-                              <Text style={styles.showControlLabel}>Сезон</Text>
+                              <Text style={styles.showControlLabel}>{t('rpg_tv_season')}</Text>
                               <Text style={styles.showControlValue}>{season}</Text>
                             </View>
                             <TouchableOpacity
@@ -911,7 +911,7 @@ export const RpgTab = ({
                               <Ionicons name="remove" size={22} color={item.completed ? '#94A3B8' : theme.colors.primary} />
                             </TouchableOpacity>
                             <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-                              <Text style={styles.showControlLabel}>Серия</Text>
+                              <Text style={styles.showControlLabel}>{t('rpg_tv_ep')}</Text>
                               <Text style={styles.showControlValue}>{episode}</Text>
                             </View>
                             <TouchableOpacity
@@ -943,7 +943,7 @@ export const RpgTab = ({
             onPress={() => setIsMovieInput(prev => !prev)}
             activeOpacity={0.8}
           >
-            <Text style={styles.keyboardSuggestionText}>Это фильм?</Text>
+            <Text style={styles.keyboardSuggestionText}>{t('rpg_tv_is_movie')}</Text>
             <View style={[
               styles.keyboardSuggestionCheckbox,
               isMovieInput && styles.keyboardSuggestionCheckboxChecked
@@ -957,9 +957,8 @@ export const RpgTab = ({
           {/* Vertical Separator */}
           <View style={{ width: 1, height: 24, backgroundColor: theme.colors.border.light, marginHorizontal: 16 }} />
 
-          {/* Episode Start Input */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: isMovieInput ? 0.35 : 1 }}>
-            <Text style={styles.keyboardSuggestionText}>Серия:</Text>
+            <Text style={styles.keyboardSuggestionText}>{t('rpg_tv_episode')}</Text>
             <TextInput
               style={{
                 width: 48,
@@ -1019,11 +1018,11 @@ export const RpgTab = ({
 
             <View style={styles.dashboardStatsColumn}>
               <View style={styles.statItemRow}>
-                <Text style={styles.statLabel}>Прогресс дня</Text>
+                <Text style={styles.statLabel}>{t('rpg_stat_progress')}</Text>
                 <Text style={styles.statValue}>{dailyStats.dailiesProgress}%</Text>
               </View>
               <View style={styles.statItemRow}>
-                <Text style={styles.statLabel}>Привычки</Text>
+                <Text style={styles.statLabel}>{t('rpg_stat_habits')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={[styles.statValue, { color: '#34D399' }]}>+{dailyStats.positiveCount}</Text>
                   <Text style={[styles.statValue, { color: '#94A3B8', marginHorizontal: 8 }]}>{dailyStats.neutralCount}</Text>
@@ -1041,8 +1040,8 @@ export const RpgTab = ({
               <MaterialCommunityIcons name="shield-star-outline" size={45} color={theme.colors.icon.primary} />
             </View>
             <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Привычки</Text>
-              <Text style={styles.menuSubtitle}>Счётчики хороших и плохих дел, которые имеют свойство повторяться</Text>
+              <Text style={styles.menuTitle}>{t('rpg_menu_habits')}</Text>
+              <Text style={styles.menuSubtitle}>{t('rpg_menu_habits_desc')}</Text>
             </View>
           </TouchableOpacity>
 
@@ -1051,8 +1050,8 @@ export const RpgTab = ({
               <MaterialCommunityIcons name="piggy-bank-outline" size={45} color={theme.colors.icon.primary} />
             </View>
             <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Копилка</Text>
-              <Text style={styles.menuSubtitle}>Копи деньги на крупные цели</Text>
+              <Text style={styles.menuTitle}>{t('rpg_menu_piggy')}</Text>
+              <Text style={styles.menuSubtitle}>{t('rpg_menu_piggy_desc')}</Text>
             </View>
           </TouchableOpacity>
 
@@ -1061,8 +1060,8 @@ export const RpgTab = ({
               <MaterialCommunityIcons name="television-play" size={45} color={theme.colors.icon.primary} />
             </View>
             <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Сериалы</Text>
-              <Text style={styles.menuSubtitle}>Отмечай фильмы и сериалы</Text>
+              <Text style={styles.menuTitle}>{t('rpg_menu_tv')}</Text>
+              <Text style={styles.menuSubtitle}>{t('rpg_menu_tv_desc')}</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -1235,12 +1234,12 @@ export const RpgTab = ({
             {selectedDayDetail && (
               <View style={styles.dayDetailBlock}>
                 <Text style={styles.dayDetailTitle}>
-                  Сводка за {selectedDayDetail.day} {selectedDayMonthGenitive}
+                  {t('rpg_cal_summary', { day: selectedDayDetail.day, month: selectedDayMonthGenitive })}
                 </Text>
 
                 <View style={styles.dayDetailGrid}>
                   <View style={styles.dayDetailItem}>
-                    <Text style={styles.statLabel}>Настроение</Text>
+                    <Text style={styles.statLabel}>{t('rpg_cal_mood')}</Text>
                     {selectedDayDetail.log.mood ? (
                       <MaterialCommunityIcons
                         name={activeMoodConfig[selectedDayDetail.log.mood].icon}
@@ -1254,7 +1253,7 @@ export const RpgTab = ({
                   </View>
 
                   <View style={styles.dayDetailItem}>
-                    <Text style={styles.statLabel}>Прогресс</Text>
+                    <Text style={styles.statLabel}>{t('rpg_cal_progress')}</Text>
                     <Text style={[styles.dayDetailValue, { color: theme.colors.primary }]}>
                       {displayProgress}%
                     </Text>
@@ -1265,7 +1264,7 @@ export const RpgTab = ({
                     onPress={() => setIsHabitsExpanded(prev => !prev)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.statLabel}>Привычки</Text>
+                    <Text style={styles.statLabel}>{t('rpg_cal_habits')}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                       <Text style={[styles.dayDetailValue, { color: '#34D399', marginTop: 0 }]}>
                         +{displayPosPoints}
@@ -1372,7 +1371,7 @@ export const RpgTab = ({
                         fontStyle: 'italic',
                         marginTop: 4
                       }}>
-                        Нет записанных привычек за этот день
+                        {t('rpg_cal_no_habits')}
                       </Text>
                     )}
                   </View>

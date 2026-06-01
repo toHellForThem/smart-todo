@@ -7,6 +7,7 @@ import ReAnimated from 'react-native-reanimated';
 import { getStyles } from './Header.styles';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { getLogicalDateStr } from '../utils/date';
+import { useTranslation } from '../utils/LanguageContext';
 
 export const Header = memo(({
   panGesture,
@@ -27,6 +28,7 @@ export const Header = memo(({
 }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
+  const { t } = useTranslation();
   const todayStr = getLogicalDateStr(settings?.reset_time);
   const todayEntry = rpgHistory?.find(item => item.date === todayStr);
   const currentMoodValue = todayEntry ? todayEntry.mood : null;
@@ -38,15 +40,15 @@ export const Header = memo(({
           if (authMode === 'auth') {
             Toast.show({
               type: 'success',
-              text1: 'Облако активно',
-              text2: 'Вы успешно подключены к серверу!',
+              text1: t('hdr_cloud_active'),
+              text2: t('hdr_cloud_desc'),
               visibilityTime: 2500,
             });
           } else {
             Toast.show({
               type: 'info',
-              text1: 'Локальный режим',
-              text2: 'Подключение к серверу отсутствует.',
+              text1: t('hdr_local_mode'),
+              text2: t('hdr_local_desc'),
               visibilityTime: 2500,
             });
           }
@@ -63,7 +65,7 @@ export const Header = memo(({
 
       <GestureDetector gesture={panGesture}>
         <View style={styles.scoreContainer} onPress={() => { }}>
-          <Text style={{ fontSize: 20, color: theme.colors.text.primary }}>Как твои делишки?</Text>
+          <Text style={{ fontSize: 20, color: theme.colors.text.primary }}>{t('hdr_how_are_things')}</Text>
           <ReAnimated.View style={[styles.contentPlaceholder, animatedContentProps]}>
             <ReAnimated.View style={[styles.moodMeter, contentAnimatedStyle]}>
               {moods.map((mood) => {

@@ -5,6 +5,7 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { getStyles } from './TodoTab.styles';
 import { getStyles as getItemStyles } from '../styles/item.styles';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
+import { useTranslation } from '../utils/LanguageContext';
 
 const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   const styles = useStyles(getStyles);
@@ -75,6 +76,7 @@ export const TodoTab = memo(({
 }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
+  const { t } = useTranslation();
 
   const activeTodos = useMemo(() =>
     todoList.filter(item => item.type === 'todo' && !item.deleted),
@@ -114,7 +116,7 @@ export const TodoTab = memo(({
           style={styles.input}
           value={task}
           onChangeText={setTask}
-          placeholder=" Что планируешь?"
+          placeholder={t('todo_placeholder')}
           placeholderTextColor={theme.colors.text.muted}
           cursorColor={theme.colors.primary}
         />

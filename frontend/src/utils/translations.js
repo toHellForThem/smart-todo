@@ -1,0 +1,238 @@
+export const translations = {
+  ru: {
+    // Navigation / Tabs
+    tab_rpg: 'RPG',
+    tab_todo: 'To Do',
+    tab_daily: 'Daily',
+
+    // Header
+    hdr_cloud_active: 'Облако активно',
+    hdr_cloud_desc: 'Вы успешно подключены к серверу!',
+    hdr_local_mode: 'Локальный режим',
+    hdr_local_desc: 'Подключение к серверу отсутствует.',
+    hdr_how_are_things: 'Как твои делишки?',
+    hdr_calendar: 'Календарь',
+
+    // TodoTab
+    todo_placeholder: ' Добавить задачу...',
+    todo_add: 'Добавить',
+    swipe_delete: 'Удалить',
+    swipe_to_trash: 'В корзину',
+
+    // DailyTab
+    daily_placeholder: ' Что планируешь?',
+    daily_progress: 'Прогресс дня: {progress}%',
+    daily_weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+
+    // RpgTab
+    rpg_menu_habits: 'Привычки',
+    rpg_menu_habits_desc: 'Счётчики хороших и плохих дел, которые имеют свойство повторяться',
+    rpg_menu_piggy: 'Копилка',
+    rpg_menu_piggy_desc: 'Копи деньги на крупные цели',
+    rpg_menu_tv: 'Сериалы',
+    rpg_menu_tv_desc: 'Отмечай фильмы и сериалы',
+    
+    rpg_stat_progress: 'Прогресс дня',
+    rpg_stat_habits: 'Привычки',
+
+    rpg_habit_placeholder: ' Новая привычка...',
+    rpg_habit_added: 'Привычка добавлена',
+
+    rpg_piggy_title_placeholder: ' Название цели',
+    rpg_piggy_target_placeholder: ' Целевая сумма',
+    rpg_piggy_create: 'Создать\nцель',
+    rpg_piggy_deduct: 'Списать',
+    rpg_piggy_deposit: 'Внести',
+
+    rpg_tv_placeholder: ' Что смотрим?',
+    rpg_tv_is_movie: 'Это фильм?',
+    rpg_tv_episode: 'Серия:',
+    rpg_tv_season: 'Сезон',
+    rpg_tv_ep: 'Серия',
+
+    rpg_cal_summary: 'Сводка за {day} {month}',
+    rpg_cal_mood: 'Настроение',
+    rpg_cal_progress: 'Прогресс',
+    rpg_cal_habits: 'Привычки',
+    rpg_cal_no_habits: 'Нет записанных привычек за этот день',
+
+    // Moods
+    mood_1: 'Ужасно',
+    mood_2: 'Плохо',
+    mood_3: 'Нормально',
+    mood_4: 'Хорошо',
+    mood_5: 'Отлично',
+
+    // Months Nominative
+    months: [
+      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+    ],
+    // Months Genitive
+    months_genitive: [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ],
+
+    // SettingsTab
+    set_profile: 'Профиль синхронизации',
+    set_profile_local: 'Локальный профиль',
+    set_profile_cloud: 'Облачный профиль',
+    set_account_title: 'Личный кабинет',
+    set_default_user: 'Пользователь',
+    set_cloud_active: 'Облако активно',
+    set_logout: 'Выйти',
+    set_login: 'Войти',
+    set_register: 'Регистрация',
+    set_server_config: 'Подключение к серверу (API)',
+    set_save: 'Сохранить',
+    set_reset_btn: 'Сбросить',
+    set_login_title: 'Вход в аккаунт',
+    set_username_placeholder: 'Логин',
+    set_password_placeholder: 'Пароль',
+    set_no_account: 'Нет аккаунта? Зарегистрироваться',
+    set_have_account: 'Уже есть аккаунт? Войти',
+    set_create_account: 'Создать аккаунт',
+    set_reset_time_title: 'Время сброса дейли и привычек',
+    set_hours: 'Часы',
+    set_minutes: 'Минуты',
+    set_start_page: 'Стартовый экран',
+    set_theme: 'Выбор темы оформления',
+    set_theme_blue: 'Голубая',
+    set_theme_mint: 'Мятная',
+    set_theme_pink: 'Розовая',
+    set_theme_dark: 'Темная',
+    set_language: 'Язык интерфейса',
+    set_lang_ru: 'Русский',
+    set_lang_en: 'English',
+    set_trash: 'Удаление в корзину',
+    set_trash_desc: 'Удалять задачи сначала в корзину',
+    set_reset_card_title: 'Сброс дейли и привычек',
+    set_reset_auto: 'Автоматический сброс',
+    set_reset_time: 'Время сброса',
+    set_about: 'О программе',
+    set_support_author: 'Поддержать автора',
+    set_toast_theme: 'Тема успешно изменена',
+    set_toast_lang: 'Язык успешно изменен',
+    set_toast_url_err: 'Пожалуйста, введите корректный URL',
+    set_desc: 'Умный таск-трекер с элементами RPG. Выполняйте дейлики, прокачивайте полезные привычки, копите на мечты в копилке и ведите учет любимых сериалов в одном месте!',
+  },
+  en: {
+    // Navigation / Tabs
+    tab_rpg: 'RPG',
+    tab_todo: 'To Do',
+    tab_daily: 'Daily',
+
+    // Header
+    hdr_cloud_active: 'Cloud Active',
+    hdr_cloud_desc: 'Successfully connected to the server!',
+    hdr_local_mode: 'Local Mode',
+    hdr_local_desc: 'No connection to the server.',
+    hdr_how_are_things: "How's it going?",
+    hdr_calendar: 'Calendar',
+
+    // TodoTab
+    todo_placeholder: ' Add task...',
+    todo_add: 'Add',
+    swipe_delete: 'Delete',
+    swipe_to_trash: 'To Trash',
+
+    // DailyTab
+    daily_placeholder: ' What are you planning?',
+    daily_progress: 'Day Progress: {progress}%',
+    daily_weekdays: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
+
+    // RpgTab
+    rpg_menu_habits: 'Habits',
+    rpg_menu_habits_desc: 'Counters of good and bad deeds that tend to repeat',
+    rpg_menu_piggy: 'Piggy Bank',
+    rpg_menu_piggy_desc: 'Save money for big goals',
+    rpg_menu_tv: 'Serials',
+    rpg_menu_tv_desc: 'Track movies and TV shows',
+    
+    rpg_stat_progress: 'Day Progress',
+    rpg_stat_habits: 'Habits',
+
+    rpg_habit_placeholder: ' New habit...',
+    rpg_habit_added: 'Habit added',
+
+    rpg_piggy_title_placeholder: ' Goal name',
+    rpg_piggy_target_placeholder: ' Target amount',
+    rpg_piggy_create: 'Create\ngoal',
+    rpg_piggy_deduct: 'Deduct',
+    rpg_piggy_deposit: 'Deposit',
+
+    rpg_tv_placeholder: ' What to watch?',
+    rpg_tv_is_movie: 'Is it a movie?',
+    rpg_tv_episode: 'Episode:',
+    rpg_tv_season: 'Season',
+    rpg_tv_ep: 'Episode',
+
+    rpg_cal_summary: 'Summary for {day} {month}',
+    rpg_cal_mood: 'Mood',
+    rpg_cal_progress: 'Progress',
+    rpg_cal_habits: 'Habits',
+    rpg_cal_no_habits: 'No habits recorded for this day',
+
+    // Moods
+    mood_1: 'Awful',
+    mood_2: 'Bad',
+    mood_3: 'Normal',
+    mood_4: 'Good',
+    mood_5: 'Excellent',
+
+    // Months Nominative
+    months: [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ],
+    // Months Genitive
+    months_genitive: [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ],
+
+    // SettingsTab
+    set_profile: 'Sync Profile',
+    set_profile_local: 'Local Profile',
+    set_profile_cloud: 'Cloud Profile',
+    set_account_title: 'Personal Account',
+    set_default_user: 'User',
+    set_cloud_active: 'Cloud Active',
+    set_logout: 'Log Out',
+    set_login: 'Log In',
+    set_register: 'Register',
+    set_server_config: 'Server Connection (API)',
+    set_save: 'Save',
+    set_reset_btn: 'Reset',
+    set_login_title: 'Log In',
+    set_username_placeholder: 'Username',
+    set_password_placeholder: 'Password',
+    set_no_account: 'No account? Register',
+    set_have_account: 'Already have an account? Log In',
+    set_create_account: 'Create Account',
+    set_reset_time_title: 'Reset Time (Daily & Habits)',
+    set_hours: 'Hours',
+    set_minutes: 'Minutes',
+    set_start_page: 'Start Screen',
+    set_theme: 'Theme Selector',
+    set_theme_blue: 'Blue',
+    set_theme_mint: 'Mint',
+    set_theme_pink: 'Pink',
+    set_theme_dark: 'Dark',
+    set_language: 'Interface Language',
+    set_lang_ru: 'Русский',
+    set_lang_en: 'English',
+    set_trash: 'Move to Trash',
+    set_trash_desc: 'Move deleted tasks to trash first',
+    set_reset_card_title: 'Reset Daily & Habits',
+    set_reset_auto: 'Automatic Reset',
+    set_reset_time: 'Reset Time',
+    set_about: 'About',
+    set_support_author: 'Support the Author',
+    set_toast_theme: 'Theme changed successfully',
+    set_toast_lang: 'Language changed successfully',
+    set_toast_url_err: 'Please enter a valid URL',
+    set_desc: 'Smart task tracker with RPG elements. Complete daily tasks, build useful habits, save for dreams, and keep track of your favorite shows in one place!',
+  }
+};

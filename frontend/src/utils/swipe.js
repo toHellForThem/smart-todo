@@ -1,19 +1,22 @@
 import { View, Animated, Text } from 'react-native';
 import { getStyles } from '../styles/item.styles';
+import { translations } from './translations';
 
-export const renderLeftAction = (prog, drag, mode, theme) => {
+export const renderLeftAction = (prog, drag, mode, theme, lang = 'ru', softDeleteEnabled = true) => {
   const styles = getStyles(theme);
-  const isRecycle = mode === 'hardDelete';
+  const isHardDelete = mode === 'hardDelete' || !softDeleteEnabled;
+  const dict = translations[lang] || translations.ru;
+  const label = isHardDelete ? dict.swipe_delete : dict.swipe_to_trash;
 
   const opacity = drag.interpolate({
-    inputRange: [0, 30, 77 - (isRecycle ? 2 : -6)],
+    inputRange: [0, 30, 77 - (isHardDelete ? 2 : -6)],
     outputRange: [0, 0.4, 1],
     extrapolate: 'clamp',
   });
 
   const translateX = drag.interpolate({
-    inputRange: [0, 65, 77 - (isRecycle ? 2 : -6)],
-    outputRange: [-59 + (isRecycle ? 2 : -6), 6 + (isRecycle ? 2 : -6), 18],
+    inputRange: [0, 65, 77 - (isHardDelete ? 2 : -6)],
+    outputRange: [-59 + (isHardDelete ? 2 : -6), 6 + (isHardDelete ? 2 : -6), 18],
     extrapolate: 'clamp',
   });
 
@@ -31,11 +34,11 @@ export const renderLeftAction = (prog, drag, mode, theme) => {
           opacity: opacity,
           marginRight: -130,
           transform: [{ translateX: translateX }],
-          backgroundColor: isRecycle ? theme.colors.danger : theme.colors.primary,
+          backgroundColor: isHardDelete ? theme.colors.danger : theme.colors.primary,
         }
       ]}>
         <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          {isRecycle ? 'Удалить' : 'В корзину'}
+          {label}
         </Text>
       </Animated.View>
     </View>

@@ -16,6 +16,7 @@ import { getStyles } from './SettingsTab.styles';
 import { AuthStorage, TodoStorage, RpgStorage } from '../utils/storage';
 import { socket, updateSocketUrlAndReconnect } from '../utils/socket';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
+import { useTranslation } from '../utils/LanguageContext';
 
 export const SettingsTab = ({
   authMode,
@@ -30,6 +31,7 @@ export const SettingsTab = ({
 }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setPasswordVisible] = useState(false);
@@ -41,7 +43,7 @@ export const SettingsTab = ({
     if (!url) {
       Toast.show({
         type: 'error',
-        text1: 'Пожалуйста, введите корректный URL',
+        text1: t('set_toast_url_err'),
         visibilityTime: 3000
       });
       return;
@@ -165,9 +167,20 @@ export const SettingsTab = ({
     updateSetting('theme', newTheme);
     Toast.show({
       type: 'success',
-      text1: 'Тема успешно изменена',
+      text1: t('set_toast_theme'),
       visibilityTime: 2000
     });
+  };
+
+  const handleLanguageChange = (newLang) => {
+    updateSetting('language', newLang);
+    setTimeout(() => {
+      Toast.show({
+        type: 'success',
+        text1: newLang === 'ru' ? 'Язык успешно изменен' : 'Language changed successfully',
+        visibilityTime: 2000
+      });
+    }, 100);
   };
 
   // Parsing current reset time
@@ -204,23 +217,23 @@ export const SettingsTab = ({
               {authMode === 'auth' ? (
                 <View style={styles.profileRow}>
                   <View style={styles.profileInfo}>
-                    <Text style={styles.profileTitle}>Личный кабинет</Text>
-                    <Text style={styles.profileUsername}>{AuthStorage.getUsername() || 'Пользователь'}</Text>
+                    <Text style={styles.profileTitle}>{t('set_account_title')}</Text>
+                    <Text style={styles.profileUsername}>{AuthStorage.getUsername() || t('set_default_user')}</Text>
                     <View style={styles.syncBadge}>
                       <View style={styles.pulseDot} />
-                      <Text style={styles.syncText}>Облако активно</Text>
+                      <Text style={styles.syncText}>{t('set_cloud_active')}</Text>
                     </View>
                   </View>
                   <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
                     <MaterialCommunityIcons name="logout" size={18} color={theme.colors.icon.primary} />
-                    <Text style={styles.logoutButtonText}>Выйти</Text>
+                    <Text style={styles.logoutButtonText}>{t('set_logout')}</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
                 <View style={styles.localProfileContainer}>
                   <View style={styles.localProfileHeader}>
                     <MaterialCommunityIcons name="cloud-off-outline" size={24} color={theme.colors.text.secondary} />
-                    <Text style={styles.cardTitle}>Локальный профиль</Text>
+                    <Text style={styles.cardTitle}>{t('set_profile_local')}</Text>
                   </View>
                   <View style={styles.authButtonsRow}>
                     <TouchableOpacity
@@ -231,7 +244,7 @@ export const SettingsTab = ({
                         setPassword('');
                       }}
                     >
-                      <Text style={styles.primaryAuthButtonText}>Войти</Text>
+                      <Text style={styles.primaryAuthButtonText}>{t('set_login')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.secondaryAuthButton}
@@ -241,7 +254,7 @@ export const SettingsTab = ({
                         setPassword('');
                       }}
                     >
-                      <Text style={styles.secondaryAuthButtonText}>Регистрация</Text>
+                      <Text style={styles.secondaryAuthButtonText}>{t('set_register')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -254,7 +267,7 @@ export const SettingsTab = ({
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="server" size={20} color={theme.colors.primary} />
-                <Text style={styles.cardTitle}>Подключение к серверу (API)</Text>
+                <Text style={styles.cardTitle}>{t('set_server_config')}</Text>
               </View>
 
               <View style={{ marginTop: 12 }}>
@@ -280,14 +293,14 @@ export const SettingsTab = ({
                     style={[styles.primaryAuthButton, { flex: 1, height: 40, paddingVertical: 0, justifyContent: 'center' }]}
                     onPress={handleSaveServerUrl}
                   >
-                    <Text style={styles.primaryAuthButtonText}>Сохранить</Text>
+                    <Text style={styles.primaryAuthButtonText}>{t('set_save')}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[styles.secondaryAuthButton, { flex: 1, height: 40, paddingVertical: 0, justifyContent: 'center' }]}
                     onPress={handleResetServerUrl}
                   >
-                    <Text style={styles.secondaryAuthButtonText}>Сбросить</Text>
+                    <Text style={styles.secondaryAuthButtonText}>{t('set_reset_btn')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -306,12 +319,12 @@ export const SettingsTab = ({
               </TouchableOpacity>
 
               <Text style={styles.authTitle}>
-                {authState === 'login' ? 'Вход в аккаунт' : 'Регистрация'}
+                {authState === 'login' ? t('set_login_title') : t('set_register')}
               </Text>
 
               <View style={styles.formContainer}>
                 <PaperInput
-                  placeholder=" Логин"
+                  placeholder={t('set_username_placeholder')}
                   value={username}
                   onChangeText={setUsername}
                   style={styles.authInput}
@@ -329,7 +342,7 @@ export const SettingsTab = ({
                 />
 
                 <PaperInput
-                  placeholder=" Пароль"
+                  placeholder={t('set_password_placeholder')}
                   value={password}
                   onChangeText={setPassword}
                   mode="outlined"
@@ -364,7 +377,7 @@ export const SettingsTab = ({
                   style={styles.submitAuthButton}
                 >
                   <Text style={styles.submitAuthButtonText}>
-                    {authState === 'login' ? 'Войти' : 'Создать аккаунт'}
+                    {authState === 'login' ? t('set_login') : t('set_create_account')}
                   </Text>
                 </TouchableOpacity>
 
@@ -374,8 +387,54 @@ export const SettingsTab = ({
                 >
                   <Text style={styles.toggleAuthText}>
                     {authState === 'login'
-                      ? 'Нет аккаунта? Зарегистрироваться'
-                      : 'Уже есть аккаунт? Войти'}
+                      ? t('set_no_account')
+                      : t('set_have_account')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* 1.6 Language Selector Section */}
+          {authState === '' && (
+            <View style={styles.card}>
+              <View style={styles.cardHeaderWithIcon}>
+                <Ionicons name="language-outline" size={20} color={theme.colors.primary} />
+                <Text style={styles.cardTitle}>{t('set_language')}</Text>
+              </View>
+
+              <View style={styles.segmentedControl}>
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    (!settings?.language || settings?.language === 'ru') && styles.segmentButtonActive
+                  ]}
+                  onPress={() => handleLanguageChange('ru')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      (!settings?.language || settings?.language === 'ru') && styles.segmentTextActive
+                    ]}
+                  >
+                    {t('set_lang_ru')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    settings?.language === 'en' && styles.segmentButtonActive
+                  ]}
+                  onPress={() => handleLanguageChange('en')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      settings?.language === 'en' && styles.segmentTextActive
+                    ]}
+                  >
+                    {t('set_lang_en')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -387,7 +446,7 @@ export const SettingsTab = ({
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="clock-outline" size={20} color={theme.colors.primary} />
-                <Text style={styles.cardTitle}>Время сброса дейли и привычек</Text>
+                <Text style={styles.cardTitle}>{t('set_reset_time_title')}</Text>
               </View>
 
               <View style={styles.clockCenterContainer}>
@@ -402,7 +461,7 @@ export const SettingsTab = ({
                       <Ionicons name="remove" size={22} color={theme.colors.icon.primary} />
                     </TouchableOpacity>
                     <View style={styles.clockValueBg}>
-                      <Text style={styles.clockValueLabel}>Часы</Text>
+                      <Text style={styles.clockValueLabel}>{t('set_hours')}</Text>
                       <Text style={styles.clockValueText}>
                         {hours.toString().padStart(2, '0')}
                       </Text>
@@ -428,7 +487,7 @@ export const SettingsTab = ({
                       <Ionicons name="remove" size={22} color={theme.colors.icon.primary} />
                     </TouchableOpacity>
                     <View style={styles.clockValueBg}>
-                      <Text style={styles.clockValueLabel}>Минуты</Text>
+                      <Text style={styles.clockValueLabel}>{t('set_minutes')}</Text>
                       <Text style={styles.clockValueText}>
                         {minutes.toString().padStart(2, '0')}
                       </Text>
@@ -451,7 +510,7 @@ export const SettingsTab = ({
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="home-outline" size={20} color={theme.colors.primary} />
-                <Text style={styles.cardTitle}>Стартовый экран</Text>
+                <Text style={styles.cardTitle}>{t('set_start_page')}</Text>
               </View>
 
               <View style={styles.segmentedControl}>
@@ -473,7 +532,7 @@ export const SettingsTab = ({
                       settings?.main_page === 'rpg' && styles.segmentTextActive
                     ]}
                   >
-                    RPG
+                    {t('tab_rpg')}
                   </Text>
                 </TouchableOpacity>
 
@@ -495,7 +554,7 @@ export const SettingsTab = ({
                       settings?.main_page === 'todo' && styles.segmentTextActive
                     ]}
                   >
-                    To Do
+                    {t('tab_todo')}
                   </Text>
                 </TouchableOpacity>
 
@@ -517,7 +576,7 @@ export const SettingsTab = ({
                       settings?.main_page === 'daily' && styles.segmentTextActive
                     ]}
                   >
-                    Daily
+                    {t('tab_daily')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -528,7 +587,7 @@ export const SettingsTab = ({
                   <View style={[styles.cardHeaderWithIcon, { marginTop: 10, marginBottom: 6 }]}>
                     <MaterialCommunityIcons name="layers-outline" size={16} color={theme.colors.primary} />
                     <Text style={[styles.cardTitle, { fontSize: 13, color: theme.colors.text.secondary }]}>
-                      RPG
+                      {t('tab_rpg')}
                     </Text>
                   </View>
 
@@ -552,7 +611,7 @@ export const SettingsTab = ({
                           { fontSize: 11 }
                         ]}
                       >
-                        Привычки
+                        {t('rpg_menu_habits')}
                       </Text>
                     </TouchableOpacity>
 
@@ -575,7 +634,7 @@ export const SettingsTab = ({
                           { fontSize: 11 }
                         ]}
                       >
-                        Копилка
+                        {t('rpg_menu_piggy')}
                       </Text>
                     </TouchableOpacity>
 
@@ -598,7 +657,7 @@ export const SettingsTab = ({
                           { fontSize: 11 }
                         ]}
                       >
-                        Сериалы
+                        {t('rpg_menu_tv')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -612,7 +671,7 @@ export const SettingsTab = ({
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="palette-outline" size={20} color={theme.colors.primary} />
-                <Text style={styles.cardTitle}>Выбор темы оформления</Text>
+                <Text style={styles.cardTitle}>{t('set_theme')}</Text>
               </View>
 
               <View style={styles.segmentedControl}>
@@ -629,7 +688,7 @@ export const SettingsTab = ({
                       (!settings?.theme || settings?.theme === 'default') && styles.segmentTextActive
                     ]}
                   >
-                    Голубая
+                    {t('set_theme_blue')}
                   </Text>
                 </TouchableOpacity>
 
@@ -646,7 +705,7 @@ export const SettingsTab = ({
                       settings?.theme === 'mint' && styles.segmentTextActive
                     ]}
                   >
-                    Мятная
+                    {t('set_theme_mint')}
                   </Text>
                 </TouchableOpacity>
 
@@ -663,7 +722,7 @@ export const SettingsTab = ({
                       settings?.theme === 'pink' && styles.segmentTextActive
                     ]}
                   >
-                    Розовая
+                    {t('set_theme_pink')}
                   </Text>
                 </TouchableOpacity>
 
@@ -680,12 +739,14 @@ export const SettingsTab = ({
                       settings?.theme === 'dark' && styles.segmentTextActive
                     ]}
                   >
-                    Темная
+                    {t('set_theme_dark')}
                   </Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
+
+
 
           {/* 4. Soft Delete Toggle Section */}
           {authState === '' && (
@@ -694,7 +755,12 @@ export const SettingsTab = ({
                 <View style={styles.switchTextContainer}>
                   <View style={styles.cardHeaderWithIcon}>
                     <MaterialCommunityIcons name="trash-can-outline" size={20} color={theme.colors.primary} />
-                    <Text style={styles.cardTitle}>Удаление в корзину</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.cardTitle}>{t('set_trash')}</Text>
+                      <Text style={{ fontSize: 11, color: theme.colors.text.muted, marginLeft: theme.spacing.sm, marginTop: 2 }}>
+                        {t('set_trash_desc')}
+                      </Text>
+                    </View>
                   </View>
                 </View>
                 <Switch
@@ -714,7 +780,12 @@ export const SettingsTab = ({
                 <View style={styles.switchTextContainer}>
                   <View style={styles.cardHeaderWithIcon}>
                     <MaterialCommunityIcons name="history" size={20} color={theme.colors.primary} />
-                    <Text style={styles.cardTitle}>Сброс дейли и привычек</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.cardTitle}>{t('set_reset_card_title')}</Text>
+                      <Text style={{ fontSize: 11, color: theme.colors.text.muted, marginLeft: theme.spacing.sm, marginTop: 2 }}>
+                        {t('set_reset_auto')}
+                      </Text>
+                    </View>
                   </View>
                 </View>
                 <Switch
@@ -732,7 +803,7 @@ export const SettingsTab = ({
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="information-outline" size={20} color={theme.colors.primary} />
-                <Text style={styles.cardTitle}>О программе</Text>
+                <Text style={styles.cardTitle}>{t('set_about')}</Text>
               </View>
 
               <View style={{ marginTop: 12, alignItems: 'center' }}>
@@ -742,15 +813,15 @@ export const SettingsTab = ({
                 />
 
                 <Text style={{ fontSize: 18, fontWeight: '800', color: theme.colors.text.primary }}>
-                  To Do So Do
+                  ToDoSoDo
                 </Text>
 
                 <Text style={{ fontSize: 12, color: theme.colors.text.muted, marginTop: 2, fontWeight: '600' }}>
-                  Версия 1.0.0
+                  {t('set_about') === 'О программе' ? 'Версия 1.0.0' : 'Version 1.0.0'}
                 </Text>
 
                 <Text style={{ fontSize: 13, color: theme.colors.text.secondary, textAlign: 'center', marginTop: 10, lineHeight: 18, paddingHorizontal: 10 }}>
-                  Умный таск-трекер с элементами RPG. Выполняйте дейлики, прокачивайте полезные привычки, копите на мечты в копилке и ведите учет любимых сериалов в одном месте!
+                  {t('set_desc')}
                 </Text>
 
                 <TouchableOpacity
@@ -771,7 +842,7 @@ export const SettingsTab = ({
                 >
                   <MaterialCommunityIcons name="heart-pulse" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
                   <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Поддержать автора
+                    {t('set_support_author')}
                   </Text>
                 </TouchableOpacity>
 

@@ -6,6 +6,7 @@ import { getStyles } from './DailyTab.styles';
 import { getStyles as getItemStyles } from '../styles/item.styles';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { FillProgress } from '../components/FillProgress';
+import { useTranslation } from '../utils/LanguageContext';
 
 
 const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
@@ -84,6 +85,7 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
 export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
+  const { t } = useTranslation();
   const [task, setTask] = useState('');
   const [progressEnd, setProgressEnd] = useState(1);
   const [selectedDays, setSelectedDays] = useState('1111111');
@@ -161,7 +163,7 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
           style={styles.input}
           value={task}
           onChangeText={setTask}
-          placeholder=" Что планируешь?"
+          placeholder={t('daily_placeholder')}
           placeholderTextColor={theme.colors.text.muted}
           cursorColor={theme.colors.primary}
         />
@@ -191,7 +193,7 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
       >
         {/* Row 1: Weekdays Selector */}
         <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', width: '100%' }}>
-          {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, idx) => {
+          {t('daily_weekdays').map((day, idx) => {
             const isSelected = selectedDays[idx] === '1';
             return (
               <TouchableOpacity
@@ -245,7 +247,7 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
         </View>
       </View>
       <View style={styles.progressContainer}>
-        <Text style={[styles.progressText, progress === 100 && styles.progressTextCompleted]}>Прогресс дня: {progress}%</Text>
+        <Text style={[styles.progressText, progress === 100 && styles.progressTextCompleted]}>{t('daily_progress', { progress })}</Text>
         <View style={styles.progressBarBg}>
           <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
         </View>
