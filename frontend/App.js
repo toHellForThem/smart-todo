@@ -112,6 +112,7 @@ export default function App() {
 
   const moods = useMemo(() => {
     const isMint = settings?.theme === 'mint';
+    const isPink = settings?.theme === 'pink';
     if (isDark) {
       return [
         { value: 1, icon: 'emoticon-dead-outline', color: '#94A3B8' },
@@ -127,6 +128,14 @@ export default function App() {
         { value: 3, icon: 'emoticon-neutral-outline', color: '#D98A2F' },
         { value: 4, icon: 'emoticon-happy-outline', color: '#10B981' },
         { value: 5, icon: 'emoticon-excited-outline', color: '#8B5CF6' },
+      ];
+    } else if (isPink) {
+      return [
+        { value: 1, icon: 'emoticon-dead-outline', color: '#64748B' },
+        { value: 2, icon: 'emoticon-sad-outline', color: '#F43F5E' },
+        { value: 3, icon: 'emoticon-neutral-outline', color: '#D98A2F' },
+        { value: 4, icon: 'emoticon-happy-outline', color: '#10B981' },
+        { value: 5, icon: 'emoticon-excited-outline', color: '#D946EF' },
       ];
     } else {
       return [

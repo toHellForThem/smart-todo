@@ -75,6 +75,31 @@ export const mintColors = {
   },
 };
 
+export const pinkColors = {
+  primary: '#EC4899',
+  primaryLight: '#FCE7F3',
+  background: '#FDF2F8',
+  surface: '#FFFFFF',
+  text: {
+    primary: '#3F2C35', // Soft, highly readable deep rose-charcoal
+    secondary: '#5C4E55', // Soft warm slate
+    muted: '#94A3B8',
+    white: '#FFFFFF',
+    link: '#EC4899',
+  },
+  border: {
+    light: '#FCE7F3',
+    default: '#FBCFE8',
+  },
+  danger: '#EF4444',
+  icon: {
+    primary: '#EC4899',
+    active: '#FFFFFF',
+    bg: '#FCE7F3',
+    bgActive: '#EC4899',
+  },
+};
+
 
 export const getTheme = (themeName) => {
   let colors = defaultColors;
@@ -82,6 +107,8 @@ export const getTheme = (themeName) => {
     colors = darkColors;
   } else if (themeName === 'mint') {
     colors = mintColors;
+  } else if (themeName === 'pink') {
+    colors = pinkColors;
   }
   return {
     colors,
@@ -122,6 +149,9 @@ const getActiveColors = () => {
     }
     if (saved?.theme === 'mint') {
       return mintColors;
+    }
+    if (saved?.theme === 'pink') {
+      return pinkColors;
     }
   } catch (e) {
     // Fallback if MMKV is not loaded yet

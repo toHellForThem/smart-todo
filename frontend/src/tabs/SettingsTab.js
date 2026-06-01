@@ -619,14 +619,14 @@ export const SettingsTab = ({
                 <TouchableOpacity
                   style={[
                     styles.segmentButton,
-                    settings?.theme !== 'dark' && settings?.theme !== 'mint' && styles.segmentButtonActive
+                    (!settings?.theme || settings?.theme === 'default') && styles.segmentButtonActive
                   ]}
                   onPress={() => handleThemeChange('default')}
                 >
                   <Text
                     style={[
                       styles.segmentText,
-                      settings?.theme !== 'dark' && settings?.theme !== 'mint' && styles.segmentTextActive
+                      (!settings?.theme || settings?.theme === 'default') && styles.segmentTextActive
                     ]}
                   >
                     Голубая
@@ -643,10 +643,27 @@ export const SettingsTab = ({
                   <Text
                     style={[
                       styles.segmentText,
-                      settings?.theme === 'mint' && settings?.theme !== 'dark' && styles.segmentTextActive
+                      settings?.theme === 'mint' && styles.segmentTextActive
                     ]}
                   >
                     Мятная
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    settings?.theme === 'pink' && styles.segmentButtonActive
+                  ]}
+                  onPress={() => handleThemeChange('pink')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      settings?.theme === 'pink' && styles.segmentTextActive
+                    ]}
+                  >
+                    Розовая
                   </Text>
                 </TouchableOpacity>
 

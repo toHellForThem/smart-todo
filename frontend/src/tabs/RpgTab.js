@@ -54,6 +54,7 @@ export const RpgTab = ({
   const isDark = settings?.theme === 'dark';
   const activeMoodConfig = useMemo(() => {
     const isMint = settings?.theme === 'mint';
+    const isPink = settings?.theme === 'pink';
     if (isDark) {
       return {
         1: { icon: 'emoticon-dead-outline', color: '#94A3B8', glassBg: '#334155', dashboardBg: '#1E293B', label: 'Ужасно' },
@@ -69,6 +70,14 @@ export const RpgTab = ({
         3: { icon: 'emoticon-neutral-outline', color: '#D98A2F', glassBg: '#FEF3C7', dashboardBg: '#FDE68A', label: 'Нормально' },
         4: { icon: 'emoticon-happy-outline', color: '#10B981', glassBg: '#D1FAE5', dashboardBg: '#A7F3D0', label: 'Хорошо' },
         5: { icon: 'emoticon-excited-outline', color: '#8B5CF6', glassBg: '#EDE9FE', dashboardBg: '#DDD6FE', label: 'Отлично' },
+      };
+    } else if (isPink) {
+      return {
+        1: { icon: 'emoticon-dead-outline', color: '#64748B', glassBg: '#EDF2F7', dashboardBg: '#E2E8F0', label: 'Ужасно' },
+        2: { icon: 'emoticon-sad-outline', color: '#F43F5E', glassBg: '#FFE4E6', dashboardBg: '#FFD2E2', label: 'Плохо' },
+        3: { icon: 'emoticon-neutral-outline', color: '#D98A2F', glassBg: '#FEF3C7', dashboardBg: '#FFEBC4', label: 'Нормально' },
+        4: { icon: 'emoticon-happy-outline', color: '#10B981', glassBg: '#D1FAE5', dashboardBg: '#E6F4EA', label: 'Хорошо' },
+        5: { icon: 'emoticon-excited-outline', color: '#D946EF', glassBg: '#FDF4FF', dashboardBg: '#FAE8FF', label: 'Отлично' },
       };
     } else {
       return {
