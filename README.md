@@ -1,6 +1,8 @@
 # Smart To-Do App 🚀
 A mobile task management app with three modes (to-do list, daily tasks, RPG) and a focus on a polished UI/UX.
 
+![Demo](https://github.com/user-attachments/assets/2319141e-f3eb-42cb-a02c-cf3d39ba2eda)
+
 ## Tech Stack
 - Front-end: JavaScript (ES6+), React Native, Expo
 - Back-end: Python, Socket.io
