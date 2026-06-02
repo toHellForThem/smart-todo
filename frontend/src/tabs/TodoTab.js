@@ -37,6 +37,8 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
         paddingHorizontal: 20,
         backgroundColor: 'transparent',
       }}
+      activeOffsetX={[-15, 15]}
+      failOffsetY={[-15, 15]}
     >
       <View style={itemStyles.todoItem}>
         <TouchableOpacity
@@ -79,7 +81,13 @@ export const TodoTab = memo(({
   const { t } = useTranslation();
 
   const activeTodos = useMemo(() =>
-    todoList.filter(item => item.type === 'todo' && !item.deleted),
+    todoList
+      .filter(item => item.type === 'todo' && !item.deleted)
+      .sort((a, b) => {
+        if (a.completed && !b.completed) return 1;
+        if (!a.completed && b.completed) return -1;
+        return 0;
+      }),
     [todoList]
   );
 

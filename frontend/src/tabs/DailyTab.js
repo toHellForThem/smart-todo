@@ -39,6 +39,8 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
         paddingHorizontal: 20,
         backgroundColor: 'transparent',
       }}
+      activeOffsetX={[-15, 15]}
+      failOffsetY={[-15, 15]}
     >
       <View style={itemStyles.todoItem}>
         <FillProgress
@@ -93,12 +95,18 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
   const dailies = useMemo(() =>
-    todoList.filter(item => {
-      if (item.type !== 'daily' || item.deleted) return false;
-      const todayDayIdx = (new Date().getDay() + 6) % 7;
-      const daysStr = item.days || '1111111';
-      return daysStr[todayDayIdx] === '1';
-    }),
+    todoList
+      .filter(item => {
+        if (item.type !== 'daily' || item.deleted) return false;
+        const todayDayIdx = (new Date().getDay() + 6) % 7;
+        const daysStr = item.days || '1111111';
+        return daysStr[todayDayIdx] === '1';
+      })
+      .sort((a, b) => {
+        if (a.completed && !b.completed) return 1;
+        if (!a.completed && b.completed) return -1;
+        return 0;
+      }),
     [todoList]
   );
 

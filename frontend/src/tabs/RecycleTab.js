@@ -47,6 +47,8 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
         paddingHorizontal: 20,
         backgroundColor: 'transparent',
       }}
+      activeOffsetX={[-15, 15]}
+      failOffsetY={[-15, 15]}
     >
       <View style={styles.todoItem}>
         <Text style={[styles.todoText, item.completed && styles.completedText]}>

@@ -85,6 +85,8 @@ export const PiggyBankSubtab = memo(({
                 paddingHorizontal: 20,
                 backgroundColor: 'transparent',
               }}
+              activeOffsetX={[-15, 15]}
+              failOffsetY={[-15, 15]}
             >
               <View style={styles.piggyCardCompact}>
                 <View style={styles.piggyCardHeader}>
