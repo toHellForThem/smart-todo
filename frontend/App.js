@@ -54,6 +54,11 @@ const TAB_VIEWS = {
         statusChangeTask={props.statusChangeTask}
         deleteTodo={props.handleDeleteTodo}
         leftAction={props.leftAction}
+        dailyDays={props.dailyDays}
+        setDailyDays={props.setDailyDays}
+        dailyProgressEnd={props.dailyProgressEnd}
+        setDailyProgressEnd={props.setDailyProgressEnd}
+        isWideScreen={props.isWideScreen}
       />
     ),
   },
@@ -72,6 +77,11 @@ const TAB_VIEWS = {
         isCalendarVisible={props.isCalendarVisible}
         setCalendarVisible={props.setCalendarVisible}
         settings={props.settings}
+        showIsMovie={props.showIsMovie}
+        setShowIsMovie={props.setShowIsMovie}
+        showStartEpisode={props.showStartEpisode}
+        setShowStartEpisode={props.setShowStartEpisode}
+        isWideScreen={props.isWideScreen}
       />
     ),
   },
@@ -166,6 +176,11 @@ export default function App() {
   });
   const [isCalendarVisible, setCalendarVisible] = useState(false);
 
+  const [dailyDays, setDailyDays] = useState('1111111');
+  const [dailyProgressEnd, setDailyProgressEnd] = useState(1);
+  const [showIsMovie, setShowIsMovie] = useState(false);
+  const [showStartEpisode, setShowStartEpisode] = useState('1');
+
   const {
     todoList,
     setTodoList,
@@ -253,7 +268,16 @@ export default function App() {
     isCalendarVisible,
     setCalendarVisible,
     settings,
-  }), [addTask, todoList, setTodoList, statusChangeTask, handleDeleteTodo, handleLeftAction, rpgHistory, setRpgHistory, rpgSubtab, setRpgSubtab, isCalendarVisible, setCalendarVisible, settings]);
+    dailyDays,
+    setDailyDays,
+    dailyProgressEnd,
+    setDailyProgressEnd,
+    showIsMovie,
+    setShowIsMovie,
+    showStartEpisode,
+    setShowStartEpisode,
+    isWideScreen,
+  }), [addTask, todoList, setTodoList, statusChangeTask, handleDeleteTodo, handleLeftAction, rpgHistory, setRpgHistory, rpgSubtab, setRpgSubtab, isCalendarVisible, setCalendarVisible, settings, dailyDays, setDailyDays, dailyProgressEnd, setDailyProgressEnd, showIsMovie, setShowIsMovie, showStartEpisode, setShowStartEpisode, isWideScreen]);
 
   const handleTabChange = (tab) => {
     if (tab === 'rpg') {
@@ -308,6 +332,15 @@ export default function App() {
                 rpgHistory={rpgHistory}
                 onOpenCalendar={handleOpenCalendar}
                 settings={settings}
+                isWideScreen={isWideScreen}
+                dailyDays={dailyDays}
+                setDailyDays={setDailyDays}
+                dailyProgressEnd={dailyProgressEnd}
+                setDailyProgressEnd={setDailyProgressEnd}
+                showIsMovie={showIsMovie}
+                setShowIsMovie={setShowIsMovie}
+                showStartEpisode={showStartEpisode}
+                setShowStartEpisode={setShowStartEpisode}
               />
               <View style={styles.main} pointerEvents={isMoodSheetOpen ? 'none' : 'auto'}>
                 {GLOBAL_VIEWS[activeView] ? (

@@ -184,18 +184,21 @@ const TvShowInput = memo(({
   styles,
   theme,
   t,
+  showIsMovie,
+  setShowIsMovie,
+  showStartEpisode,
+  setShowStartEpisode,
+  isWideScreen,
 }) => {
   const [showTitle, setShowTitle] = useState('');
-  const [isMovieInput, setIsMovieInput] = useState(false);
-  const [startEpisode, setStartEpisode] = useState('1');
 
   const handleAdd = useCallback(() => {
     if (!showTitle.trim()) return;
-    handleAddShow(showTitle, isMovieInput, startEpisode);
+    handleAddShow(showTitle, showIsMovie, showStartEpisode);
     setShowTitle('');
-    setStartEpisode('1');
-    setIsMovieInput(false);
-  }, [showTitle, isMovieInput, startEpisode, handleAddShow]);
+    setShowStartEpisode('1');
+    setShowIsMovie(false);
+  }, [showTitle, showIsMovie, showStartEpisode, handleAddShow, setShowStartEpisode, setShowIsMovie]);
 
   return (
     <>
@@ -221,58 +224,60 @@ const TvShowInput = memo(({
         </TouchableOpacity>
       </View>
 
-      <View
-        pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
-        style={[styles.keyboardSuggestionBar, {
-          bottom: keyboardHeight - 71,
-          opacity: isKeyboardVisible ? 1 : 0
-        }]}
-      >
-        <TouchableOpacity
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
-          onPress={() => setIsMovieInput(prev => !prev)}
-          activeOpacity={0.8}
+      {!isWideScreen && (
+        <View
+          pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
+          style={[styles.keyboardSuggestionBar, {
+            bottom: keyboardHeight - 71,
+            opacity: isKeyboardVisible ? 1 : 0
+          }]}
         >
-          <Text style={styles.keyboardSuggestionText}>{t('rpg_tv_is_movie')}</Text>
-          <View style={[
-            styles.keyboardSuggestionCheckbox,
-            isMovieInput && styles.keyboardSuggestionCheckboxChecked
-          ]}>
-            {isMovieInput && (
-              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-            )}
+          <TouchableOpacity
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
+            onPress={() => setShowIsMovie(prev => !prev)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.keyboardSuggestionText}>{t('rpg_tv_is_movie')}</Text>
+            <View style={[
+              styles.keyboardSuggestionCheckbox,
+              showIsMovie && styles.keyboardSuggestionCheckboxChecked
+            ]}>
+              {showIsMovie && (
+                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+              )}
+            </View>
+          </TouchableOpacity>
+
+          <View style={{ width: 1, height: 24, backgroundColor: theme.colors.border.light, marginHorizontal: 16 }} />
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: showIsMovie ? 0.35 : 1 }}>
+            <Text style={styles.keyboardSuggestionText}>{t('rpg_tv_episode')}</Text>
+            <TextInput
+              style={{
+                width: 48,
+                height: 32,
+                borderRadius: theme.radius.sm,
+                borderWidth: 1.5,
+                borderColor: showIsMovie ? theme.colors.border.light : theme.colors.primary,
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text.primary,
+                textAlign: 'center',
+                fontWeight: 'bold',
+                fontSize: 14,
+                padding: 0,
+              }}
+              value={showStartEpisode}
+              onChangeText={text => {
+                const digits = text.replace(/[^0-9]/g, '');
+                setShowStartEpisode(digits);
+              }}
+              keyboardType="numeric"
+              editable={!showIsMovie}
+              selectTextOnFocus={true}
+            />
           </View>
-        </TouchableOpacity>
-
-        <View style={{ width: 1, height: 24, backgroundColor: theme.colors.border.light, marginHorizontal: 16 }} />
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: isMovieInput ? 0.35 : 1 }}>
-          <Text style={styles.keyboardSuggestionText}>{t('rpg_tv_episode')}</Text>
-          <TextInput
-            style={{
-              width: 48,
-              height: 32,
-              borderRadius: theme.radius.sm,
-              borderWidth: 1.5,
-              borderColor: isMovieInput ? theme.colors.border.light : theme.colors.primary,
-              backgroundColor: theme.colors.background,
-              color: theme.colors.text.primary,
-              textAlign: 'center',
-              fontWeight: 'bold',
-              fontSize: 14,
-              padding: 0,
-            }}
-            value={startEpisode}
-            onChangeText={text => {
-              const digits = text.replace(/[^0-9]/g, '');
-              setStartEpisode(digits);
-            }}
-            keyboardType="numeric"
-            editable={!isMovieInput}
-            selectTextOnFocus={true}
-          />
         </View>
-      </View>
+      )}
     </>
   );
 });
@@ -288,6 +293,11 @@ export const TvShowsSubtab = memo(({
   styles,
   theme,
   t,
+  showIsMovie,
+  setShowIsMovie,
+  showStartEpisode,
+  setShowStartEpisode,
+  isWideScreen,
 }) => {
   const renderItem = useCallback(({ item }) => (
     <TvShowItem
@@ -312,6 +322,11 @@ export const TvShowsSubtab = memo(({
         styles={styles}
         theme={theme}
         t={t}
+        showIsMovie={showIsMovie}
+        setShowIsMovie={setShowIsMovie}
+        showStartEpisode={showStartEpisode}
+        setShowStartEpisode={setShowStartEpisode}
+        isWideScreen={isWideScreen}
       />
 
       <FlatList

@@ -102,14 +102,19 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   );
 });
 
-const DailyInput = memo(({ onAdd }) => {
+const DailyInput = memo(({
+  onAdd,
+  dailyDays,
+  setDailyDays,
+  dailyProgressEnd,
+  setDailyProgressEnd,
+  isWideScreen,
+}) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
   const { t } = useTranslation();
 
   const [task, setTask] = useState('');
-  const [progressEnd, setProgressEnd] = useState(1);
-  const [selectedDays, setSelectedDays] = useState('1111111');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -140,12 +145,12 @@ const DailyInput = memo(({ onAdd }) => {
 
   const handleAdd = useCallback(() => {
     if (task.trim()) {
-      onAdd(task, progressEnd, 'daily', 0, 0, selectedDays);
+      onAdd(task, dailyProgressEnd, 'daily', 0, 0, dailyDays);
       setTask('');
-      setProgressEnd(1);
-      setSelectedDays('1111111');
+      setDailyProgressEnd(1);
+      setDailyDays('1111111');
     }
-  }, [task, progressEnd, selectedDays, onAdd]);
+  }, [task, dailyProgressEnd, dailyDays, onAdd, setDailyProgressEnd, setDailyDays]);
 
   return (
     <>
@@ -164,76 +169,90 @@ const DailyInput = memo(({ onAdd }) => {
           <MaterialCommunityIcons name="plus-thick" size={24} color={theme.colors.icon.primary} />
         </TouchableOpacity>
       </View>
-      <View
-        pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
-        style={[styles.floatingContainer, {
-          bottom: keyboardHeight - 71,
-          opacity: isKeyboardVisible ? 1 : 0,
-          flexDirection: 'column',
-          height: 100,
-          paddingVertical: 12,
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }]}
-      >
-        <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', width: '100%' }}>
-          {t('daily_weekdays').map((day, idx) => {
-            const isSelected = selectedDays[idx] === '1';
-            return (
-              <TouchableOpacity
-                key={day}
-                onPress={() => {
-                  setSelectedDays(prev => {
-                    const arr = prev.split('');
-                    arr[idx] = arr[idx] === '1' ? '0' : '1';
-                    if (arr.every(x => x === '0')) return prev;
-                    return arr.join('');
-                  });
-                }}
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 9,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: isSelected ? theme.colors.background : 'transparent',
-                  borderWidth: 1.5,
-                  borderColor: isSelected ? theme.colors.primary : 'transparent',
-                }}
-              >
-                <Text style={{
-                  fontSize: 13,
-                  fontWeight: 'bold',
-                  color: isSelected ? theme.colors.primary : theme.colors.text.secondary
-                }}>
-                  {day}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      {!isWideScreen && (
+        <View
+          pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
+          style={[styles.floatingContainer, {
+            bottom: keyboardHeight - 71,
+            opacity: isKeyboardVisible ? 1 : 0,
+            flexDirection: 'column',
+            height: 100,
+            paddingVertical: 12,
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }]}
+        >
+          <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', width: '100%' }}>
+            {t('daily_weekdays').map((day, idx) => {
+              const isSelected = dailyDays[idx] === '1';
+              return (
+                <TouchableOpacity
+                  key={day}
+                  onPress={() => {
+                    setDailyDays(prev => {
+                      const arr = prev.split('');
+                      arr[idx] = arr[idx] === '1' ? '0' : '1';
+                      if (arr.every(x => x === '0')) return prev;
+                      return arr.join('');
+                    });
+                  }}
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 9,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isSelected ? theme.colors.background : 'transparent',
+                    borderWidth: 1.5,
+                    borderColor: isSelected ? theme.colors.primary : 'transparent',
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 13,
+                    fontWeight: 'bold',
+                    color: isSelected ? theme.colors.primary : theme.colors.text.secondary
+                  }}>
+                    {day}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          <TouchableOpacity hitSlop={15} onPress={() => {
-            setProgressEnd(progressEnd === 1 ? 1 : progressEnd - 1);
-          }}>
-            <Ionicons name="remove-circle-outline" size={24} color={theme.colors.icon.primary} />
-          </TouchableOpacity>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', marginHorizontal: 15, color: theme.colors.text.primary }}>
-            {progressEnd}
-          </Text>
-          <TouchableOpacity hitSlop={15} onPress={() => {
-            setProgressEnd(progressEnd === 20 ? 20 : progressEnd + 1);
-          }}>
-            <Ionicons name="add-circle-outline" size={24} color={theme.colors.icon.primary} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <TouchableOpacity hitSlop={15} onPress={() => {
+              setDailyProgressEnd(dailyProgressEnd === 1 ? 1 : dailyProgressEnd - 1);
+            }}>
+              <Ionicons name="remove-circle-outline" size={24} color={theme.colors.icon.primary} />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', marginHorizontal: 15, color: theme.colors.text.primary }}>
+              {dailyProgressEnd}
+            </Text>
+            <TouchableOpacity hitSlop={15} onPress={() => {
+              setDailyProgressEnd(dailyProgressEnd === 20 ? 20 : dailyProgressEnd + 1);
+            }}>
+              <Ionicons name="add-circle-outline" size={24} color={theme.colors.icon.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
     </>
   );
 });
 
-export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
+export const DailyTab = memo(({
+  todoList,
+  setTodoList,
+  onAdd,
+  statusChangeTask,
+  deleteTodo,
+  leftAction,
+  dailyDays,
+  setDailyDays,
+  dailyProgressEnd,
+  setDailyProgressEnd,
+  isWideScreen,
+}) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
   const { t } = useTranslation();
@@ -276,7 +295,14 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
 
   return (
     <View style={styles.todoWrapper}>
-      <DailyInput onAdd={onAdd} />
+      <DailyInput
+        onAdd={onAdd}
+        dailyDays={dailyDays}
+        setDailyDays={setDailyDays}
+        dailyProgressEnd={dailyProgressEnd}
+        setDailyProgressEnd={setDailyProgressEnd}
+        isWideScreen={isWideScreen}
+      />
       <FlatList
         data={dailies}
         bounces={false}

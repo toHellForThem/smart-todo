@@ -24,6 +24,11 @@ export const RpgTab = memo(({
   isCalendarVisible,
   setCalendarVisible,
   settings,
+  showIsMovie,
+  setShowIsMovie,
+  showStartEpisode,
+  setShowStartEpisode,
+  isWideScreen,
 }) => {
   console.log('=== Render RpgTab ===');
   const styles = useStyles(getStyles);
@@ -457,6 +462,11 @@ export const RpgTab = memo(({
         styles={styles}
         theme={theme}
         t={t}
+        showIsMovie={showIsMovie}
+        setShowIsMovie={setShowIsMovie}
+        showStartEpisode={showStartEpisode}
+        setShowStartEpisode={setShowStartEpisode}
+        isWideScreen={isWideScreen}
       />
     );
   }
