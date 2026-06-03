@@ -46,10 +46,7 @@ If you only want to host your own synchronization server for the mobile app, fol
 ### Starting the Server
 
 Use the provided convenience script in the root directory:
-- Double-click `start_server_windows.bat` or run:
-  ```cmd
-  start_server_windows.bat
-  ```
+- Double-click `start_server_windows.bat` 
 
 ---
 
@@ -72,10 +69,7 @@ If you want to contribute or build the frontend application locally, follow thes
 ### Running for Development
 
 To run both the backend server and the frontend client simultaneously for debugging:
-- Double-click `start_dev_windows.bat` or run:
-  ```cmd
-  start_dev_windows.bat
-  ```
+- Double-click `start_dev_windows.bat`
 
 Alternatively, you can run the frontend client separately:
 ```bash
