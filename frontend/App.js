@@ -263,6 +263,29 @@ export default function App() {
         <SafeAreaProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaView style={styles.container}>
+              {Platform.OS === 'web' && (
+                <style dangerouslySetInnerHTML={{ __html: `
+                  body, html, * {
+                    user-select: none !important;
+                    -webkit-user-select: none !important;
+                    -moz-user-select: none !important;
+                    -ms-user-select: none !important;
+                  }
+                  *::-webkit-scrollbar {
+                    display: none !important;
+                  }
+                  * {
+                    -ms-overflow-style: none !important;
+                    scrollbar-width: none !important;
+                  }
+                  input, textarea, [contenteditable="true"] {
+                    user-select: text !important;
+                    -webkit-user-select: text !important;
+                    -moz-user-select: text !important;
+                    -ms-user-select: text !important;
+                  }
+                `}} />
+              )}
               <Header
                 {...moodSheet}
                 isMoodSheetOpen={isMoodSheetOpen}
