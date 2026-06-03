@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   View,
+  Text,
   Platform,
   UIManager,
-  BackHandler
+  BackHandler,
+  useWindowDimensions
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -106,6 +108,8 @@ const GLOBAL_VIEWS = {
 export default function App() {
   const [task, setTask] = useState('');
   const [settings, setSettings] = useState(() => AuthStorage.getSettings());
+  const { width } = useWindowDimensions();
+  const isWideScreen = width >= 900;
 
   const isDark = settings?.theme === 'dark';
   const theme = useMemo(() => getTheme(settings?.theme), [settings?.theme]);
@@ -225,6 +229,34 @@ export default function App() {
     return () => backHandler.remove();
   }, [mainTab, rpgSubtab, activeView, isCalendarVisible, moodSheet]);
 
+  const tabProps = {
+    task,
+    setTask,
+    onAdd: addTask,
+    todoList,
+    setTodoList,
+    statusChangeTask,
+    deleteToRecycle: handleDeleteTodo,
+    handleDeleteTodo,
+    leftAction: (prog, drag, mode) => renderLeftAction(prog, drag, mode, theme, settings?.language || 'ru', settings?.soft_delete !== false),
+    rpgHistory,
+    setRpgHistory,
+    addTask,
+    rpgSubtab,
+    setRpgSubtab,
+    isCalendarVisible,
+    setCalendarVisible,
+    settings,
+  };
+
+  const handleTabChange = (tab) => {
+    if (tab === 'rpg') {
+      setRpgSubtab('dashboard');
+    }
+    setMainTab(tab);
+    setActiveView('list');
+  };
+
   return (
     <ThemeContext.Provider value={{ theme, isDark }}>
       <LanguageProvider language={settings?.language || 'ru'}>
@@ -268,38 +300,63 @@ export default function App() {
                     setMainTab,
                   })
                 ) : (
-                  TAB_VIEWS[mainTab]?.list ? (
-                    TAB_VIEWS[mainTab].list({
-                      task,
-                      setTask,
-                      onAdd: addTask,
-                      todoList,
-                      setTodoList,
-                      statusChangeTask,
-                      deleteToRecycle: handleDeleteTodo,
-                      handleDeleteTodo,
-                      leftAction: (prog, drag, mode) => renderLeftAction(prog, drag, mode, theme, settings?.language || 'ru', settings?.soft_delete !== false),
-                      rpgHistory,
-                      setRpgHistory,
-                      addTask,
-                      rpgSubtab,
-                      setRpgSubtab,
-                      isCalendarVisible,
-                      setCalendarVisible,
-                      settings,
-                    })
-                  ) : null
+                  isWideScreen ? (
+                    <View style={styles.dashboardContainer}>
+                      {/* RPG Column */}
+                      <View
+                        onStartShouldSetResponderCapture={() => { if (mainTab !== 'rpg') handleTabChange('rpg'); return false; }}
+                        style={[styles.column, mainTab === 'rpg' && styles.activeColumn]}
+                      >
+                        <View style={styles.columnHeader}>
+                          <Text style={styles.columnTitle}>
+                            {settings?.language === 'ru' ? '⚔️ РПГ-режим' : '⚔️ RPG Mode'}
+                          </Text>
+                        </View>
+                        <View style={styles.columnContent}>
+                          {TAB_VIEWS.rpg.list(tabProps)}
+                        </View>
+                      </View>
+
+                      {/* Todo Column */}
+                      <View
+                        onStartShouldSetResponderCapture={() => { if (mainTab !== 'todo') handleTabChange('todo'); return false; }}
+                        style={[styles.column, mainTab === 'todo' && styles.activeColumn]}
+                      >
+                        <View style={styles.columnHeader}>
+                          <Text style={styles.columnTitle}>
+                            {settings?.language === 'ru' ? '📝 Список дел' : '📝 To-Do List'}
+                          </Text>
+                        </View>
+                        <View style={styles.columnContent}>
+                          {TAB_VIEWS.todo.list(tabProps)}
+                        </View>
+                      </View>
+
+                      {/* Daily Column */}
+                      <View
+                        onStartShouldSetResponderCapture={() => { if (mainTab !== 'daily') handleTabChange('daily'); return false; }}
+                        style={[styles.column, mainTab === 'daily' && styles.activeColumn]}
+                      >
+                        <View style={styles.columnHeader}>
+                          <Text style={styles.columnTitle}>
+                            {settings?.language === 'ru' ? '⚡ Ежедневные' : '⚡ Daily Tasks'}
+                          </Text>
+                        </View>
+                        <View style={styles.columnContent}>
+                          {TAB_VIEWS.daily.list(tabProps)}
+                        </View>
+                      </View>
+                    </View>
+                  ) : (
+                    TAB_VIEWS[mainTab]?.list ? (
+                      TAB_VIEWS[mainTab].list(tabProps)
+                    ) : null
+                  )
                 )}
               </View>
               <TabBar
                 currentTab={mainTab}
-                setCurrentTab={(tab) => {
-                  if (tab === 'rpg') {
-                    setRpgSubtab('dashboard');
-                  }
-                  setMainTab(tab);
-                  setActiveView('list');
-                }}
+                setCurrentTab={handleTabChange}
                 rpgSubtab={rpgSubtab}
                 activeView={activeView}
               />
