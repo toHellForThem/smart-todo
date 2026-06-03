@@ -292,4 +292,3 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
     </View>
   );
 });
-

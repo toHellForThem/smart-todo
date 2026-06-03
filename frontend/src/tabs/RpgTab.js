@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, memo } from 'react';
 import { View, Text, TouchableOpacity, Keyboard, LayoutAnimation, Platform, TextInput } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getStyles } from './RpgTab.styles';
@@ -11,7 +11,7 @@ import { HabitsSubtab } from './rpg/HabitsSubtab';
 import { PiggyBankSubtab } from './rpg/PiggyBankSubtab';
 import { TvShowsSubtab } from './rpg/TvShowsSubtab';
 
-export const RpgTab = ({
+export const RpgTab = memo(({
   rpgHistory,
   setRpgHistory,
   todoList,
@@ -25,6 +25,7 @@ export const RpgTab = ({
   setCalendarVisible,
   settings,
 }) => {
+  console.log('=== Render RpgTab ===');
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
   const { t } = useTranslation();
@@ -562,4 +563,4 @@ export const RpgTab = ({
       />
     </View>
   );
-};
+});

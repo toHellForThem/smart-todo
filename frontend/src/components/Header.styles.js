@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export const getStyles = (theme) => StyleSheet.create({
   header: {
@@ -58,13 +58,13 @@ export const getStyles = (theme) => StyleSheet.create({
     zIndex: 50,
   },
   invisibleShade: {
-    position: 'absolute',
-    top: -10000,
-    bottom: -10000,
-    left: -10000,
-    right: -10000,
+    position: Platform.OS === 'web' ? 'fixed' : 'absolute',
+    top: Platform.OS === 'web' ? 0 : -120,
+    left: Platform.OS === 'web' ? 0 : -100,
+    right: Platform.OS === 'web' ? 0 : -110,
+    bottom: Platform.OS === 'web' ? 0 : -1000,
     zIndex: 49,
-    backgroundColor: 'rgba(0,0,0,0)',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   moodMeter: {
     top: 0,

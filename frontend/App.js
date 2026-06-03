@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -180,18 +180,25 @@ export default function App() {
     handleMoodChange,
   } = useTodoActions(mainTab, settings);
 
-  const handleDeleteTodo = (id) => {
+  const handleDeleteTodo = useCallback((id) => {
     if (settings.soft_delete) {
       deleteToRecycle(id);
     } else {
       deleteTodo(id);
     }
-  };
+  }, [settings.soft_delete, deleteToRecycle, deleteTodo]);
 
   useTodoSocket(setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings, setMainTab);
 
   const [isMoodSheetOpen, setIsMoodSheetOpen] = useState(false);
   const moodSheet = useMoodSheet(setIsMoodSheetOpen);
+
+  const handleOpenCalendar = useCallback(() => {
+    setMainTab('rpg');
+    setRpgSubtab('dashboard');
+    setCalendarVisible(true);
+    setActiveView('list');
+  }, [setMainTab, setRpgSubtab, setCalendarVisible, setActiveView]);
 
   useEffect(() => {
     const backAction = () => {
@@ -226,14 +233,18 @@ export default function App() {
     return () => backHandler.remove();
   }, [mainTab, rpgSubtab, activeView, isCalendarVisible, moodSheet]);
 
-  const tabProps = {
+  const handleLeftAction = useCallback((prog, drag, mode) => {
+    return renderLeftAction(prog, drag, mode, theme, settings?.language || 'ru', settings?.soft_delete !== false);
+  }, [theme, settings?.language, settings?.soft_delete]);
+
+  const tabProps = useMemo(() => ({
     onAdd: addTask,
     todoList,
     setTodoList,
     statusChangeTask,
     deleteToRecycle: handleDeleteTodo,
     handleDeleteTodo,
-    leftAction: (prog, drag, mode) => renderLeftAction(prog, drag, mode, theme, settings?.language || 'ru', settings?.soft_delete !== false),
+    leftAction: handleLeftAction,
     rpgHistory,
     setRpgHistory,
     addTask,
@@ -242,7 +253,7 @@ export default function App() {
     isCalendarVisible,
     setCalendarVisible,
     settings,
-  };
+  }), [addTask, todoList, setTodoList, statusChangeTask, handleDeleteTodo, handleLeftAction, rpgHistory, setRpgHistory, rpgSubtab, setRpgSubtab, isCalendarVisible, setCalendarVisible, settings]);
 
   const handleTabChange = (tab) => {
     if (tab === 'rpg') {
@@ -252,14 +263,17 @@ export default function App() {
     setActiveView('list');
   };
 
+  const themeContextValue = useMemo(() => ({ theme, isDark }), [theme, isDark]);
+
   return (
-    <ThemeContext.Provider value={{ theme, isDark }}>
+    <ThemeContext.Provider value={themeContextValue}>
       <LanguageProvider language={settings?.language || 'ru'}>
         <SafeAreaProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaView style={styles.container}>
               {Platform.OS === 'web' && (
-                <style dangerouslySetInnerHTML={{ __html: `
+                <style dangerouslySetInnerHTML={{
+                  __html: `
                   body, html, * {
                     user-select: none !important;
                     -webkit-user-select: none !important;
@@ -292,12 +306,7 @@ export default function App() {
                 authMode={authMode}
                 onMoodChange={handleMoodChange}
                 rpgHistory={rpgHistory}
-                onOpenCalendar={() => {
-                  setMainTab('rpg');
-                  setRpgSubtab('dashboard');
-                  setCalendarVisible(true);
-                  setActiveView('list');
-                }}
+                onOpenCalendar={handleOpenCalendar}
                 settings={settings}
               />
               <View style={styles.main} pointerEvents={isMoodSheetOpen ? 'none' : 'auto'}>
@@ -307,7 +316,7 @@ export default function App() {
                     rpgSubtab,
                     todoList,
                     deleteTodo,
-                    leftAction: (prog, drag, mode) => renderLeftAction(prog, drag, mode, theme, settings?.language || 'ru', settings?.soft_delete !== false),
+                    leftAction: handleLeftAction,
                     setTodoList,
                     authMode,
                     setAuthMode,

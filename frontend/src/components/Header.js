@@ -11,8 +11,6 @@ import { useTranslation } from '../utils/LanguageContext';
 
 export const Header = memo(({
   panGesture,
-  animatedContentProps,
-  contentAnimatedStyle,
   moods,
   tailStyle,
   animatedStyle,
@@ -27,8 +25,10 @@ export const Header = memo(({
   settings,
   closeSheet,
   toggleSheet,
+  contentAnimatedStyle,
   isMoodSheetOpen,
 }) => {
+  console.log('=== Render Header ===');
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
   const { t } = useTranslation();

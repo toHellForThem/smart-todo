@@ -8,7 +8,6 @@ import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { useTranslation } from '../utils/LanguageContext';
 
 const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
-  const styles = useStyles(getStyles);
   const itemStyles = useStyles(getItemStyles);
   const { theme } = useAppTheme();
 
