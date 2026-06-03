@@ -1,5 +1,5 @@
-import { memo, useCallback, useMemo, useEffect } from 'react';
-import { View, TextInput, TouchableOpacity, FlatList, Text, Keyboard } from 'react-native';
+import { memo, useCallback, useMemo, useEffect, useRef } from 'react';
+import { View, TextInput, TouchableOpacity, FlatList, Text, Keyboard, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { getStyles } from './TodoTab.styles';
@@ -12,9 +12,25 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   const itemStyles = useStyles(getItemStyles);
   const { theme } = useAppTheme();
 
-  const handlePress = useCallback(() => {
+  const startX = useRef(0);
+  const startY = useRef(0);
+
+  const handlePressIn = useCallback((e) => {
+    if (Platform.OS === 'web') {
+      startX.current = e.nativeEvent.pageX || e.nativeEvent.clientX || 0;
+      startY.current = e.nativeEvent.pageY || e.nativeEvent.clientY || 0;
+    }
+  }, []);
+
+  const handlePress = useCallback((e) => {
+    if (Platform.OS === 'web' && e) {
+      const endX = e.nativeEvent.pageX || e.nativeEvent.clientX || 0;
+      const endY = e.nativeEvent.pageY || e.nativeEvent.clientY || 0;
+      const dist = Math.sqrt(Math.pow(endX - startX.current, 2) + Math.pow(endY - startY.current, 2));
+      if (dist > 8) return;
+    }
     statusChangeTask(item.id, 1);
-  }, [item.id, item.completed, statusChangeTask]);
+  }, [item.id, statusChangeTask]);
 
   const handleDelete = useCallback(() => {
     deleteTodo(item.id);
@@ -44,6 +60,7 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
         <TouchableOpacity
           delayPressIn={150}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 100 }}
+          onPressIn={handlePressIn}
           onPress={handlePress}
           style={[itemStyles.checkbox, item.completed && itemStyles.checked]}
         >
@@ -58,6 +75,7 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
         </TouchableOpacity>
         <Text
           style={[itemStyles.todoText, item.completed && itemStyles.completedText]}
+          onPressIn={handlePressIn}
           onPress={handlePress}
         >
           {item.text}

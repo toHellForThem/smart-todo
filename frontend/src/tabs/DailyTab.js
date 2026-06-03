@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, memo, useMemo } from 'react';
-import { View, TextInput, TouchableOpacity, FlatList, Text, Keyboard, LayoutAnimation } from 'react-native';
+import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react';
+import { View, TextInput, TouchableOpacity, FlatList, Text, Keyboard, LayoutAnimation, Platform } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { getStyles } from './DailyTab.styles';
@@ -14,7 +14,23 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   const itemStyles = useStyles(getItemStyles);
   const { theme } = useAppTheme();
 
-  const handlePress = useCallback(() => {
+  const startX = useRef(0);
+  const startY = useRef(0);
+
+  const handlePressIn = useCallback((e) => {
+    if (Platform.OS === 'web') {
+      startX.current = e.nativeEvent.pageX || e.nativeEvent.clientX || 0;
+      startY.current = e.nativeEvent.pageY || e.nativeEvent.clientY || 0;
+    }
+  }, []);
+
+  const handlePress = useCallback((e) => {
+    if (Platform.OS === 'web' && e) {
+      const endX = e.nativeEvent.pageX || e.nativeEvent.clientX || 0;
+      const endY = e.nativeEvent.pageY || e.nativeEvent.clientY || 0;
+      const dist = Math.sqrt(Math.pow(endX - startX.current, 2) + Math.pow(endY - startY.current, 2));
+      if (dist > 8) return;
+    }
     statusChangeTask(item.id);
   }, [item.id, statusChangeTask]);
 
@@ -53,11 +69,13 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
             { backgroundColor: 'transparent' },
             item.completed && styles.completedTextDaily
           ]}
+          onPressIn={handlePressIn}
           onPress={handlePress}
         >
           {item.text}
         </Text>
         <TouchableOpacity
+          onPressIn={handlePressIn}
           onPress={handlePress}
           style={{
             marginLeft: 'auto',
