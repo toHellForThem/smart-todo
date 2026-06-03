@@ -25,6 +25,9 @@ export const Header = memo(({
   onOpenCalendar,
   rpgHistory,
   settings,
+  closeSheet,
+  toggleSheet,
+  isMoodSheetOpen,
 }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
@@ -63,36 +66,50 @@ export const Header = memo(({
         />
       </TouchableOpacity>
 
-      <GestureDetector gesture={panGesture}>
-        <View style={styles.scoreContainer} onPress={() => { }}>
-          <Text style={{ fontSize: 20, color: theme.colors.text.primary }}>{t('hdr_how_are_things')}</Text>
-          <ReAnimated.View style={[styles.contentPlaceholder, animatedContentProps]}>
-            <ReAnimated.View style={[styles.moodMeter, contentAnimatedStyle]}>
-              {moods.map((mood) => {
-                const isSelected = currentMoodValue === mood.value;
-                const isAnySelected = currentMoodValue !== null && currentMoodValue !== undefined;
-                const opacity = isSelected ? 1.0 : (isAnySelected ? 0.35 : 0.65);
+      <View style={styles.scoreContainer}>
+        <Text style={{ fontSize: 20, color: theme.colors.text.primary }}>{t('hdr_how_are_things')}</Text>
+        <ReAnimated.View 
+          style={[styles.invisibleShade, tailStyle]}
+          pointerEvents={isMoodSheetOpen ? 'auto' : 'none'}
+        >
+          <TouchableOpacity
+            style={{ width: '100%', height: '100%' }}
+            activeOpacity={1}
+            onPress={closeSheet}
+          />
+        </ReAnimated.View>
+        <ReAnimated.View 
+          style={styles.contentPlaceholder}
+          pointerEvents={isMoodSheetOpen ? 'auto' : 'none'}
+        >
+          <ReAnimated.View style={[styles.moodMeter, contentAnimatedStyle]}>
+            {moods.map((mood) => {
+              const isSelected = currentMoodValue === mood.value;
+              const isAnySelected = currentMoodValue !== null && currentMoodValue !== undefined;
+              const opacity = isSelected ? 1.0 : (isAnySelected ? 0.35 : 0.65);
 
-                return (
-                  <TouchableOpacity
-                    key={mood.value}
-                    onPress={() => onMoodChange && onMoodChange(mood.value)}
-                    style={{
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: opacity,
-                      transform: [{ scale: isSelected ? 1.3 : 1.0 }],
-                    }}
-                  >
-                    <MaterialCommunityIcons name={mood.icon} size={50} color={mood.color} />
-                  </TouchableOpacity>
-                );
-              })}
-            </ReAnimated.View>
+              return (
+                <TouchableOpacity
+                  key={mood.value}
+                  onPress={() => {
+                    if (onMoodChange) onMoodChange(mood.value);
+                  }}
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: opacity,
+                    transform: [{ scale: isSelected ? 1.3 : 1.0 }],
+                  }}
+                >
+                  <MaterialCommunityIcons name={mood.icon} size={50} color={mood.color} />
+                </TouchableOpacity>
+              );
+            })}
           </ReAnimated.View>
-          <ReAnimated.View style={[styles.invisibleShade, tailStyle]} />
-          <ReAnimated.View style={[styles.scoreShade, animatedStyle, { cursor: 'grab' }]}>
-            <View>
+        </ReAnimated.View>
+        <GestureDetector gesture={panGesture}>
+          <ReAnimated.View style={[styles.scoreShade, animatedStyle, { cursor: 'pointer' }]}>
+            <View style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
               <Ionicons
                 name={'caret-down'}
                 size={20}
@@ -100,8 +117,8 @@ export const Header = memo(({
               />
             </View>
           </ReAnimated.View>
-        </View>
-      </GestureDetector>
+        </GestureDetector>
+      </View>
 
       <TouchableOpacity
         onPress={() => setActiveView(prev => prev === 'recycle' ? 'list' : 'recycle')}

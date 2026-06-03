@@ -265,6 +265,7 @@ export default function App() {
             <SafeAreaView style={styles.container}>
               <Header
                 {...moodSheet}
+                isMoodSheetOpen={isMoodSheetOpen}
                 moods={moods}
                 activeView={activeView}
                 setActiveView={setActiveView}

@@ -18,6 +18,7 @@ export const useMoodSheet = (onStateChange) => {
   const isActive = useSharedValue(0);
 
   const panGesture = Gesture.Pan()
+    .minDistance(10)
     .onStart((event) => {
       context.value = translateY.value;
       if (onStateChange) runOnJS(onStateChange)(true);
@@ -94,14 +95,37 @@ export const useMoodSheet = (onStateChange) => {
     if (onStateChange) onStateChange(false);
   };
 
+  const openSheet = () => {
+    translateY.value = withSpring(MAX_PULL);
+    isActive.value = 1;
+    if (onStateChange) onStateChange(true);
+  };
+
+  const toggleSheet = () => {
+    if (isActive.value === 1) {
+      closeSheet();
+    } else {
+      openSheet();
+    }
+  };
+
+  const tapGesture = Gesture.Tap()
+    .onEnd(() => {
+      runOnJS(toggleSheet)();
+    });
+
+  const composedGesture = Gesture.Exclusive(panGesture, tapGesture);
+
   return {
-    panGesture,
+    panGesture: composedGesture,
     animatedStyle,
     tailStyle,
     tailProps,
     contentAnimatedStyle,
     animatedContentProps,
     closeSheet,
+    openSheet,
+    toggleSheet,
     isActive,
   };
 };
