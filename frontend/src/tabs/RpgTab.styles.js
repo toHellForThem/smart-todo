@@ -559,7 +559,8 @@ export const getStyles = (theme) => {
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.06,
       shadowRadius: 6,
-      elevation: 5,
+      elevation: 10,
+      zIndex: 99,
     },
     keyboardSuggestionText: {
       color: theme.colors.text.primary,
@@ -776,6 +777,8 @@ export const getStyles = (theme) => {
       borderTopWidth: 1,
       borderTopColor: theme.colors.border.light,
       gap: 15,
+      elevation: 10,
+      zIndex: 99,
     },
     piggyFloatingBtn: {
       flex: 1,

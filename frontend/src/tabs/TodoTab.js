@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useEffect, useRef } from 'react';
+import { memo, useCallback, useMemo, useEffect, useRef, useState } from 'react';
 import { View, TextInput, TouchableOpacity, FlatList, Text, Keyboard, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
@@ -85,18 +85,49 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   );
 });
 
+const TodoInput = memo(({ onAdd }) => {
+  const styles = useStyles(getStyles);
+  const { theme } = useAppTheme();
+  const { t } = useTranslation();
+  const [task, setTask] = useState('');
+
+  const handleAdd = useCallback(() => {
+    if (task.trim()) {
+      onAdd(task, 1);
+      setTask('');
+    }
+  }, [task, onAdd]);
+
+  return (
+    <View style={styles.inputContainer}>
+      <TextInput
+        style={styles.input}
+        value={task}
+        onChangeText={setTask}
+        placeholder={t('todo_placeholder')}
+        placeholderTextColor={theme.colors.text.muted}
+        cursorColor={theme.colors.primary}
+      />
+      <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+        <MaterialCommunityIcons
+          style={{ borderRadius: 10, backgroundColor: theme.colors.icon.bg }}
+          name={'plus-thick'}
+          size={24}
+          color={theme.colors.icon.primary}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+});
+
 export const TodoTab = memo(({
   todoList,
-  task,
-  setTask,
   onAdd,
   deleteTodo,
   statusChangeTask,
   leftAction
 }) => {
   const styles = useStyles(getStyles);
-  const { theme } = useAppTheme();
-  const { t } = useTranslation();
 
   const activeTodos = useMemo(() =>
     todoList
@@ -119,13 +150,6 @@ export const TodoTab = memo(({
     return () => hideSubscription.remove();
   }, []);
 
-  const handleAdd = useCallback(() => {
-    if (task.trim()) {
-      onAdd(task, 1);
-      setTask('');
-    }
-  }, [task, onAdd, setTask]);
-
   const renderItem = useCallback(({ item }) => (
     <TodoItem
       item={item}
@@ -137,24 +161,7 @@ export const TodoTab = memo(({
 
   return (
     <View style={styles.todoWrapper}>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={task}
-          onChangeText={setTask}
-          placeholder={t('todo_placeholder')}
-          placeholderTextColor={theme.colors.text.muted}
-          cursorColor={theme.colors.primary}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-          <MaterialCommunityIcons
-            style={{ borderRadius: 10, backgroundColor: theme.colors.icon.bg }}
-            name={'plus-thick'}
-            size={24}
-            color={theme.colors.icon.primary}
-          />
-        </TouchableOpacity>
-      </View>
+      <TodoInput onAdd={onAdd} />
       <FlatList
         data={activeTodos}
         bounces={false}

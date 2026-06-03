@@ -102,31 +102,16 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   );
 });
 
-export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
+const DailyInput = memo(({ onAdd }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
   const { t } = useTranslation();
+
   const [task, setTask] = useState('');
   const [progressEnd, setProgressEnd] = useState(1);
   const [selectedDays, setSelectedDays] = useState('1111111');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
-  const dailies = useMemo(() =>
-    todoList
-      .filter(item => {
-        if (item.type !== 'daily' || item.deleted) return false;
-        const todayDayIdx = (new Date().getDay() + 6) % 7;
-        const daysStr = item.days || '1111111';
-        return daysStr[todayDayIdx] === '1';
-      })
-      .sort((a, b) => {
-        if (a.completed && !b.completed) return 1;
-        if (!a.completed && b.completed) return -1;
-        return 0;
-      }),
-    [todoList]
-  );
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
@@ -153,36 +138,17 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
     };
   }, []);
 
-  const progress = useMemo(() => {
-    if (dailies.length === 0) return 0;
-    const { needProgress, nowProgress } = dailies.reduce((acc, item) => {
-      acc.needProgress += (item.progressEnd || 0);
-      acc.nowProgress += (item.progressNow || 0);
-      return acc;
-    }, { needProgress: 0, nowProgress: 0 });
-
-    return Math.round((nowProgress / needProgress) * 100);
-  }, [dailies]);
-
   const handleAdd = useCallback(() => {
     if (task.trim()) {
       onAdd(task, progressEnd, 'daily', 0, 0, selectedDays);
       setTask('');
+      setProgressEnd(1);
       setSelectedDays('1111111');
     }
   }, [task, progressEnd, selectedDays, onAdd]);
 
-  const renderItem = useCallback(({ item }) => (
-    <DailyItem
-      item={item}
-      statusChangeTask={statusChangeTask}
-      deleteTodo={deleteTodo}
-      leftAction={leftAction}
-    />
-  ), [statusChangeTask, deleteTodo, leftAction]);
-
   return (
-    <View style={styles.todoWrapper}>
+    <>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -196,14 +162,6 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
           <MaterialCommunityIcons name="plus-thick" size={24} color={theme.colors.icon.primary} />
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={dailies}
-        bounces={false}
-        overScrollMode="never"
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingTop: 6, paddingBottom: 10 }}
-      />
       <View
         pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
         style={[styles.floatingContainer, {
@@ -269,6 +227,62 @@ export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, 
           </TouchableOpacity>
         </View>
       </View>
+    </>
+  );
+});
+
+export const DailyTab = memo(({ todoList, setTodoList, onAdd, statusChangeTask, deleteTodo, leftAction }) => {
+  const styles = useStyles(getStyles);
+  const { theme } = useAppTheme();
+  const { t } = useTranslation();
+
+  const dailies = useMemo(() =>
+    todoList
+      .filter(item => {
+        if (item.type !== 'daily' || item.deleted) return false;
+        const todayDayIdx = (new Date().getDay() + 6) % 7;
+        const daysStr = item.days || '1111111';
+        return daysStr[todayDayIdx] === '1';
+      })
+      .sort((a, b) => {
+        if (a.completed && !b.completed) return 1;
+        if (!a.completed && b.completed) return -1;
+        return 0;
+      }),
+    [todoList]
+  );
+
+  const progress = useMemo(() => {
+    if (dailies.length === 0) return 0;
+    const { needProgress, nowProgress } = dailies.reduce((acc, item) => {
+      acc.needProgress += (item.progressEnd || 0);
+      acc.nowProgress += (item.progressNow || 0);
+      return acc;
+    }, { needProgress: 0, nowProgress: 0 });
+
+    return Math.round((nowProgress / needProgress) * 100);
+  }, [dailies]);
+
+  const renderItem = useCallback(({ item }) => (
+    <DailyItem
+      item={item}
+      statusChangeTask={statusChangeTask}
+      deleteTodo={deleteTodo}
+      leftAction={leftAction}
+    />
+  ), [statusChangeTask, deleteTodo, leftAction]);
+
+  return (
+    <View style={styles.todoWrapper}>
+      <DailyInput onAdd={onAdd} />
+      <FlatList
+        data={dailies}
+        bounces={false}
+        overScrollMode="never"
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        contentContainerStyle={{ paddingTop: 6, paddingBottom: 10 }}
+      />
       <View style={styles.progressContainer}>
         <Text style={[styles.progressText, progress === 100 && styles.progressTextCompleted]}>{t('daily_progress', { progress })}</Text>
         <View style={styles.progressBarBg}>

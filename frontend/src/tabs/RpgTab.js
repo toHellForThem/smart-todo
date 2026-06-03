@@ -74,12 +74,6 @@ export const RpgTab = ({
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  const [habitName, setHabitName] = useState('');
-  const [pointsOrDeposit, setPointsOrDeposit] = useState('positive');
-
-  const [piggyGoal, setPiggyGoal] = useState('');
-  const [piggyTarget, setPiggyTarget] = useState('');
-  const [piggyInputs, setPiggyInputs] = useState({});
   const [focusedGoalId, setFocusedGoalId] = useState(null);
   const [flashingGoalId, setFlashingGoalId] = useState(null);
   const flashTimerRef = useRef(null);
@@ -94,9 +88,7 @@ export const RpgTab = ({
     };
   }, []);
 
-  const [showTitle, setShowTitle] = useState('');
-  const [isMovieInput, setIsMovieInput] = useState(false);
-  const [startEpisode, setStartEpisode] = useState('1');
+
 
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => getLogicalDateStr(settings?.reset_time), [settings?.reset_time]);
@@ -325,31 +317,24 @@ export const RpgTab = ({
     setIsHabitsExpanded(false);
   };
 
-  const handleAddHabit = () => {
-    if (!habitName.trim()) return;
+  const handleAddHabit = (name, type) => {
     addTask(
-      habitName.trim(),
+      name.trim(),
       1,
       'habit',
       0,
-      pointsOrDeposit === 'positive' ? 1 : pointsOrDeposit === 'negative' ? -1 : 0
+      type === 'positive' ? 1 : type === 'negative' ? -1 : 0
     );
-    setHabitName('');
     Keyboard.dismiss();
   };
 
-  const handleSavePiggyGoal = () => {
-    if (!piggyGoal.trim() || !piggyTarget.trim()) return;
-    addTask(piggyGoal.trim(), parseInt(piggyTarget, 10) || 0, 'piggy_bank', 0);
-    setPiggyGoal('');
-    setPiggyTarget('');
+  const handleSavePiggyGoal = (goal, target) => {
+    addTask(goal.trim(), parseInt(target, 10) || 0, 'piggy_bank', 0);
     Keyboard.dismiss();
   };
 
-  const handleUpdatePiggy = (goalId, isAdd) => {
-    const inputVal = parseInt(piggyInputs[goalId], 10) || 0;
+  const handleUpdatePiggy = (goalId, inputVal, isAdd) => {
     statusChangeTask(goalId, isAdd ? inputVal : -inputVal);
-    setPiggyInputs(prev => ({ ...prev, [goalId]: '' }));
     Keyboard.dismiss();
 
     if (flashTimerRef.current) {
@@ -363,13 +348,9 @@ export const RpgTab = ({
     }, 650);
   };
 
-  const handleAddShow = () => {
-    if (!showTitle.trim()) return;
-    const startEp = parseInt(startEpisode, 10) || 1;
-    addTask(showTitle.trim(), 1, isMovieInput ? 'movie' : 'tv_show', isMovieInput ? "0" : `1-${startEp}`);
-    setShowTitle('');
-    setIsMovieInput(false);
-    setStartEpisode('1');
+  const handleAddShow = (title, isMovie, startEp) => {
+    const epNum = parseInt(startEp, 10) || 1;
+    addTask(title.trim(), 1, isMovie ? 'movie' : 'tv_show', isMovie ? "0" : `1-${epNum}`);
     Keyboard.dismiss();
   };
 
@@ -429,10 +410,6 @@ export const RpgTab = ({
     return (
       <HabitsSubtab
         allHabits={allHabits}
-        habitName={habitName}
-        setHabitName={setHabitName}
-        pointsOrDeposit={pointsOrDeposit}
-        setPointsOrDeposit={setPointsOrDeposit}
         handleAddHabit={handleAddHabit}
         statusChangeTask={statusChangeTask}
         deleteToRecycle={deleteToRecycle}
@@ -448,12 +425,6 @@ export const RpgTab = ({
     return (
       <PiggyBankSubtab
         piggyGoalItems={piggyGoalItems}
-        piggyGoal={piggyGoal}
-        setPiggyGoal={setPiggyGoal}
-        piggyTarget={piggyTarget}
-        setPiggyTarget={setPiggyTarget}
-        piggyInputs={piggyInputs}
-        setPiggyInputs={setPiggyInputs}
         focusedGoalId={focusedGoalId}
         setFocusedGoalId={setFocusedGoalId}
         flashingGoalId={flashingGoalId}
@@ -476,12 +447,6 @@ export const RpgTab = ({
     return (
       <TvShowsSubtab
         activeShows={activeShows}
-        showTitle={showTitle}
-        setShowTitle={setShowTitle}
-        isMovieInput={isMovieInput}
-        setIsMovieInput={setIsMovieInput}
-        startEpisode={startEpisode}
-        setStartEpisode={setStartEpisode}
         keyboardHeight={keyboardHeight}
         isKeyboardVisible={isKeyboardVisible}
         handleAddShow={handleAddShow}

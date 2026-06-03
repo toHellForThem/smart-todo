@@ -37,8 +37,6 @@ const TAB_VIEWS = {
   todo: {
     list: (props) => (
       <TodoTab
-        task={props.task}
-        setTask={props.setTask}
         onAdd={props.onAdd}
         todoList={props.todoList}
         statusChangeTask={props.statusChangeTask}
@@ -106,7 +104,6 @@ const GLOBAL_VIEWS = {
 };
 
 export default function App() {
-  const [task, setTask] = useState('');
   const [settings, setSettings] = useState(() => AuthStorage.getSettings());
   const { width } = useWindowDimensions();
   const isWideScreen = width >= 900;
@@ -230,8 +227,6 @@ export default function App() {
   }, [mainTab, rpgSubtab, activeView, isCalendarVisible, moodSheet]);
 
   const tabProps = {
-    task,
-    setTask,
     onAdd: addTask,
     todoList,
     setTodoList,
