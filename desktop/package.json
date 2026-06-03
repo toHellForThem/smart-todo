@@ -1,0 +1,30 @@
+{
+  "name": "todosodo-desktop",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:dev": "cross-env NODE_ENV=development electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3",
+    "cross-env": "^7.0.3"
+  },
+  "build": {
+    "appId": "com.todosodo.desktop",
+    "productName": "ToDoSoDo",
+    "directories": {
+      "output": "dist-mac-win-linux"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "../frontend/dist/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
