@@ -141,6 +141,8 @@ const HabitInput = memo(({
         selectionColor={theme.colors.icon.primary}
         value={habitName}
         onChangeText={setHabitName}
+        onSubmitEditing={handleAdd}
+        returnKeyType="done"
       />
       <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
         <MaterialCommunityIcons

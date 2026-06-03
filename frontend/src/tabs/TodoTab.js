@@ -106,6 +106,8 @@ const TodoInput = memo(({ onAdd }) => {
         placeholder={t('todo_placeholder')}
         placeholderTextColor={theme.colors.text.muted}
         cursorColor={theme.colors.primary}
+        onSubmitEditing={handleAdd}
+        returnKeyType="done"
       />
       <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
         <MaterialCommunityIcons

@@ -157,6 +157,8 @@ const DailyInput = memo(({ onAdd }) => {
           placeholder={t('daily_placeholder')}
           placeholderTextColor={theme.colors.text.muted}
           cursorColor={theme.colors.primary}
+          onSubmitEditing={handleAdd}
+          returnKeyType="done"
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
           <MaterialCommunityIcons name="plus-thick" size={24} color={theme.colors.icon.primary} />

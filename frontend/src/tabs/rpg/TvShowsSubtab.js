@@ -208,6 +208,8 @@ const TvShowInput = memo(({
           selectionColor={theme.colors.icon.primary}
           value={showTitle}
           onChangeText={setShowTitle}
+          onSubmitEditing={handleAdd}
+          returnKeyType="done"
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
           <MaterialCommunityIcons

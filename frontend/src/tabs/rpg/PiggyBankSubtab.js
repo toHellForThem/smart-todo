@@ -1,4 +1,4 @@
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
@@ -139,6 +139,7 @@ const PiggyGoalInput = memo(({
 }) => {
   const [piggyGoal, setPiggyGoal] = useState('');
   const [piggyTarget, setPiggyTarget] = useState('');
+  const targetInputRef = useRef(null);
 
   const handleSaveGoal = useCallback(() => {
     if (!piggyGoal.trim() || !piggyTarget.trim()) return;
@@ -158,8 +159,12 @@ const PiggyGoalInput = memo(({
           selectionColor={theme.colors.icon.primary}
           value={piggyGoal}
           onChangeText={setPiggyGoal}
+          onSubmitEditing={() => targetInputRef.current?.focus()}
+          returnKeyType="next"
+          blurOnSubmit={false}
         />
         <TextInput
+          ref={targetInputRef}
           style={[styles.input, { flex: 0, width: '100%', marginBottom: 0 }]}
           placeholder={t('rpg_piggy_target_placeholder')}
           placeholderTextColor="#94A3B8"
@@ -168,6 +173,8 @@ const PiggyGoalInput = memo(({
           keyboardType="numeric"
           value={piggyTarget}
           onChangeText={setPiggyTarget}
+          onSubmitEditing={handleSaveGoal}
+          returnKeyType="done"
         />
       </View>
 
