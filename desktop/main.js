@@ -31,6 +31,10 @@ const getMimeType = (filePath) => {
     '.svg': 'image/svg+xml',
     '.ico': 'image/x-icon',
     '.json': 'application/json',
+    '.ttf': 'font/ttf',
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+    '.otf': 'font/otf',
   };
   return mimes[ext] || 'application/octet-stream';
 };
