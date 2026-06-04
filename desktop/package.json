@@ -21,7 +21,10 @@
     "files": [
       "main.js",
       "package.json",
-      "../frontend/dist/**/*"
+      {
+        "from": "../frontend/dist",
+        "to": "dist"
+      }
     ],
     "win": {
       "target": "nsis"

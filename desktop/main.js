@@ -69,7 +69,7 @@ app.whenReady().then(() => {
     }
 
     const absolutePath = path.normalize(
-      path.join(__dirname, '../frontend/dist', relativePath)
+      path.join(__dirname, 'dist', relativePath)
     );
 
     try {
@@ -79,7 +79,7 @@ app.whenReady().then(() => {
       });
     } catch (err) {
       try {
-        const indexData = await fs.readFile(path.join(__dirname, '../frontend/dist/index.html'));
+        const indexData = await fs.readFile(path.join(__dirname, 'dist/index.html'));
         return new Response(indexData, {
           headers: { 'content-type': 'text/html' }
         });
