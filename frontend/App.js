@@ -343,7 +343,7 @@ export default function App() {
                 setShowStartEpisode={setShowStartEpisode}
               />
               <View style={styles.main} pointerEvents={isMoodSheetOpen ? 'none' : 'auto'}>
-                {GLOBAL_VIEWS[activeView] ? (
+                {GLOBAL_VIEWS[activeView] && !(activeView === 'recycle' && isWideScreen) ? (
                   GLOBAL_VIEWS[activeView]({
                     mainTab,
                     rpgSubtab,
@@ -374,7 +374,18 @@ export default function App() {
                           </Text>
                         </View>
                         <View style={styles.columnContent}>
-                          {TAB_VIEWS.rpg.list(tabProps)}
+                          {mainTab === 'rpg' && activeView === 'recycle' ? (
+                            <RecycleTab
+                              context="rpg"
+                              rpgSubtab={rpgSubtab}
+                              todoList={todoList}
+                              deleteTodo={deleteTodo}
+                              leftAction={handleLeftAction}
+                              setTodoList={setTodoList}
+                            />
+                          ) : (
+                            TAB_VIEWS.rpg.list(tabProps)
+                          )}
                         </View>
                       </View>
 
@@ -389,7 +400,18 @@ export default function App() {
                           </Text>
                         </View>
                         <View style={styles.columnContent}>
-                          {TAB_VIEWS.todo.list(tabProps)}
+                          {mainTab === 'todo' && activeView === 'recycle' ? (
+                            <RecycleTab
+                              context="todo"
+                              rpgSubtab={rpgSubtab}
+                              todoList={todoList}
+                              deleteTodo={deleteTodo}
+                              leftAction={handleLeftAction}
+                              setTodoList={setTodoList}
+                            />
+                          ) : (
+                            TAB_VIEWS.todo.list(tabProps)
+                          )}
                         </View>
                       </View>
 
@@ -404,7 +426,18 @@ export default function App() {
                           </Text>
                         </View>
                         <View style={styles.columnContent}>
-                          {TAB_VIEWS.daily.list(tabProps)}
+                          {mainTab === 'daily' && activeView === 'recycle' ? (
+                            <RecycleTab
+                              context="daily"
+                              rpgSubtab={rpgSubtab}
+                              todoList={todoList}
+                              deleteTodo={deleteTodo}
+                              leftAction={handleLeftAction}
+                              setTodoList={setTodoList}
+                            />
+                          ) : (
+                            TAB_VIEWS.daily.list(tabProps)
+                          )}
                         </View>
                       </View>
                     </View>
