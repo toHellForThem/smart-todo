@@ -36,6 +36,12 @@ export const Header = memo(({
   setShowIsMovie,
   showStartEpisode,
   setShowStartEpisode,
+  mainTab,
+  rpgSubtab,
+  focusedGoalId,
+  piggyInputs,
+  setPiggyInputs,
+  handleUpdatePiggy,
 }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
@@ -49,40 +55,92 @@ export const Header = memo(({
       {isWideScreen ? (
         <>
           <View style={styles.webHeaderLeft}>
-            <View style={styles.webTvSettings}>
-              <TouchableOpacity
-                style={styles.checkboxContainer}
-                onPress={() => setShowIsMovie(prev => !prev)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.webSettingsText}>{t('rpg_tv_is_movie')}</Text>
-                <View style={[
-                  styles.keyboardSuggestionCheckbox,
-                  showIsMovie && styles.keyboardSuggestionCheckboxChecked
-                ]}>
-                  {showIsMovie && (
-                    <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                  )}
+            {mainTab === 'rpg' && rpgSubtab === 'tv_shows' && (
+              <View style={styles.webTvSettings}>
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() => setShowIsMovie(prev => !prev)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.webSettingsText}>{t('rpg_tv_is_movie')}</Text>
+                  <View style={[
+                    styles.keyboardSuggestionCheckbox,
+                    showIsMovie && styles.keyboardSuggestionCheckboxChecked
+                  ]}>
+                    {showIsMovie && (
+                      <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <View style={styles.divider} />
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: showIsMovie ? 0.35 : 1 }}>
+                  <Text style={styles.webSettingsText}>{t('rpg_tv_episode')}</Text>
+                  <TextInput
+                    style={styles.episodeInput}
+                    value={showStartEpisode}
+                    onChangeText={text => {
+                      const digits = text.replace(/[^0-9]/g, '');
+                      setShowStartEpisode(digits);
+                    }}
+                    keyboardType="numeric"
+                    editable={!showIsMovie}
+                    selectTextOnFocus={true}
+                  />
                 </View>
-              </TouchableOpacity>
-
-              <View style={styles.divider} />
-
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: showIsMovie ? 0.35 : 1 }}>
-                <Text style={styles.webSettingsText}>{t('rpg_tv_episode')}</Text>
-                <TextInput
-                  style={styles.episodeInput}
-                  value={showStartEpisode}
-                  onChangeText={text => {
-                    const digits = text.replace(/[^0-9]/g, '');
-                    setShowStartEpisode(digits);
-                  }}
-                  keyboardType="numeric"
-                  editable={!showIsMovie}
-                  selectTextOnFocus={true}
-                />
               </View>
-            </View>
+            )}
+
+            {mainTab === 'rpg' && rpgSubtab === 'piggy_bank' && focusedGoalId && (
+              <View style={styles.webTvSettings}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                    borderColor: '#EF4444',
+                    borderWidth: 1.5,
+                    borderRadius: theme.radius.md,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 16,
+                    height: 38,
+                    gap: 6,
+                    cursor: 'pointer'
+                  }}
+                  onPress={() => {
+                    const inputVal = parseInt(piggyInputs[focusedGoalId], 10) || 0;
+                    handleUpdatePiggy(focusedGoalId, inputVal, false);
+                    setPiggyInputs(prev => ({ ...prev, [focusedGoalId]: '' }));
+                  }}
+                >
+                  <MaterialCommunityIcons name="minus" size={20} color="#EF4444" />
+                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#EF4444' }}>{t('rpg_piggy_deduct')}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: 'rgba(52, 211, 153, 0.12)',
+                    borderColor: '#34D399',
+                    borderWidth: 1.5,
+                    borderRadius: theme.radius.md,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 16,
+                    height: 38,
+                    gap: 6,
+                    cursor: 'pointer'
+                  }}
+                  onPress={() => {
+                    const inputVal = parseInt(piggyInputs[focusedGoalId], 10) || 0;
+                    handleUpdatePiggy(focusedGoalId, inputVal, true);
+                    setPiggyInputs(prev => ({ ...prev, [focusedGoalId]: '' }));
+                  }}
+                >
+                  <MaterialCommunityIcons name="plus" size={20} color="#34D399" />
+                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#34D399' }}>{t('rpg_piggy_deposit')}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <View style={styles.webHeaderCenter}>

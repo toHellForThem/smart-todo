@@ -1,11 +1,12 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   Platform,
   UIManager,
   BackHandler,
-  useWindowDimensions
+  useWindowDimensions,
+  Keyboard
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -82,6 +83,12 @@ const TAB_VIEWS = {
         showStartEpisode={props.showStartEpisode}
         setShowStartEpisode={props.setShowStartEpisode}
         isWideScreen={props.isWideScreen}
+        focusedGoalId={props.focusedGoalId}
+        setFocusedGoalId={props.setFocusedGoalId}
+        flashingGoalId={props.flashingGoalId}
+        piggyInputs={props.piggyInputs}
+        setPiggyInputs={props.setPiggyInputs}
+        handleUpdatePiggy={props.handleUpdatePiggy}
       />
     ),
   },
@@ -166,7 +173,12 @@ export default function App() {
   const [activeView, setActiveView] = useState('list');
   const [authMode, setAuthMode] = useState('local');
   const [authState, setAuthState] = useState('');
-  const [rpgSubtab, setRpgSubtab] = useState(() => {
+  const [focusedGoalId, setFocusedGoalId] = useState(null);
+  const [flashingGoalId, setFlashingGoalId] = useState(null);
+  const [piggyInputs, setPiggyInputs] = useState({});
+  const flashTimerRef = useRef(null);
+
+  const [rpgSubtab, setRpgSubtabState] = useState(() => {
     const localSettings = AuthStorage.getSettings();
     const savedSubtab = localSettings.rpg_subtab;
     if (savedSubtab === 'habits' || savedSubtab === 'piggy_bank' || savedSubtab === 'tv_shows') {
@@ -174,6 +186,11 @@ export default function App() {
     }
     return 'habits';
   });
+  const setRpgSubtab = useCallback((val) => {
+    setRpgSubtabState(val);
+    setFocusedGoalId(null);
+  }, []);
+
   const [isCalendarVisible, setCalendarVisible] = useState(false);
 
   const [dailyDays, setDailyDays] = useState('1111111');
@@ -202,6 +219,20 @@ export default function App() {
       deleteTodo(id);
     }
   }, [settings.soft_delete, deleteToRecycle, deleteTodo]);
+
+  const handleUpdatePiggy = useCallback((goalId, inputVal, isAdd) => {
+    statusChangeTask(goalId, isAdd ? inputVal : -inputVal);
+    Keyboard.dismiss();
+    
+    if (flashTimerRef.current) {
+      clearTimeout(flashTimerRef.current);
+    }
+    setFlashingGoalId(goalId);
+    flashTimerRef.current = setTimeout(() => {
+      setFlashingGoalId(null);
+      flashTimerRef.current = null;
+    }, 650);
+  }, [statusChangeTask]);
 
   useTodoSocket(setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings, setMainTab);
 
@@ -277,7 +308,13 @@ export default function App() {
     showStartEpisode,
     setShowStartEpisode,
     isWideScreen,
-  }), [addTask, todoList, setTodoList, statusChangeTask, handleDeleteTodo, handleLeftAction, rpgHistory, setRpgHistory, rpgSubtab, setRpgSubtab, isCalendarVisible, setCalendarVisible, settings, dailyDays, setDailyDays, dailyProgressEnd, setDailyProgressEnd, showIsMovie, setShowIsMovie, showStartEpisode, setShowStartEpisode, isWideScreen]);
+    focusedGoalId,
+    setFocusedGoalId,
+    flashingGoalId,
+    piggyInputs,
+    setPiggyInputs,
+    handleUpdatePiggy,
+  }), [addTask, todoList, setTodoList, statusChangeTask, handleDeleteTodo, handleLeftAction, rpgHistory, setRpgHistory, rpgSubtab, setRpgSubtab, isCalendarVisible, setCalendarVisible, settings, dailyDays, setDailyDays, dailyProgressEnd, setDailyProgressEnd, showIsMovie, setShowIsMovie, showStartEpisode, setShowStartEpisode, isWideScreen, focusedGoalId, setFocusedGoalId, flashingGoalId, piggyInputs, setPiggyInputs, handleUpdatePiggy]);
 
   const handleTabChange = (tab) => {
     if (tab === 'rpg') {
@@ -285,6 +322,7 @@ export default function App() {
     }
     setMainTab(tab);
     setActiveView('list');
+    setFocusedGoalId(null);
   };
 
   const themeContextValue = useMemo(() => ({ theme, isDark }), [theme, isDark]);
@@ -341,6 +379,12 @@ export default function App() {
                 setShowIsMovie={setShowIsMovie}
                 showStartEpisode={showStartEpisode}
                 setShowStartEpisode={setShowStartEpisode}
+                rpgSubtab={rpgSubtab}
+                mainTab={mainTab}
+                focusedGoalId={focusedGoalId}
+                piggyInputs={piggyInputs}
+                setPiggyInputs={setPiggyInputs}
+                handleUpdatePiggy={handleUpdatePiggy}
               />
               <View style={styles.main} pointerEvents={isMoodSheetOpen ? 'none' : 'auto'}>
                 {GLOBAL_VIEWS[activeView] && !(activeView === 'recycle' && isWideScreen) ? (

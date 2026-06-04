@@ -29,6 +29,12 @@ export const RpgTab = memo(({
   showStartEpisode,
   setShowStartEpisode,
   isWideScreen,
+  focusedGoalId,
+  setFocusedGoalId,
+  flashingGoalId,
+  piggyInputs,
+  setPiggyInputs,
+  handleUpdatePiggy,
 }) => {
   console.log('=== Render RpgTab ===');
   const styles = useStyles(getStyles);
@@ -80,19 +86,8 @@ export const RpgTab = memo(({
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  const [focusedGoalId, setFocusedGoalId] = useState(null);
-  const [flashingGoalId, setFlashingGoalId] = useState(null);
-  const flashTimerRef = useRef(null);
   const flatListRef = useRef(null);
   const currentScrollY = useRef(0);
-
-  useEffect(() => {
-    return () => {
-      if (flashTimerRef.current) {
-        clearTimeout(flashTimerRef.current);
-      }
-    };
-  }, []);
 
 
 
@@ -339,20 +334,6 @@ export const RpgTab = memo(({
     Keyboard.dismiss();
   };
 
-  const handleUpdatePiggy = (goalId, inputVal, isAdd) => {
-    statusChangeTask(goalId, isAdd ? inputVal : -inputVal);
-    Keyboard.dismiss();
-
-    if (flashTimerRef.current) {
-      clearTimeout(flashTimerRef.current);
-    }
-
-    setFlashingGoalId(goalId);
-    flashTimerRef.current = setTimeout(() => {
-      setFlashingGoalId(null);
-      flashTimerRef.current = null;
-    }, 650);
-  };
 
   const handleAddShow = (title, isMovie, startEp) => {
     const epNum = parseInt(startEp, 10) || 1;
@@ -445,6 +426,8 @@ export const RpgTab = memo(({
         styles={styles}
         theme={theme}
         t={t}
+        piggyInputs={piggyInputs}
+        setPiggyInputs={setPiggyInputs}
       />
     );
   }

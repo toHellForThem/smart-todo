@@ -1,5 +1,5 @@
 import { memo, useState, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 
@@ -9,11 +9,13 @@ const PiggyBankItem = memo(({
   setInputValue,
   isFocused,
   onFocus,
+  onBlur,
   isFlashing,
   deleteToRecycle,
   renderSwipeLeft,
   styles,
   theme,
+  handleUpdatePiggy,
 }) => {
   const handleSwipeOpen = useCallback(() => {
     deleteToRecycle(item.id);
@@ -27,9 +29,22 @@ const PiggyBankItem = memo(({
     onFocus(item.id);
   }, [item.id, onFocus]);
 
+  const handleInputBlur = useCallback(() => {
+    onBlur(item.id);
+  }, [item.id, onBlur]);
+
   const handleTextChange = useCallback((text) => {
-    setInputValue(item.id, text);
+    const filtered = text.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '');
+    setInputValue(item.id, filtered);
   }, [item.id, setInputValue]);
+
+  const handleSubmit = useCallback(() => {
+    const inputVal = parseInt(inputValue, 10) || 0;
+    if (inputVal !== 0) {
+      handleUpdatePiggy(item.id, inputVal, true);
+      setInputValue(item.id, '');
+    }
+  }, [item.id, inputValue, handleUpdatePiggy, setInputValue]);
 
   const isCompleted = (item.progressNow || 0) >= item.progressEnd;
   const progressPercent = isCompleted
@@ -101,12 +116,15 @@ const PiggyBankItem = memo(({
                   isFlashing && { borderColor: theme.colors.icon.primary }
                 ]}
                 placeholder=""
-                keyboardType="numeric"
+                keyboardType={Platform.OS === 'web' ? 'default' : 'numeric'}
                 cursorColor={theme.colors.icon.primary}
                 selectionColor={theme.colors.icon.primary}
                 value={inputValue}
                 onChangeText={handleTextChange}
                 onFocus={handleFocus}
+                onBlur={handleInputBlur}
+                onSubmitEditing={handleSubmit}
+                returnKeyType="done"
               />
               {!inputValue && !isFocused && (
                 <View style={styles.piggyInputCoinsPlaceholder} pointerEvents="none">
@@ -201,15 +219,21 @@ export const PiggyBankSubtab = memo(({
   styles,
   theme,
   t,
+  piggyInputs,
+  setPiggyInputs,
 }) => {
-  const [piggyInputs, setPiggyInputs] = useState({});
-
   const handleInputChange = useCallback((id, text) => {
     setPiggyInputs(prev => ({ ...prev, [id]: text }));
-  }, []);
+  }, [setPiggyInputs]);
 
   const handleFocus = useCallback((id) => {
     setFocusedGoalId(id);
+  }, [setFocusedGoalId]);
+
+  const handleBlur = useCallback((id) => {
+    setTimeout(() => {
+      setFocusedGoalId(currentId => currentId === id ? null : currentId);
+    }, 200);
   }, [setFocusedGoalId]);
 
   const onUpdateClick = useCallback((isAdd) => {
@@ -217,7 +241,7 @@ export const PiggyBankSubtab = memo(({
     const inputVal = parseInt(piggyInputs[focusedGoalId], 10) || 0;
     handleUpdatePiggy(focusedGoalId, inputVal, isAdd);
     setPiggyInputs(prev => ({ ...prev, [focusedGoalId]: '' }));
-  }, [focusedGoalId, piggyInputs, handleUpdatePiggy]);
+  }, [focusedGoalId, piggyInputs, handleUpdatePiggy, setPiggyInputs]);
 
   const renderItem = useCallback(({ item }) => (
     <PiggyBankItem
@@ -226,13 +250,15 @@ export const PiggyBankSubtab = memo(({
       setInputValue={handleInputChange}
       isFocused={focusedGoalId === item.id}
       onFocus={handleFocus}
+      onBlur={handleBlur}
       isFlashing={flashingGoalId === item.id}
       deleteToRecycle={deleteToRecycle}
       renderSwipeLeft={renderSwipeLeft}
       styles={styles}
       theme={theme}
+      handleUpdatePiggy={handleUpdatePiggy}
     />
-  ), [piggyInputs, handleInputChange, focusedGoalId, handleFocus, flashingGoalId, deleteToRecycle, renderSwipeLeft, styles, theme]);
+  ), [piggyInputs, handleInputChange, focusedGoalId, handleFocus, handleBlur, flashingGoalId, deleteToRecycle, renderSwipeLeft, styles, theme, handleUpdatePiggy]);
 
   return (
     <View style={styles.container}>
