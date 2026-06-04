@@ -63,7 +63,7 @@ app.whenReady().then(() => {
   // Setup custom app:// handler
   protocol.handle('app', async (request) => {
     const url = new URL(request.url);
-    let relativePath = url.pathname;
+    let relativePath = decodeURIComponent(url.pathname);
     
     if (relativePath.startsWith('/')) {
       relativePath = relativePath.slice(1);
