@@ -5,7 +5,7 @@
   "scripts": {
     "start": "electron .",
     "start:dev": "cross-env NODE_ENV=development electron .",
-    "dist": "electron-builder"
+    "dist": "node copy-fonts.js && electron-builder"
   },
   "devDependencies": {
     "electron": "^30.0.0",

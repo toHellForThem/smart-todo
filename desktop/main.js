@@ -68,6 +68,9 @@ app.whenReady().then(() => {
     if (relativePath.startsWith('/')) {
       relativePath = relativePath.slice(1);
     }
+    if (relativePath.includes('assets/node_modules/')) {
+      relativePath = relativePath.replace('assets/node_modules/', 'assets/vendor/');
+    }
     if (!relativePath) {
       relativePath = 'index.html';
     }
