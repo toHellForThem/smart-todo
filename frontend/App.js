@@ -184,7 +184,7 @@ export default function App() {
     if (savedSubtab === 'habits' || savedSubtab === 'piggy_bank' || savedSubtab === 'tv_shows') {
       return savedSubtab;
     }
-    return 'habits';
+    return 'dashboard';
   });
   const setRpgSubtab = useCallback((val) => {
     setRpgSubtabState(val);

@@ -205,7 +205,7 @@ export const SettingsTab = ({
 
   const activeRpgSubtab = (settings?.rpg_subtab === 'habits' || settings?.rpg_subtab === 'piggy_bank' || settings?.rpg_subtab === 'tv_shows')
     ? settings.rpg_subtab
-    : 'habits';
+    : null;
 
   return (
     <PaperProvider>
