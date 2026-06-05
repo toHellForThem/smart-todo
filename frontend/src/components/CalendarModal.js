@@ -57,13 +57,13 @@ export const CalendarModal = memo(({
           >
             <Ionicons
               style={{
-                padding: 4,
+                padding: 8,
                 borderBottomLeftRadius: 14,
                 borderTopRightRadius: 14,
                 backgroundColor: theme.colors.icon.bg,
               }}
               name="close"
-              size={40}
+              size={32}
               color={theme.colors.icon.primary}
             />
           </TouchableOpacity>

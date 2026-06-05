@@ -5,34 +5,29 @@ import { useStyles } from '../theme/ThemeContext';
 
 export const FillProgress = memo(({ progressNow, progressEnd }) => {
   const styles = useStyles(getStyles);
-  const scaleX = useRef(new Animated.Value(0)).current;
+  const widthAnim = useRef(new Animated.Value(0)).current;
   const segments = useMemo(() => Array.from({ length: progressEnd }), [progressEnd]);
 
   useEffect(() => {
-    Animated.timing(scaleX, {
-      toValue: progressNow / progressEnd,
+    const toValue = progressEnd > 0 ? (progressNow / progressEnd) * 100 : 0;
+    Animated.timing(widthAnim, {
+      toValue,
       duration: 200,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [progressNow, progressEnd]);
+
+  const widthPercent = widthAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
 
   return (
     <View style={styles.backgroundContainer}>
       <Animated.View
         style={[
           styles.fill,
-          {
-            transform: [
-              { translateX: -135 },
-              {
-                scaleX: scaleX.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 1],
-                })
-              },
-              { translateX: 135 }
-            ]
-          }
+          { width: widthPercent }
         ]}
       />
       <View style={styles.grid}>

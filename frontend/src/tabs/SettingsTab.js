@@ -112,6 +112,12 @@ export const SettingsTab = ({
     };
   }, [authMode, setAuthMode]);
 
+  useEffect(() => {
+    if ((authState === 'login' || authState === 'register') && !socket.connected) {
+      socket.connect();
+    }
+  }, [authState]);
+
   const handleLogin = () => {
     if (username && password) {
       Keyboard.dismiss();
@@ -127,13 +133,15 @@ export const SettingsTab = ({
   };
 
   const handleLogout = () => {
-    AuthStorage.logout();
+    socket.emit('client:logout');
     socket.auth = {};
+    socket.disconnect();
+
+    AuthStorage.logout();
     setAuthMode('local');
     setAuthState('');
     setUsername('');
     setPassword('');
-    socket.emit('client:logout');
 
     if (setTodoList) {
       setTodoList([]);
@@ -197,7 +205,7 @@ export const SettingsTab = ({
 
   const activeRpgSubtab = (settings?.rpg_subtab === 'habits' || settings?.rpg_subtab === 'piggy_bank' || settings?.rpg_subtab === 'tv_shows')
     ? settings.rpg_subtab
-    : 'habits';
+    : null;
 
   return (
     <PaperProvider>
@@ -813,7 +821,7 @@ export const SettingsTab = ({
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#F59E0B', 
+                    backgroundColor: '#F59E0B',
                     borderRadius: theme.radius.md,
                     paddingVertical: 10,
                     paddingHorizontal: 20,

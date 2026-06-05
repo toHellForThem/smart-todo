@@ -46,7 +46,7 @@ If you only want to host your own synchronization server for the mobile app, fol
 ### Starting the Server
 
 Use the provided convenience script in the root directory:
-- Double-click `start_server_windows.bat` 
+- Double-click `start_server_windows.bat`
 
 ---
 

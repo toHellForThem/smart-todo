@@ -42,6 +42,8 @@ export const getStyles = (theme) => StyleSheet.create({
     justifyContent: 'center',
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.light,
+    elevation: 10,
+    zIndex: 99,
   },
   progressContainer: {
     paddingBottom: theme.spacing.smd,

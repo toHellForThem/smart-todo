@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { TodoStorage, RpgStorage, AuthStorage } from '../utils/storage';
 import { socket } from '../utils/socket';
 import { getLogicalDateStr } from '../utils/date';
@@ -44,6 +44,12 @@ export const useTodoActions = (mainTab, settings) => {
     return list;
   });
   const [rpgHistory, setRpgHistory] = useState(() => RpgStorage.getHistory());
+  const isHistoryLoadedRef = useRef(!AuthStorage.getToken());
+
+  const setRpgHistoryWrapper = useCallback((value) => {
+    isHistoryLoadedRef.current = true;
+    setRpgHistory(value);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -103,6 +109,10 @@ export const useTodoActions = (mainTab, settings) => {
 
   useEffect(() => {
     if (todoList.length === 0) return;
+    if (!isHistoryLoadedRef.current) {
+      console.log('Skipping daily history sync: history not loaded yet');
+      return;
+    }
 
     const maxUpdatedAt = todoList.length > 0
       ? Math.max(...todoList.map(t => t.updatedAt || 0))
@@ -357,6 +367,7 @@ export const useTodoActions = (mainTab, settings) => {
   }, []);
 
   const handleMoodChange = useCallback((moodValue) => {
+    isHistoryLoadedRef.current = true;
     const todayStr = getLogicalDateStr(settings?.reset_time);
 
     const parts = todayStr.split('-').map(Number);
@@ -433,7 +444,7 @@ export const useTodoActions = (mainTab, settings) => {
     deleteTodo,
 
     rpgHistory,
-    setRpgHistory,
+    setRpgHistory: setRpgHistoryWrapper,
 
     handleMoodChange,
   };

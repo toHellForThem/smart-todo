@@ -1,9 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
+  Text,
   Platform,
   UIManager,
-  BackHandler
+  BackHandler,
+  useWindowDimensions,
+  Keyboard
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -35,8 +38,6 @@ const TAB_VIEWS = {
   todo: {
     list: (props) => (
       <TodoTab
-        task={props.task}
-        setTask={props.setTask}
         onAdd={props.onAdd}
         todoList={props.todoList}
         statusChangeTask={props.statusChangeTask}
@@ -54,6 +55,11 @@ const TAB_VIEWS = {
         statusChangeTask={props.statusChangeTask}
         deleteTodo={props.handleDeleteTodo}
         leftAction={props.leftAction}
+        dailyDays={props.dailyDays}
+        setDailyDays={props.setDailyDays}
+        dailyProgressEnd={props.dailyProgressEnd}
+        setDailyProgressEnd={props.setDailyProgressEnd}
+        isWideScreen={props.isWideScreen}
       />
     ),
   },
@@ -72,6 +78,17 @@ const TAB_VIEWS = {
         isCalendarVisible={props.isCalendarVisible}
         setCalendarVisible={props.setCalendarVisible}
         settings={props.settings}
+        showIsMovie={props.showIsMovie}
+        setShowIsMovie={props.setShowIsMovie}
+        showStartEpisode={props.showStartEpisode}
+        setShowStartEpisode={props.setShowStartEpisode}
+        isWideScreen={props.isWideScreen}
+        focusedGoalId={props.focusedGoalId}
+        setFocusedGoalId={props.setFocusedGoalId}
+        flashingGoalId={props.flashingGoalId}
+        piggyInputs={props.piggyInputs}
+        setPiggyInputs={props.setPiggyInputs}
+        handleUpdatePiggy={props.handleUpdatePiggy}
       />
     ),
   },
@@ -104,8 +121,9 @@ const GLOBAL_VIEWS = {
 };
 
 export default function App() {
-  const [task, setTask] = useState('');
   const [settings, setSettings] = useState(() => AuthStorage.getSettings());
+  const { width } = useWindowDimensions();
+  const isWideScreen = width >= 900;
 
   const isDark = settings?.theme === 'dark';
   const theme = useMemo(() => getTheme(settings?.theme), [settings?.theme]);
@@ -155,15 +173,30 @@ export default function App() {
   const [activeView, setActiveView] = useState('list');
   const [authMode, setAuthMode] = useState('local');
   const [authState, setAuthState] = useState('');
-  const [rpgSubtab, setRpgSubtab] = useState(() => {
+  const [focusedGoalId, setFocusedGoalId] = useState(null);
+  const [flashingGoalId, setFlashingGoalId] = useState(null);
+  const [piggyInputs, setPiggyInputs] = useState({});
+  const flashTimerRef = useRef(null);
+
+  const [rpgSubtab, setRpgSubtabState] = useState(() => {
     const localSettings = AuthStorage.getSettings();
     const savedSubtab = localSettings.rpg_subtab;
     if (savedSubtab === 'habits' || savedSubtab === 'piggy_bank' || savedSubtab === 'tv_shows') {
       return savedSubtab;
     }
-    return 'habits';
+    return 'dashboard';
   });
+  const setRpgSubtab = useCallback((val) => {
+    setRpgSubtabState(val);
+    setFocusedGoalId(null);
+  }, []);
+
   const [isCalendarVisible, setCalendarVisible] = useState(false);
+
+  const [dailyDays, setDailyDays] = useState('1111111');
+  const [dailyProgressEnd, setDailyProgressEnd] = useState(1);
+  const [showIsMovie, setShowIsMovie] = useState(false);
+  const [showStartEpisode, setShowStartEpisode] = useState('1');
 
   const {
     todoList,
@@ -179,18 +212,39 @@ export default function App() {
     handleMoodChange,
   } = useTodoActions(mainTab, settings);
 
-  const handleDeleteTodo = (id) => {
+  const handleDeleteTodo = useCallback((id) => {
     if (settings.soft_delete) {
       deleteToRecycle(id);
     } else {
       deleteTodo(id);
     }
-  };
+  }, [settings.soft_delete, deleteToRecycle, deleteTodo]);
+
+  const handleUpdatePiggy = useCallback((goalId, inputVal, isAdd) => {
+    statusChangeTask(goalId, isAdd ? inputVal : -inputVal);
+    Keyboard.dismiss();
+    
+    if (flashTimerRef.current) {
+      clearTimeout(flashTimerRef.current);
+    }
+    setFlashingGoalId(goalId);
+    flashTimerRef.current = setTimeout(() => {
+      setFlashingGoalId(null);
+      flashTimerRef.current = null;
+    }, 650);
+  }, [statusChangeTask]);
 
   useTodoSocket(setTodoList, setAuthMode, setAuthState, setRpgHistory, setSettings, settings, setMainTab);
 
   const [isMoodSheetOpen, setIsMoodSheetOpen] = useState(false);
   const moodSheet = useMoodSheet(setIsMoodSheetOpen);
+
+  const handleOpenCalendar = useCallback(() => {
+    setMainTab('rpg');
+    setRpgSubtab('dashboard');
+    setCalendarVisible(true);
+    setActiveView('list');
+  }, [setMainTab, setRpgSubtab, setCalendarVisible, setActiveView]);
 
   useEffect(() => {
     const backAction = () => {
@@ -225,14 +279,87 @@ export default function App() {
     return () => backHandler.remove();
   }, [mainTab, rpgSubtab, activeView, isCalendarVisible, moodSheet]);
 
+  const handleLeftAction = useCallback((prog, drag, mode) => {
+    return renderLeftAction(prog, drag, mode, theme, settings?.language || 'ru', settings?.soft_delete !== false);
+  }, [theme, settings?.language, settings?.soft_delete]);
+
+  const tabProps = useMemo(() => ({
+    onAdd: addTask,
+    todoList,
+    setTodoList,
+    statusChangeTask,
+    deleteToRecycle: handleDeleteTodo,
+    handleDeleteTodo,
+    leftAction: handleLeftAction,
+    rpgHistory,
+    setRpgHistory,
+    addTask,
+    rpgSubtab,
+    setRpgSubtab,
+    isCalendarVisible,
+    setCalendarVisible,
+    settings,
+    dailyDays,
+    setDailyDays,
+    dailyProgressEnd,
+    setDailyProgressEnd,
+    showIsMovie,
+    setShowIsMovie,
+    showStartEpisode,
+    setShowStartEpisode,
+    isWideScreen,
+    focusedGoalId,
+    setFocusedGoalId,
+    flashingGoalId,
+    piggyInputs,
+    setPiggyInputs,
+    handleUpdatePiggy,
+  }), [addTask, todoList, setTodoList, statusChangeTask, handleDeleteTodo, handleLeftAction, rpgHistory, setRpgHistory, rpgSubtab, setRpgSubtab, isCalendarVisible, setCalendarVisible, settings, dailyDays, setDailyDays, dailyProgressEnd, setDailyProgressEnd, showIsMovie, setShowIsMovie, showStartEpisode, setShowStartEpisode, isWideScreen, focusedGoalId, setFocusedGoalId, flashingGoalId, piggyInputs, setPiggyInputs, handleUpdatePiggy]);
+
+  const handleTabChange = (tab) => {
+    if (tab === 'rpg') {
+      setRpgSubtab('dashboard');
+    }
+    setMainTab(tab);
+    setActiveView('list');
+    setFocusedGoalId(null);
+  };
+
+  const themeContextValue = useMemo(() => ({ theme, isDark }), [theme, isDark]);
+
   return (
-    <ThemeContext.Provider value={{ theme, isDark }}>
+    <ThemeContext.Provider value={themeContextValue}>
       <LanguageProvider language={settings?.language || 'ru'}>
         <SafeAreaProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaView style={styles.container}>
+              {Platform.OS === 'web' && (
+                <style dangerouslySetInnerHTML={{
+                  __html: `
+                  body, html, * {
+                    user-select: none !important;
+                    -webkit-user-select: none !important;
+                    -moz-user-select: none !important;
+                    -ms-user-select: none !important;
+                  }
+                  *::-webkit-scrollbar {
+                    display: none !important;
+                  }
+                  * {
+                    -ms-overflow-style: none !important;
+                    scrollbar-width: none !important;
+                  }
+                  input, textarea, [contenteditable="true"] {
+                    user-select: text !important;
+                    -webkit-user-select: text !important;
+                    -moz-user-select: text !important;
+                    -ms-user-select: text !important;
+                  }
+                `}} />
+              )}
               <Header
                 {...moodSheet}
+                isMoodSheetOpen={isMoodSheetOpen}
                 moods={moods}
                 activeView={activeView}
                 setActiveView={setActiveView}
@@ -241,22 +368,32 @@ export default function App() {
                 authMode={authMode}
                 onMoodChange={handleMoodChange}
                 rpgHistory={rpgHistory}
-                onOpenCalendar={() => {
-                  setMainTab('rpg');
-                  setRpgSubtab('dashboard');
-                  setCalendarVisible(true);
-                  setActiveView('list');
-                }}
+                onOpenCalendar={handleOpenCalendar}
                 settings={settings}
+                isWideScreen={isWideScreen}
+                dailyDays={dailyDays}
+                setDailyDays={setDailyDays}
+                dailyProgressEnd={dailyProgressEnd}
+                setDailyProgressEnd={setDailyProgressEnd}
+                showIsMovie={showIsMovie}
+                setShowIsMovie={setShowIsMovie}
+                showStartEpisode={showStartEpisode}
+                setShowStartEpisode={setShowStartEpisode}
+                rpgSubtab={rpgSubtab}
+                mainTab={mainTab}
+                focusedGoalId={focusedGoalId}
+                piggyInputs={piggyInputs}
+                setPiggyInputs={setPiggyInputs}
+                handleUpdatePiggy={handleUpdatePiggy}
               />
               <View style={styles.main} pointerEvents={isMoodSheetOpen ? 'none' : 'auto'}>
-                {GLOBAL_VIEWS[activeView] ? (
+                {GLOBAL_VIEWS[activeView] && !(activeView === 'recycle' && isWideScreen) ? (
                   GLOBAL_VIEWS[activeView]({
                     mainTab,
                     rpgSubtab,
                     todoList,
                     deleteTodo,
-                    leftAction: (prog, drag, mode) => renderLeftAction(prog, drag, mode, theme, settings?.language || 'ru', settings?.soft_delete !== false),
+                    leftAction: handleLeftAction,
                     setTodoList,
                     authMode,
                     setAuthMode,
@@ -268,38 +405,96 @@ export default function App() {
                     setMainTab,
                   })
                 ) : (
-                  TAB_VIEWS[mainTab]?.list ? (
-                    TAB_VIEWS[mainTab].list({
-                      task,
-                      setTask,
-                      onAdd: addTask,
-                      todoList,
-                      setTodoList,
-                      statusChangeTask,
-                      deleteToRecycle: handleDeleteTodo,
-                      handleDeleteTodo,
-                      leftAction: (prog, drag, mode) => renderLeftAction(prog, drag, mode, theme, settings?.language || 'ru', settings?.soft_delete !== false),
-                      rpgHistory,
-                      setRpgHistory,
-                      addTask,
-                      rpgSubtab,
-                      setRpgSubtab,
-                      isCalendarVisible,
-                      setCalendarVisible,
-                      settings,
-                    })
-                  ) : null
+                  isWideScreen ? (
+                    <View style={styles.dashboardContainer}>
+                      {/* RPG Column */}
+                      <View
+                        onStartShouldSetResponderCapture={() => { if (mainTab !== 'rpg') handleTabChange('rpg'); return false; }}
+                        style={[styles.column, mainTab === 'rpg' && styles.activeColumn]}
+                      >
+                        <View style={styles.columnHeader}>
+                          <Text style={styles.columnTitle}>
+                            {settings?.language === 'ru' ? '⚔️ РПГ-режим' : '⚔️ RPG Mode'}
+                          </Text>
+                        </View>
+                        <View style={styles.columnContent}>
+                          {mainTab === 'rpg' && activeView === 'recycle' ? (
+                            <RecycleTab
+                              context="rpg"
+                              rpgSubtab={rpgSubtab}
+                              todoList={todoList}
+                              deleteTodo={deleteTodo}
+                              leftAction={handleLeftAction}
+                              setTodoList={setTodoList}
+                            />
+                          ) : (
+                            TAB_VIEWS.rpg.list(tabProps)
+                          )}
+                        </View>
+                      </View>
+
+                      {/* Todo Column */}
+                      <View
+                        onStartShouldSetResponderCapture={() => { if (mainTab !== 'todo') handleTabChange('todo'); return false; }}
+                        style={[styles.column, mainTab === 'todo' && styles.activeColumn]}
+                      >
+                        <View style={styles.columnHeader}>
+                          <Text style={styles.columnTitle}>
+                            {settings?.language === 'ru' ? '📝 Список дел' : '📝 To-Do List'}
+                          </Text>
+                        </View>
+                        <View style={styles.columnContent}>
+                          {mainTab === 'todo' && activeView === 'recycle' ? (
+                            <RecycleTab
+                              context="todo"
+                              rpgSubtab={rpgSubtab}
+                              todoList={todoList}
+                              deleteTodo={deleteTodo}
+                              leftAction={handleLeftAction}
+                              setTodoList={setTodoList}
+                            />
+                          ) : (
+                            TAB_VIEWS.todo.list(tabProps)
+                          )}
+                        </View>
+                      </View>
+
+                      {/* Daily Column */}
+                      <View
+                        onStartShouldSetResponderCapture={() => { if (mainTab !== 'daily') handleTabChange('daily'); return false; }}
+                        style={[styles.column, mainTab === 'daily' && styles.activeColumn]}
+                      >
+                        <View style={styles.columnHeader}>
+                          <Text style={styles.columnTitle}>
+                            {settings?.language === 'ru' ? '⚡ Ежедневные' : '⚡ Daily Tasks'}
+                          </Text>
+                        </View>
+                        <View style={styles.columnContent}>
+                          {mainTab === 'daily' && activeView === 'recycle' ? (
+                            <RecycleTab
+                              context="daily"
+                              rpgSubtab={rpgSubtab}
+                              todoList={todoList}
+                              deleteTodo={deleteTodo}
+                              leftAction={handleLeftAction}
+                              setTodoList={setTodoList}
+                            />
+                          ) : (
+                            TAB_VIEWS.daily.list(tabProps)
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                  ) : (
+                    TAB_VIEWS[mainTab]?.list ? (
+                      TAB_VIEWS[mainTab].list(tabProps)
+                    ) : null
+                  )
                 )}
               </View>
               <TabBar
                 currentTab={mainTab}
-                setCurrentTab={(tab) => {
-                  if (tab === 'rpg') {
-                    setRpgSubtab('dashboard');
-                  }
-                  setMainTab(tab);
-                  setActiveView('list');
-                }}
+                setCurrentTab={handleTabChange}
                 rpgSubtab={rpgSubtab}
                 activeView={activeView}
               />

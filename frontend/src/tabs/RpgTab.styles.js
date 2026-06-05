@@ -1,6 +1,9 @@
 import { StyleSheet, Dimensions } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
+const isWide = width >= 900;
+const calendarWidth = isWide ? 420 : width;
+const cellWidth = (calendarWidth - 130) / 7;
 
 const getCardStyle = (theme) => ({
   backgroundColor: theme.colors.surface,
@@ -19,7 +22,7 @@ export const getStyles = (theme) => {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.background,
+      backgroundColor: 'transparent',
       paddingHorizontal: 0,
       paddingTop: 10,
     },
@@ -165,6 +168,7 @@ export const getStyles = (theme) => {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.xl,
       width: '100%',
+      maxWidth: 420,
       padding: 20,
       borderWidth: 1,
       borderColor: theme.colors.border.light,
@@ -193,8 +197,8 @@ export const getStyles = (theme) => {
       marginBottom: 20,
     },
     calendarCell: {
-      width: (width - 130) / 7,
-      height: (width - 130) / 7,
+      width: cellWidth,
+      height: cellWidth,
       borderRadius: 8,
       alignItems: 'center',
       justifyContent: 'center',
@@ -242,9 +246,7 @@ export const getStyles = (theme) => {
       paddingBottom: theme.spacing.xl,
       borderBottomWidth: 1,
       borderColor: theme.colors.border.light,
-      flexDirection: 'row',
       gap: 10,
-      alignItems: 'center',
       paddingHorizontal: theme.spacing.xl,
     },
     input: {
@@ -257,19 +259,18 @@ export const getStyles = (theme) => {
       fontSize: 16,
       elevation: 2,
     },
-    typeToggleButton: {
-      width: 48,
-      height: 48,
+    typeToggleButtonCompact: {
+      width: 44,
+      height: 44,
       borderRadius: theme.radius.md,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 1,
+      borderWidth: 1.5,
     },
     addButton: {
       backgroundColor: theme.colors.primaryLight,
       borderRadius: theme.radius.lg,
       width: 50,
-      height: 48,
       justifyContent: 'center',
       alignItems: 'center',
       elevation: 3,
@@ -558,7 +559,8 @@ export const getStyles = (theme) => {
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.06,
       shadowRadius: 6,
-      elevation: 5,
+      elevation: 10,
+      zIndex: 99,
     },
     keyboardSuggestionText: {
       color: theme.colors.text.primary,
@@ -775,6 +777,8 @@ export const getStyles = (theme) => {
       borderTopWidth: 1,
       borderTopColor: theme.colors.border.light,
       gap: 15,
+      elevation: 10,
+      zIndex: 99,
     },
     piggyFloatingBtn: {
       flex: 1,
