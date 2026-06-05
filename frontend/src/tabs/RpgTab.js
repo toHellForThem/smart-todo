@@ -36,7 +36,6 @@ export const RpgTab = memo(({
   setPiggyInputs,
   handleUpdatePiggy,
 }) => {
-  console.log('=== Render RpgTab ===');
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
   const { t } = useTranslation();

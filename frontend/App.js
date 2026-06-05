@@ -28,7 +28,9 @@ import { LanguageProvider } from './src/utils/LanguageContext';
 import { useTodoActions } from './src/hooks/useTodoActions';
 import { useTodoSocket } from './src/hooks/useTodoSocket';
 import { useMoodSheet } from './src/hooks/useMoodSheet';
+import { useShortcuts } from './src/hooks/useShortcuts';
 import { AuthStorage } from './src/utils/storage';
+import { CalendarModal } from './src/components/CalendarModal';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -205,10 +207,8 @@ export default function App() {
     deleteToRecycle,
     statusChangeTask,
     deleteTodo,
-
     rpgHistory,
     setRpgHistory,
-
     handleMoodChange,
   } = useTodoActions(mainTab, settings);
 
@@ -239,12 +239,16 @@ export default function App() {
   const [isMoodSheetOpen, setIsMoodSheetOpen] = useState(false);
   const moodSheet = useMoodSheet(setIsMoodSheetOpen);
 
-  const handleOpenCalendar = useCallback(() => {
+  const handleOpenCalendar = () => {
+    if (isCalendarVisible) {
+      setCalendarVisible(false);
+    } else {
+      setCalendarVisible(true);
+    }
     setMainTab('rpg');
     setRpgSubtab('dashboard');
-    setCalendarVisible(true);
     setActiveView('list');
-  }, [setMainTab, setRpgSubtab, setCalendarVisible, setActiveView]);
+  }
 
   useEffect(() => {
     const backAction = () => {
@@ -324,6 +328,45 @@ export default function App() {
     setActiveView('list');
     setFocusedGoalId(null);
   };
+
+  const handleSubtabChange = (subtab) => {
+    setMainTab('rpg');
+    setRpgSubtab(subtab);
+    setActiveView('list');
+  }
+
+  const habdleActiveView = (view) => {
+    if(activeView === view) {
+      setActiveView('list');
+    } else {
+      setActiveView(view);
+    }
+  }
+
+  const handleMoodSheet = () => {
+    if (moodSheet.isActive && moodSheet.isActive.value === 1){
+      moodSheet.isActive = false;
+      moodSheet.closeSheet();
+    } else {
+      moodSheet.isActive = true;
+      moodSheet.openSheet();
+    }
+  }
+
+  const shortcutsMap = {
+    'mod+1': () => handleTabChange('rpg'),
+    'mod+2': () => handleTabChange('todo'),
+    'mod+3': () => handleTabChange('daily'),
+    'mod+q': () => handleSubtabChange('habits'),
+    'mod+w': () => handleSubtabChange('piggy_bank'),
+    'mod+e': () => handleSubtabChange('tv_shows'),
+    'mod+r': () => habdleActiveView('recycle'),
+    'mod+s': () => habdleActiveView('settings'),
+    'mod+c': () => handleOpenCalendar(),
+    'mod+x': () => handleMoodSheet(),
+  };
+
+  useShortcuts(shortcutsMap);
 
   const themeContextValue = useMemo(() => ({ theme, isDark }), [theme, isDark]);
 
