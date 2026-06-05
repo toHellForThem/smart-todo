@@ -27,7 +27,15 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ],
+          "artifactName": "${productName}-${version}-${arch}-setup.${ext}"
+        }
+      ]
     }
   }
 }
