@@ -15,9 +15,9 @@ A mobile task management app with three modes (to-do list, daily tasks, RPG) and
 
 ## Platform Support
 
-- ✅ Android ([RuStore](https://www.rustore.ru/catalog/app/com.anonymous.toDoSoDo))
+- ✅ Android ([RuStore](https://www.rustore.ru/catalog/app/com.anonymous.toDoSoDo) / [GitHub APK](https://github.com/toHellForThem/smart-todo/releases/latest))
+- ✅ Desktop ([Download .exe for Windows](https://github.com/toHellForThem/smart-todo/releases/latest))
 - ⏳ iOS (In development)
-- ⏳ Desktop (In development)
 
 ## Running the Server (Self-Hosting)
 
