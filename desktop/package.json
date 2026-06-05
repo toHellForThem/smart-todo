@@ -27,13 +27,13 @@
       }
     ],
     "win": {
+      "artifactName": "${productName}-${version}-${arch}-setup.${ext}",
       "target": [
         {
           "target": "nsis",
           "arch": [
             "x64"
-          ],
-          "artifactName": "${productName}-${version}-${arch}-setup.${ext}"
+          ]
         }
       ]
     }
