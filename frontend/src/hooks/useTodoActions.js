@@ -366,6 +366,29 @@ export const useTodoActions = (mainTab, settings) => {
     });
   }, []);
 
+  const editTask = useCallback((id, updatedFields) => {
+    let updated = null;
+    setTodoList(prev => {
+      return prev.map(todo => {
+        if (todo.id === id) {
+          const merged = { ...todo, ...updatedFields, updatedAt: Date.now() };
+          if ('progressEnd' in updatedFields || 'progressNow' in updatedFields) {
+            const nextProgressEnd = parseInt(merged.progressEnd, 10) || 1;
+            const nextProgressNow = parseInt(merged.progressNow, 10) || 0;
+            merged.completed = nextProgressNow >= nextProgressEnd;
+          }
+          updated = merged;
+          return updated;
+        }
+        return todo;
+      });
+    });
+    if (updated) {
+      socket.emit('client:sync_todo', updated);
+    }
+  }, []);
+
+
   const handleMoodChange = useCallback((moodValue) => {
     isHistoryLoadedRef.current = true;
     const todayStr = getLogicalDateStr(settings?.reset_time);
@@ -442,6 +465,7 @@ export const useTodoActions = (mainTab, settings) => {
     deleteToRecycle,
     statusChangeTask,
     deleteTodo,
+    editTask,
 
     rpgHistory,
     setRpgHistory: setRpgHistoryWrapper,

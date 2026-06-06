@@ -108,6 +108,9 @@ const GLOBAL_VIEWS = {
       setTodoList={props.setTodoList}
       setRpgHistory={props.setRpgHistory}
       setMainTab={props.setMainTab}
+      todoList={props.todoList}
+      editTask={props.editTask}
+      leftAction={props.leftAction}
     />
   ),
   recycle: (props) => (
@@ -210,6 +213,7 @@ export default function App() {
     rpgHistory,
     setRpgHistory,
     handleMoodChange,
+    editTask,
   } = useTodoActions(mainTab, settings);
 
   const handleDeleteTodo = useCallback((id) => {
@@ -223,7 +227,7 @@ export default function App() {
   const handleUpdatePiggy = useCallback((goalId, inputVal, isAdd) => {
     statusChangeTask(goalId, isAdd ? inputVal : -inputVal);
     Keyboard.dismiss();
-    
+
     if (flashTimerRef.current) {
       clearTimeout(flashTimerRef.current);
     }
@@ -336,7 +340,7 @@ export default function App() {
   }
 
   const habdleActiveView = (view) => {
-    if(activeView === view) {
+    if (activeView === view) {
       setActiveView('list');
     } else {
       setActiveView(view);
@@ -344,7 +348,7 @@ export default function App() {
   }
 
   const handleMoodSheet = () => {
-    if (moodSheet.isActive && moodSheet.isActive.value === 1){
+    if (moodSheet.isActive && moodSheet.isActive.value === 1) {
       moodSheet.isActive = false;
       moodSheet.closeSheet();
     } else {
@@ -479,6 +483,7 @@ export default function App() {
                     setSettings,
                     setRpgHistory,
                     setMainTab,
+                    editTask,
                   })
                 ) : (
                   isWideScreen ? (

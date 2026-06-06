@@ -8,12 +8,16 @@ import {
   ScrollView,
   Linking,
   Image,
-  Platform
+  Platform,
+  TextInput,
+  BackHandler
 } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { TextInput as PaperInput, PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { getStyles } from './SettingsTab.styles';
+import { getStyles as getItemStyles } from '../styles/item.styles';
 import { AuthStorage, TodoStorage, RpgStorage } from '../utils/storage';
 import { socket, updateSocketUrlAndReconnect } from '../utils/socket';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
@@ -41,13 +45,54 @@ export const SettingsTab = ({
   setSettings,
   setTodoList,
   setRpgHistory,
-  setMainTab
+  setMainTab,
+  todoList,
+  editTask,
+  leftAction
 }) => {
   const styles = useStyles(getStyles);
+  const itemStyles = useStyles(getItemStyles);
   const { theme } = useAppTheme();
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [recordingKey, setRecordingKey] = useState(null);
+  const [subView, setSubView] = useState(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'android' && subView) {
+      const handleBackPress = () => {
+        setSubView(null);
+        return true;
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+      return () => {
+        subscription.remove();
+      };
+    }
+  }, [subView]);
+
+  const handleToggleDay = (item, idx) => {
+    const daysArr = (item.days || '1111111').split('');
+    daysArr[idx] = daysArr[idx] === '1' ? '0' : '1';
+    if (daysArr.every(x => x === '0')) return;
+    const updatedDays = daysArr.join('');
+    if (editTask) {
+      editTask(item.id, { days: updatedDays });
+    }
+  };
+
+  const handleChangeProgressEnd = (item, delta) => {
+    const nextVal = Math.max(1, Math.min(20, (item.progressEnd || 1) + delta));
+    if (editTask) {
+      editTask(item.id, { progressEnd: nextVal });
+    }
+  };
+
+  const handleDeleteDaily = (item) => {
+    if (editTask) {
+      editTask(item.id, { deleted: true });
+    }
+  };
 
   const formatShortcut = (shortcutStr) => {
     if (!shortcutStr) return '';
@@ -338,6 +383,151 @@ export const SettingsTab = ({
   const activeRpgSubtab = (settings?.rpg_subtab === 'habits' || settings?.rpg_subtab === 'piggy_bank' || settings?.rpg_subtab === 'tv_shows')
     ? settings.rpg_subtab
     : null;
+
+  if (subView === 'dailies') {
+    const dailies = (todoList || []).filter(item => item.type === 'daily' && !item.deleted);
+
+    return (
+      <PaperProvider>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+          <ScrollView
+            contentContainerStyle={{
+              paddingTop: Platform.OS === 'web' ? theme.spacing.xl : theme.spacing.md,
+              paddingBottom: theme.spacing.xxl,
+              width: '100%',
+              alignItems: 'center',
+            }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Centered Dailies Header Block */}
+            <View style={{ paddingHorizontal: 20, width: '100%', maxWidth: 600, alignSelf: 'center' }}>
+              <View style={[styles.card, {
+                flexDirection: 'row',
+                alignItems: 'center',
+                height: 54,
+                padding: 0,
+                overflow: 'hidden',
+                marginBottom: theme.spacing.smd,
+              }]}>
+                <TouchableOpacity
+                  onPress={() => setSubView(null)}
+                  style={{
+                    height: '100%',
+                    width: 54,
+                    backgroundColor: theme.colors.icon.bg,
+                    borderTopLeftRadius: theme.radius.lg,
+                    borderBottomLeftRadius: theme.radius.lg,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name="arrow-back" size={24} color={theme.colors.icon.primary} />
+                </TouchableOpacity>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: theme.colors.text.primary, marginLeft: 16 }}>
+                  {settings?.language === 'ru' ? 'Редактировать Daily' : 'Edit Daily Tasks'}
+                </Text>
+              </View>
+            </View>
+            {dailies.length === 0 ? (
+              <View style={{ paddingHorizontal: 20, width: '100%', maxWidth: 600 }}>
+                <View style={[styles.card, { alignItems: 'center', paddingVertical: 30, marginBottom: 0 }]}>
+                  <MaterialCommunityIcons name="calendar-blank" size={48} color={theme.colors.text.muted} />
+                  <Text style={{ fontSize: 14, color: theme.colors.text.secondary, marginTop: 12 }}>
+                    {settings?.language === 'ru' ? 'Нет активных ежедневных задач' : 'No active daily tasks'}
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              dailies.map(item => {
+                const daysStr = item.days || '1111111';
+                return (
+                  <Swipeable
+                    key={item.id}
+                    friction={1.6}
+                    leftThreshold={78}
+                    overshootLeft={true}
+                    renderLeftActions={(prog, drag) => leftAction ? leftAction(prog, drag, 'toRecycle') : null}
+                    onSwipeableLeftOpen={() => handleDeleteDaily(item)}
+                    containerStyle={{
+                      paddingTop: 2,
+                      paddingBottom: 8,
+                      paddingHorizontal: 20,
+                      backgroundColor: 'transparent',
+                      width: '100%',
+                      maxWidth: 600,
+                      alignSelf: 'center',
+                    }}
+                    activeOffsetX={[-15, 15]}
+                    failOffsetY={[-15, 15]}
+                  >
+                    <View style={[itemStyles.todoItem, { flexDirection: 'column', alignItems: 'stretch', padding: theme.spacing.md }]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Text
+                          style={{
+                            flex: 1,
+                            fontSize: 14,
+                            fontWeight: '700',
+                            color: theme.colors.text.primary,
+                            paddingVertical: 6,
+                          }}
+                        >
+                          {item.text}
+                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <TouchableOpacity hitSlop={10} onPress={() => handleChangeProgressEnd(item, -1)}>
+                            <Ionicons name="remove-circle-outline" size={22} color={theme.colors.icon.primary} />
+                          </TouchableOpacity>
+                          <Text style={{ fontSize: 14, fontWeight: 'bold', marginHorizontal: 10, color: theme.colors.text.primary }}>
+                            {item.progressEnd || 1}
+                          </Text>
+                          <TouchableOpacity hitSlop={10} onPress={() => handleChangeProgressEnd(item, 1)}>
+                            <Ionicons name="add-circle-outline" size={22} color={theme.colors.icon.primary} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      {/* Weekdays indicator and toggle */}
+                      <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: 12 }}>
+                        {t('daily_weekdays').map((day, idx) => {
+                          const isSelected = daysStr[idx] === '1';
+                          return (
+                            <TouchableOpacity
+                              key={day}
+                              onPress={() => handleToggleDay(item, idx)}
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 8,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: isSelected ? theme.colors.primaryLight : 'transparent',
+                                borderWidth: 1.5,
+                                borderColor: isSelected ? theme.colors.primary : theme.colors.border.light,
+                              }}
+                            >
+                              <Text style={{
+                                fontSize: 12,
+                                fontWeight: 'bold',
+                                color: isSelected ? theme.colors.primary : theme.colors.text.secondary
+                              }}>
+                                {day}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  </Swipeable>
+                );
+              })
+            )}
+          </ScrollView>
+        </View>
+      </PaperProvider>
+    );
+  }
 
   return (
     <PaperProvider>
@@ -922,6 +1112,30 @@ export const SettingsTab = ({
             </View>
           )}
 
+          {authState === '' && (
+            <View style={styles.card}>
+              <View style={styles.cardHeaderWithIcon}>
+                <MaterialCommunityIcons name="calendar-check" size={20} color={theme.colors.primary} />
+                <Text style={styles.cardTitle}>
+                  {settings?.language === 'ru' ? 'Настройка Daily' : 'Daily Tasks Config'}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 11, color: theme.colors.text.muted, marginLeft: theme.spacing.sm, marginTop: 4, marginBottom: 12 }}>
+                {settings?.language === 'ru' ? 'Настройте дни недели и прогресс для ваших ежедневных задач' : 'Configure active weekdays and progress goals for your daily tasks'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setSubView('dailies')}
+                style={[styles.logoutButton, { marginTop: 4, paddingVertical: 10 }]}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons name="calendar-edit" size={18} color={theme.colors.icon.primary} style={{ marginRight: 6 }} />
+                <Text style={styles.logoutButtonText}>
+                  {settings?.language === 'ru' ? 'Редактировать Daily' : 'Edit Daily Tasks'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {authState === '' && Platform.OS === 'web' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
@@ -931,7 +1145,7 @@ export const SettingsTab = ({
               <Text style={{ fontSize: 11, color: theme.colors.text.muted, marginTop: 4, marginBottom: 12 }}>
                 {t('set_shortcuts_desc')}
               </Text>
-              
+
               {Object.keys(defaultShortcuts).map((key) => (
                 <View key={key} style={styles.shortcutRow}>
                   <View style={styles.shortcutInfo}>
