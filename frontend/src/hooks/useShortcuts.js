@@ -18,7 +18,9 @@ export function useShortcuts(shortcutMap) {
         return;
       }
 
-      const isMod = event.ctrlKey;
+      const isMod = event.ctrlKey || event.metaKey;
+      const isAlt = event.altKey;
+      const isShift = event.shiftKey;
 
       let key = event.key.toLowerCase();
       if (event.code) {
@@ -29,12 +31,16 @@ export function useShortcuts(shortcutMap) {
         }
       }
 
+      if (key === 'control' || key === 'meta' || key === 'alt' || key === 'shift') {
+        return;
+      }
+
       const pressedKeys = [];
       if (isMod) pressedKeys.push('mod');
+      if (isAlt) pressedKeys.push('alt');
+      if (isShift) pressedKeys.push('shift');
       
-      if (key !== 'control') {
-        pressedKeys.push(key);
-      }
+      pressedKeys.push(key);
 
       const combination = pressedKeys.join('+');
 

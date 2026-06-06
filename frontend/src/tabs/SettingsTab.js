@@ -53,9 +53,15 @@ export const SettingsTab = ({
     if (!shortcutStr) return '';
     const parts = shortcutStr.split('+');
     const formattedParts = parts.map(part => {
+      const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       if (part === 'mod') {
-        const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
         return isMac ? '⌘' : 'Ctrl';
+      }
+      if (part === 'alt') {
+        return isMac ? '⌥' : 'Alt';
+      }
+      if (part === 'shift') {
+        return isMac ? '⇧' : 'Shift';
       }
       return part.toUpperCase();
     });
@@ -78,15 +84,26 @@ export const SettingsTab = ({
       <View style={styles.shortcutKeysContainer}>
         {parts.map((part, index) => {
           let text = part;
+          const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
           if (part === 'mod') {
-            const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
             text = isMac ? '⌘' : 'Ctrl';
+          } else if (part === 'alt') {
+            text = isMac ? '⌥' : 'Alt';
+          } else if (part === 'shift') {
+            text = isMac ? '⇧' : 'Shift';
           } else {
             text = text.toUpperCase();
           }
           return (
-            <View key={index} style={styles.keycap}>
-              <Text style={styles.keycapText}>{text}</Text>
+            <View key={index} style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {index > 0 && (
+                <Text style={{ fontSize: 11, fontWeight: '800', color: theme.colors.text.secondary, marginHorizontal: 4 }}>
+                  +
+                </Text>
+              )}
+              <View style={styles.keycap}>
+                <Text style={styles.keycapText}>{text}</Text>
+              </View>
             </View>
           );
         })}
@@ -102,6 +119,8 @@ export const SettingsTab = ({
       e.stopPropagation();
 
       const isMod = e.ctrlKey || e.metaKey;
+      const isAlt = e.altKey;
+      const isShift = e.shiftKey;
 
       let key = e.key.toLowerCase();
       if (e.code) {
@@ -118,6 +137,8 @@ export const SettingsTab = ({
 
       const pressedKeys = [];
       if (isMod) pressedKeys.push('mod');
+      if (isAlt) pressedKeys.push('alt');
+      if (isShift) pressedKeys.push('shift');
       pressedKeys.push(key);
       const combination = pressedKeys.join('+');
 

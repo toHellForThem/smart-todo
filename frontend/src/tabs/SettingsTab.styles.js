@@ -5,6 +5,12 @@ export const getStyles = (theme) => StyleSheet.create({
     padding: theme.spacing.md,
     paddingBottom: theme.spacing.xxl,
     backgroundColor: theme.colors.background,
+    ...Platform.select({
+      web: {
+        paddingTop: theme.spacing.xl,
+        paddingHorizontal: theme.spacing.lg,
+      }
+    }),
   },
   card: {
     backgroundColor: theme.colors.surface,
@@ -28,6 +34,9 @@ export const getStyles = (theme) => StyleSheet.create({
         shadowRadius: 4,
         borderWidth: 1,
         borderColor: theme.colors.border.light,
+        maxWidth: 600,
+        width: '100%',
+        alignSelf: 'center',
       }
     }),
   },
