@@ -353,18 +353,51 @@ export default function App() {
     }
   }
 
-  const shortcutsMap = {
-    'mod+1': () => handleTabChange('rpg'),
-    'mod+2': () => handleTabChange('todo'),
-    'mod+3': () => handleTabChange('daily'),
-    'mod+q': () => handleSubtabChange('habits'),
-    'mod+w': () => handleSubtabChange('piggy_bank'),
-    'mod+e': () => handleSubtabChange('tv_shows'),
-    'mod+r': () => habdleActiveView('recycle'),
-    'mod+s': () => habdleActiveView('settings'),
-    'mod+c': () => handleOpenCalendar(),
-    'mod+x': () => handleMoodSheet(),
+  const defaultShortcuts = {
+    rpg_tab: 'mod+1',
+    todo_tab: 'mod+2',
+    daily_tab: 'mod+3',
+    habits_subtab: 'mod+q',
+    piggy_subtab: 'mod+w',
+    tv_subtab: 'mod+e',
+    recycle_view: 'mod+r',
+    settings_view: 'mod+s',
+    calendar_view: 'mod+c',
+    mood_view: 'mod+x',
   };
+
+  const shortcuts = settings?.shortcuts || defaultShortcuts;
+
+  const shortcutsMap = useMemo(() => {
+    const map = {};
+    if (shortcuts.rpg_tab) map[shortcuts.rpg_tab] = () => handleTabChange('rpg');
+    if (shortcuts.todo_tab) map[shortcuts.todo_tab] = () => handleTabChange('todo');
+    if (shortcuts.daily_tab) map[shortcuts.daily_tab] = () => handleTabChange('daily');
+    if (shortcuts.habits_subtab) map[shortcuts.habits_subtab] = () => handleSubtabChange('habits');
+    if (shortcuts.piggy_subtab) map[shortcuts.piggy_subtab] = () => handleSubtabChange('piggy_bank');
+    if (shortcuts.tv_subtab) map[shortcuts.tv_subtab] = () => handleSubtabChange('tv_shows');
+    if (shortcuts.recycle_view) map[shortcuts.recycle_view] = () => habdleActiveView('recycle');
+    if (shortcuts.settings_view) map[shortcuts.settings_view] = () => habdleActiveView('settings');
+    if (shortcuts.calendar_view) map[shortcuts.calendar_view] = () => handleOpenCalendar();
+    if (shortcuts.mood_view) map[shortcuts.mood_view] = () => handleMoodSheet();
+    return map;
+  }, [
+    shortcuts.rpg_tab,
+    shortcuts.todo_tab,
+    shortcuts.daily_tab,
+    shortcuts.habits_subtab,
+    shortcuts.piggy_subtab,
+    shortcuts.tv_subtab,
+    shortcuts.recycle_view,
+    shortcuts.settings_view,
+    shortcuts.calendar_view,
+    shortcuts.mood_view,
+    handleTabChange,
+    handleSubtabChange,
+    habdleActiveView,
+    handleOpenCalendar,
+    handleMoodSheet
+  ]);
 
   useShortcuts(shortcutsMap);
 

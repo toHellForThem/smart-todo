@@ -319,4 +319,87 @@ export const getStyles = (theme) => StyleSheet.create({
   switchTextContainer: {
     flex: 1,
   },
+  shortcutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.light,
+  },
+  shortcutInfo: {
+    flex: 1,
+    marginRight: theme.spacing.md,
+  },
+  shortcutTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+  },
+  shortcutKeysContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  keycap: {
+    backgroundColor: theme.colors.icon.bg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+    borderRadius: theme.radius.xs,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 1,
+      },
+      android: {
+        elevation: 1,
+      },
+      web: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 1,
+        cursor: 'pointer',
+      }
+    }),
+  },
+  keycapActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  keycapText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: theme.colors.icon.primary,
+    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+  },
+  keycapTextActive: {
+    color: '#FFFFFF',
+  },
+  shortcutResetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.icon.bg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+    borderRadius: theme.radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.md,
+    alignSelf: 'stretch',
+  },
+  shortcutResetButtonText: {
+    color: theme.colors.text.secondary,
+    fontWeight: '700',
+    fontSize: 13,
+    marginLeft: 6,
+  },
 });

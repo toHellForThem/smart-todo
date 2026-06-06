@@ -7,7 +7,8 @@ import {
   Switch,
   ScrollView,
   Linking,
-  Image
+  Image,
+  Platform
 } from 'react-native';
 import { TextInput as PaperInput, PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,19 @@ import { AuthStorage, TodoStorage, RpgStorage } from '../utils/storage';
 import { socket, updateSocketUrlAndReconnect } from '../utils/socket';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { useTranslation } from '../utils/LanguageContext';
+
+const defaultShortcuts = {
+  rpg_tab: 'mod+1',
+  todo_tab: 'mod+2',
+  daily_tab: 'mod+3',
+  habits_subtab: 'mod+q',
+  piggy_subtab: 'mod+w',
+  tv_subtab: 'mod+e',
+  recycle_view: 'mod+r',
+  settings_view: 'mod+s',
+  calendar_view: 'mod+c',
+  mood_view: 'mod+x',
+};
 
 export const SettingsTab = ({
   authMode,
@@ -33,6 +47,103 @@ export const SettingsTab = ({
   const { theme } = useAppTheme();
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
+  const [recordingKey, setRecordingKey] = useState(null);
+
+  const formatShortcut = (shortcutStr) => {
+    if (!shortcutStr) return '';
+    const parts = shortcutStr.split('+');
+    const formattedParts = parts.map(part => {
+      if (part === 'mod') {
+        const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        return isMac ? '⌘' : 'Ctrl';
+      }
+      return part.toUpperCase();
+    });
+    return formattedParts.join(' + ');
+  };
+
+  const renderKeycaps = (shortcutStr, isRecording) => {
+    if (isRecording) {
+      return (
+        <View style={[styles.keycap, styles.keycapActive]}>
+          <Text style={[styles.keycapText, styles.keycapTextActive]}>
+            {t('set_shortcut_press_key')}
+          </Text>
+        </View>
+      );
+    }
+    if (!shortcutStr) return null;
+    const parts = shortcutStr.split('+');
+    return (
+      <View style={styles.shortcutKeysContainer}>
+        {parts.map((part, index) => {
+          let text = part;
+          if (part === 'mod') {
+            const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            text = isMac ? '⌘' : 'Ctrl';
+          } else {
+            text = text.toUpperCase();
+          }
+          return (
+            <View key={index} style={styles.keycap}>
+              <Text style={styles.keycapText}>{text}</Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
+  useEffect(() => {
+    if (!recordingKey) return;
+
+    const handleCaptureKeyDown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const isMod = e.ctrlKey || e.metaKey;
+
+      let key = e.key.toLowerCase();
+      if (e.code) {
+        if (e.code.startsWith('Key')) {
+          key = e.code.slice(3).toLowerCase();
+        } else if (e.code.startsWith('Digit')) {
+          key = e.code.slice(5);
+        }
+      }
+
+      if (key === 'control' || key === 'meta' || key === 'shift' || key === 'alt') {
+        return;
+      }
+
+      const pressedKeys = [];
+      if (isMod) pressedKeys.push('mod');
+      pressedKeys.push(key);
+      const combination = pressedKeys.join('+');
+
+      const currentShortcuts = settings?.shortcuts || defaultShortcuts;
+      const updatedShortcuts = {
+        ...currentShortcuts,
+        [recordingKey]: combination
+      };
+      updateSetting('shortcuts', updatedShortcuts);
+      setRecordingKey(null);
+
+      Toast.show({
+        type: 'success',
+        text1: settings?.language === 'ru' ? 'Горячая клавиша изменена!' : 'Shortcut changed!',
+        text2: `${formatShortcut(combination)}`,
+        visibilityTime: 2000
+      });
+    };
+
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('keydown', handleCaptureKeyDown, true);
+      return () => {
+        window.removeEventListener('keydown', handleCaptureKeyDown, true);
+      };
+    }
+  }, [recordingKey, settings]);
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [serverUrlInput, setServerUrlInput] = useState(() => AuthStorage.getServerUrl() || '');
@@ -152,7 +263,7 @@ export const SettingsTab = ({
       RpgStorage.saveHistory([]);
     }
 
-    const defaults = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '00:00', reset_enabled: true };
+    const defaults = { main_page: 'todo', theme: 'default', soft_delete: true, reset_time: '00:00', reset_enabled: true, shortcuts: defaultShortcuts };
     setSettings(defaults);
   };
 
@@ -787,6 +898,52 @@ export const SettingsTab = ({
                   thumbColor={settings?.reset_enabled !== false ? theme.colors.primary : theme.colors.border.default}
                 />
               </View>
+            </View>
+          )}
+
+          {authState === '' && Platform.OS === 'web' && (
+            <View style={styles.card}>
+              <View style={styles.cardHeaderWithIcon}>
+                <MaterialCommunityIcons name="keyboard-outline" size={20} color={theme.colors.primary} />
+                <Text style={styles.cardTitle}>{t('set_shortcuts_title')}</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: theme.colors.text.muted, marginTop: 4, marginBottom: 12 }}>
+                {t('set_shortcuts_desc')}
+              </Text>
+              
+              {Object.keys(defaultShortcuts).map((key) => (
+                <View key={key} style={styles.shortcutRow}>
+                  <View style={styles.shortcutInfo}>
+                    <Text style={styles.shortcutTitle}>
+                      {t(`set_shortcut_action_${key}`)}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => setRecordingKey(recordingKey === key ? null : key)}
+                  >
+                    {renderKeycaps(settings?.shortcuts?.[key], recordingKey === key)}
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+              <TouchableOpacity
+                onPress={() => {
+                  updateSetting('shortcuts', defaultShortcuts);
+                  Toast.show({
+                    type: 'success',
+                    text1: settings?.language === 'ru' ? 'Шорткаты сброшены' : 'Shortcuts reset',
+                    visibilityTime: 2000
+                  });
+                }}
+                style={styles.shortcutResetButton}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons name="restore" size={18} color={theme.colors.text.secondary} />
+                <Text style={styles.shortcutResetButtonText}>
+                  {t('set_shortcuts_reset')}
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
 

@@ -78,6 +78,18 @@ export const AuthStorage = {
   setSettings: (settings) => core.set('user_settings', JSON.stringify(settings)),
   getSettings: () => {
     const data = core.get('user_settings');
+    const defaultShortcuts = {
+      rpg_tab: 'mod+1',
+      todo_tab: 'mod+2',
+      daily_tab: 'mod+3',
+      habits_subtab: 'mod+q',
+      piggy_subtab: 'mod+w',
+      tv_subtab: 'mod+e',
+      recycle_view: 'mod+r',
+      settings_view: 'mod+s',
+      calendar_view: 'mod+c',
+      mood_view: 'mod+x',
+    };
     const defaultSettings = { 
       main_page: 'todo', 
       theme: 'default', 
@@ -85,9 +97,21 @@ export const AuthStorage = {
       reset_time: '00:00', 
       rpg_subtab: 'dashboard', 
       reset_enabled: true,
-      language: getSystemLanguage()
+      language: getSystemLanguage(),
+      shortcuts: defaultShortcuts
     };
-    return data ? { ...defaultSettings, ...JSON.parse(data) } : defaultSettings;
+    if (data) {
+      const parsed = JSON.parse(data);
+      return {
+        ...defaultSettings,
+        ...parsed,
+        shortcuts: {
+          ...defaultShortcuts,
+          ...(parsed.shortcuts || {})
+        }
+      };
+    }
+    return defaultSettings;
   },
 
   setServerUrl: (url) => core.set('server_url', url),
