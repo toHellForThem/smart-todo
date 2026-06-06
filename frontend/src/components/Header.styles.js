@@ -200,6 +200,7 @@ export const getStyles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
+    zIndex: 49
   },
   webHeaderCenter: {
     flex: 1,
@@ -209,6 +210,7 @@ export const getStyles = (theme) => StyleSheet.create({
     justifyContent: 'center',
     height: '100%',
     gap: theme.spacing.sm,
+    zIndex: 50
   },
   webHeaderRight: {
     flex: 1,
@@ -216,5 +218,6 @@ export const getStyles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    zIndex: 49
   },
 });
