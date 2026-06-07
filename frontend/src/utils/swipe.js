@@ -16,7 +16,7 @@ export const renderLeftAction = (prog, drag, mode, theme, lang = 'ru', softDelet
 
   const translateX = drag.interpolate({
     inputRange: [0, 65, 77 - (isHardDelete ? 2 : -6)],
-    outputRange: [-59 + (isHardDelete ? 2 : -6), 6 + (isHardDelete ? 2 : -6), 18],
+    outputRange: [-59 + (isHardDelete ? 2 : -6), 7 + (isHardDelete ? 2 : -6), 20],
     extrapolate: 'clamp',
   });
 
@@ -32,7 +32,7 @@ export const renderLeftAction = (prog, drag, mode, theme, lang = 'ru', softDelet
         styles.deleteBack,
         {
           opacity: opacity,
-          marginRight: -130,
+          marginRight: -510,
           transform: [{ translateX: translateX }],
           backgroundColor: isHardDelete ? theme.colors.danger : theme.colors.primary,
         }
