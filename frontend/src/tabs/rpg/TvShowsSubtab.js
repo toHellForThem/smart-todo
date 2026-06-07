@@ -191,6 +191,7 @@ const TvShowInput = memo(({
   isWideScreen,
 }) => {
   const [showTitle, setShowTitle] = useState('');
+  const [isEpisodeFocused, setIsEpisodeFocused] = useState(false);
 
   const handleAdd = useCallback(() => {
     if (!showTitle.trim()) return;
@@ -228,7 +229,7 @@ const TvShowInput = memo(({
         <View
           pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
           style={[styles.keyboardSuggestionBar, {
-            bottom: keyboardHeight - 71,
+            bottom: keyboardHeight - 71 - (isEpisodeFocused ? 45 : 0),
             opacity: isKeyboardVisible ? 1 : 0
           }]}
         >
@@ -274,6 +275,8 @@ const TvShowInput = memo(({
               keyboardType="numeric"
               editable={!showIsMovie}
               selectTextOnFocus={true}
+              onFocus={() => setIsEpisodeFocused(true)}
+              onBlur={() => setIsEpisodeFocused(false)}
             />
           </View>
         </View>
