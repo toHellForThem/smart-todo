@@ -1,4 +1,4 @@
-const { app, BrowserWindow, protocol } = require('electron');
+const { app, BrowserWindow, protocol, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs/promises');
 
@@ -97,6 +97,7 @@ app.whenReady().then(() => {
     }
   });
 
+  Menu.setApplicationMenu(null);
   createWindow();
 
   app.on('activate', () => {

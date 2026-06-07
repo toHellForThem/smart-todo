@@ -1,5 +1,5 @@
-import { memo, useState, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
+import { memo, useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, TextInput, FlatList, Platform, Keyboard } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 
@@ -16,7 +16,15 @@ const PiggyBankItem = memo(({
   styles,
   theme,
   handleUpdatePiggy,
+  isSelected,
 }) => {
+  const handleKeyPress = useCallback((e) => {
+    if (e.nativeEvent?.key === 'Escape') {
+      e.stopPropagation();
+      Keyboard.dismiss();
+    }
+  }, []);
+
   const handleSwipeOpen = useCallback(() => {
     deleteToRecycle(item.id);
   }, [item.id, deleteToRecycle]);
@@ -67,7 +75,21 @@ const PiggyBankItem = memo(({
       activeOffsetX={[-15, 15]}
       failOffsetY={[-15, 15]}
     >
-      <View style={styles.piggyCardCompact}>
+      <View style={[
+        styles.piggyCardCompact,
+        isSelected && { backgroundColor: theme.colors.icon.bg }
+      ]}>
+        {isSelected && (
+          <View style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            backgroundColor: theme.colors.primary,
+            zIndex: 10,
+          }} />
+        )}
         <View style={styles.piggyCardHeader}>
           <Text style={styles.piggyTitleText}>
             {item.text}
@@ -125,6 +147,7 @@ const PiggyBankItem = memo(({
                 onBlur={handleInputBlur}
                 onSubmitEditing={handleSubmit}
                 returnKeyType="done"
+                onKeyPress={handleKeyPress}
               />
               {!inputValue && !isFocused && (
                 <View style={styles.piggyInputCoinsPlaceholder} pointerEvents="none">
@@ -154,10 +177,18 @@ const PiggyGoalInput = memo(({
   styles,
   theme,
   t,
+  inputRef,
 }) => {
   const [piggyGoal, setPiggyGoal] = useState('');
   const [piggyTarget, setPiggyTarget] = useState('');
   const targetInputRef = useRef(null);
+
+  const handleKeyPress = useCallback((e) => {
+    if (e.nativeEvent?.key === 'Escape') {
+      e.stopPropagation();
+      Keyboard.dismiss();
+    }
+  }, []);
 
   const handleSaveGoal = useCallback(() => {
     if (!piggyGoal.trim() || !piggyTarget.trim()) return;
@@ -170,6 +201,7 @@ const PiggyGoalInput = memo(({
     <View style={styles.piggyInputRowContainer}>
       <View style={styles.piggyInputColumn}>
         <TextInput
+          ref={inputRef}
           style={[styles.input, { flex: 0, width: '100%', marginBottom: 0 }]}
           placeholder={t('rpg_piggy_title_placeholder')}
           placeholderTextColor="#94A3B8"
@@ -180,6 +212,7 @@ const PiggyGoalInput = memo(({
           onSubmitEditing={() => targetInputRef.current?.focus()}
           returnKeyType="next"
           blurOnSubmit={false}
+          onKeyPress={handleKeyPress}
         />
         <TextInput
           ref={targetInputRef}
@@ -193,6 +226,7 @@ const PiggyGoalInput = memo(({
           onChangeText={setPiggyTarget}
           onSubmitEditing={handleSaveGoal}
           returnKeyType="done"
+          onKeyPress={handleKeyPress}
         />
       </View>
 
@@ -221,7 +255,45 @@ export const PiggyBankSubtab = memo(({
   t,
   piggyInputs,
   setPiggyInputs,
+  selectedTaskId,
+  focusInputTrigger,
+  isActive,
 }) => {
+  const inputRef = useRef(null);
+  const lastTrigger = useRef(focusInputTrigger);
+
+  useEffect(() => {
+    if (focusInputTrigger !== lastTrigger.current) {
+      lastTrigger.current = focusInputTrigger;
+      if (isActive) {
+        inputRef.current?.focus();
+      }
+    }
+  }, [focusInputTrigger, isActive]);
+
+  useEffect(() => {
+    if (!selectedTaskId || !flatListRef?.current) return;
+    const index = piggyGoalItems.findIndex(item => item.id === selectedTaskId);
+    if (index !== -1) {
+      try {
+        flatListRef.current.scrollToIndex({
+          index,
+          viewPosition: 0.5,
+          animated: true,
+        });
+      } catch (err) {
+        try {
+          flatListRef.current.scrollToOffset({
+            offset: index * 150,
+            animated: true,
+          });
+        } catch (innerErr) {
+          console.log('Scroll to selected piggy bank item failed:', innerErr);
+        }
+      }
+    }
+  }, [selectedTaskId, piggyGoalItems, flatListRef]);
+
   const handleInputChange = useCallback((id, text) => {
     setPiggyInputs(prev => ({ ...prev, [id]: text }));
   }, [setPiggyInputs]);
@@ -257,8 +329,9 @@ export const PiggyBankSubtab = memo(({
       styles={styles}
       theme={theme}
       handleUpdatePiggy={handleUpdatePiggy}
+      isSelected={item.id === selectedTaskId}
     />
-  ), [piggyInputs, handleInputChange, focusedGoalId, handleFocus, handleBlur, flashingGoalId, deleteToRecycle, renderSwipeLeft, styles, theme, handleUpdatePiggy]);
+  ), [piggyInputs, handleInputChange, focusedGoalId, handleFocus, handleBlur, flashingGoalId, deleteToRecycle, renderSwipeLeft, styles, theme, handleUpdatePiggy, selectedTaskId]);
 
   return (
     <View style={styles.container}>
@@ -269,11 +342,13 @@ export const PiggyBankSubtab = memo(({
         styles={styles}
         theme={theme}
         t={t}
+        inputRef={inputRef}
       />
 
       <FlatList
         ref={flatListRef}
         data={piggyGoalItems}
+        extraData={selectedTaskId}
         bounces={false}
         overScrollMode="never"
         keyExtractor={(item) => item.id}

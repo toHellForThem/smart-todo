@@ -1,5 +1,5 @@
-import { memo, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import { memo, useState, useCallback, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, TextInput, FlatList, Keyboard } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 
@@ -11,6 +11,7 @@ const TvShowItem = memo(({
   styles,
   theme,
   t,
+  isSelected,
 }) => {
   const handleToggleComplete = useCallback(() => {
     statusChangeTask(item.id, item.type === 'movie' ? undefined : 'toggle_complete');
@@ -48,12 +49,31 @@ const TvShowItem = memo(({
       activeOffsetX={[-15, 15]}
       failOffsetY={[-15, 15]}
     >
-      <View style={styles.showCard}>
+      <View style={[
+        styles.showCard,
+        {
+          borderRadius: theme.radius.xl,
+          overflow: 'hidden',
+          backgroundColor: isSelected ? theme.colors.icon.bg : 'transparent',
+          position: 'relative',
+        }
+      ]}>
+        {isSelected && (
+          <View style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            backgroundColor: theme.colors.primary,
+            zIndex: 10,
+          }} />
+        )}
         {item.type === 'movie' ? (
           <View style={[
             styles.showTitleBlock,
             { borderBottomLeftRadius: theme.radius.xl, borderBottomRightRadius: theme.radius.xl },
-            item.completed && { backgroundColor: theme.colors.icon.bg }
+            isSelected ? { backgroundColor: 'transparent' } : (item.completed && { backgroundColor: theme.colors.icon.bg })
           ]}>
             <Text style={[
               styles.showTitle,
@@ -88,7 +108,7 @@ const TvShowItem = memo(({
           <>
             <View style={[
               styles.showTitleBlock,
-              item.completed && { backgroundColor: theme.colors.icon.bg }
+              isSelected ? { backgroundColor: 'transparent' } : (item.completed && { backgroundColor: theme.colors.icon.bg })
             ]}>
               <Text style={[
                 styles.showTitle,
@@ -189,9 +209,17 @@ const TvShowInput = memo(({
   showStartEpisode,
   setShowStartEpisode,
   isWideScreen,
+  inputRef,
 }) => {
   const [showTitle, setShowTitle] = useState('');
   const [isEpisodeFocused, setIsEpisodeFocused] = useState(false);
+
+  const handleKeyPress = useCallback((e) => {
+    if (e.nativeEvent?.key === 'Escape') {
+      e.stopPropagation();
+      Keyboard.dismiss();
+    }
+  }, []);
 
   const handleAdd = useCallback(() => {
     if (!showTitle.trim()) return;
@@ -205,6 +233,7 @@ const TvShowInput = memo(({
     <>
       <View style={styles.inputBlock}>
         <TextInput
+          ref={inputRef}
           style={styles.input}
           placeholder={t('rpg_tv_placeholder')}
           placeholderTextColor="#94A3B8"
@@ -214,6 +243,7 @@ const TvShowInput = memo(({
           onChangeText={setShowTitle}
           onSubmitEditing={handleAdd}
           returnKeyType="done"
+          onKeyPress={handleKeyPress}
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
           <MaterialCommunityIcons
@@ -301,7 +331,45 @@ export const TvShowsSubtab = memo(({
   showStartEpisode,
   setShowStartEpisode,
   isWideScreen,
+  selectedTaskId,
+  focusInputTrigger,
+  isActive,
 }) => {
+  const flatListRef = useRef(null);
+  const inputRef = useRef(null);
+  const lastTrigger = useRef(focusInputTrigger);
+
+  useEffect(() => {
+    if (focusInputTrigger !== lastTrigger.current) {
+      lastTrigger.current = focusInputTrigger;
+      if (isActive) {
+        inputRef.current?.focus();
+      }
+    }
+  }, [focusInputTrigger, isActive]);
+
+  useEffect(() => {
+    if (!selectedTaskId || !flatListRef.current) return;
+    const index = activeShows.findIndex(item => item.id === selectedTaskId);
+    if (index !== -1) {
+      try {
+        flatListRef.current.scrollToIndex({
+          index,
+          viewPosition: 0.5,
+          animated: true,
+        });
+      } catch (err) {
+        try {
+          flatListRef.current.scrollToOffset({
+            offset: index * 120,
+            animated: true,
+          });
+        } catch (innerErr) {
+          console.log('Scroll to selected tv show failed:', innerErr);
+        }
+      }
+    }
+  }, [selectedTaskId, activeShows]);
   const renderItem = useCallback(({ item }) => (
     <TvShowItem
       item={item}
@@ -311,8 +379,9 @@ export const TvShowsSubtab = memo(({
       styles={styles}
       theme={theme}
       t={t}
+      isSelected={item.id === selectedTaskId}
     />
-  ), [statusChangeTask, deleteToRecycle, renderSwipeLeft, styles, theme, t]);
+  ), [statusChangeTask, deleteToRecycle, renderSwipeLeft, styles, theme, t, selectedTaskId]);
 
   return (
     <View style={styles.container}>
@@ -330,10 +399,13 @@ export const TvShowsSubtab = memo(({
         showStartEpisode={showStartEpisode}
         setShowStartEpisode={setShowStartEpisode}
         isWideScreen={isWideScreen}
+        inputRef={inputRef}
       />
 
       <FlatList
+        ref={flatListRef}
         data={activeShows}
+        extraData={selectedTaskId}
         bounces={false}
         overScrollMode="never"
         keyExtractor={(item) => item.id}

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Keyboard } from 'react-native';
 
 export function useShortcuts(shortcutMap) {
   const mapRef = useRef(shortcutMap);
@@ -10,10 +11,41 @@ export function useShortcuts(shortcutMap) {
   useEffect(() => {
     const handleKeyDown = (event) => {
       const target = event.target;
+      let key = event.key ? event.key.toLowerCase() : '';
+      const tagName = target && target.tagName ? target.tagName.toUpperCase() : '';
+
+      console.log('KeyDown event:', { key, tagName, isContentEditable: target?.isContentEditable });
+
+      if (key === 'escape') {
+        if (
+          tagName === 'INPUT' || 
+          tagName === 'TEXTAREA' || 
+          tagName === 'PAPER-INPUT' || 
+          (target && target.isContentEditable)
+        ) {
+          console.log('Escape pressed inside input, blurring...');
+          try {
+            Keyboard.dismiss();
+          } catch (e) {
+            console.log('Keyboard.dismiss failed:', e);
+          }
+          if (target && typeof target.blur === 'function') {
+            try {
+              target.blur();
+            } catch (e) {
+              console.log('target.blur failed:', e);
+            }
+          }
+          event.preventDefault();
+          return;
+        }
+      }
+
       if (
-        target.tagName === 'INPUT' || 
-        target.tagName === 'PAPER-INPUT' || 
-        target.isContentEditable
+        tagName === 'INPUT' || 
+        tagName === 'TEXTAREA' || 
+        tagName === 'PAPER-INPUT' || 
+        (target && target.isContentEditable)
       ) {
         return;
       }
@@ -22,7 +54,12 @@ export function useShortcuts(shortcutMap) {
       const isAlt = event.altKey;
       const isShift = event.shiftKey;
 
-      let key = event.key.toLowerCase();
+      if (isMod && (key === 'r' || key === 's' || key === 'p' || key === 'f' || key === 'g' || key === 'h' || key === 'w' || key === 'q')) {
+        event.preventDefault();
+      }
+      if (key === ' ') {
+        key = 'space';
+      }
       if (event.code) {
         if (event.code.startsWith('Key')) {
           key = event.code.slice(3).toLowerCase();

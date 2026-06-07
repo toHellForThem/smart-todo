@@ -45,6 +45,9 @@ const TAB_VIEWS = {
         statusChangeTask={props.statusChangeTask}
         deleteTodo={props.handleDeleteTodo}
         leftAction={props.leftAction}
+        selectedTaskId={props.selectedTaskId}
+        focusInputTrigger={props.focusInputTrigger}
+        isActive={props.mainTab === 'todo'}
       />
     ),
   },
@@ -62,6 +65,9 @@ const TAB_VIEWS = {
         dailyProgressEnd={props.dailyProgressEnd}
         setDailyProgressEnd={props.setDailyProgressEnd}
         isWideScreen={props.isWideScreen}
+        selectedTaskId={props.selectedTaskId}
+        focusInputTrigger={props.focusInputTrigger}
+        isActive={props.mainTab === 'daily'}
       />
     ),
   },
@@ -91,6 +97,9 @@ const TAB_VIEWS = {
         piggyInputs={props.piggyInputs}
         setPiggyInputs={props.setPiggyInputs}
         handleUpdatePiggy={props.handleUpdatePiggy}
+        selectedTaskId={props.selectedTaskId}
+        focusInputTrigger={props.focusInputTrigger}
+        isActive={props.mainTab === 'rpg'}
       />
     ),
   },
@@ -181,6 +190,7 @@ export default function App() {
   const [focusedGoalId, setFocusedGoalId] = useState(null);
   const [flashingGoalId, setFlashingGoalId] = useState(null);
   const [piggyInputs, setPiggyInputs] = useState({});
+  const [focusInputTrigger, setFocusInputTrigger] = useState(0);
   const flashTimerRef = useRef(null);
 
   const [rpgSubtab, setRpgSubtabState] = useState(() => {
@@ -202,6 +212,7 @@ export default function App() {
   const [dailyProgressEnd, setDailyProgressEnd] = useState(1);
   const [showIsMovie, setShowIsMovie] = useState(false);
   const [showStartEpisode, setShowStartEpisode] = useState('1');
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
 
   const {
     todoList,
@@ -243,7 +254,43 @@ export default function App() {
   const [isMoodSheetOpen, setIsMoodSheetOpen] = useState(false);
   const moodSheet = useMoodSheet(setIsMoodSheetOpen);
 
-  const handleOpenCalendar = () => {
+  const handleTabChange = useCallback((tab) => {
+    if (tab === 'rpg') {
+      setRpgSubtab('dashboard');
+    }
+    setMainTab(tab);
+    setActiveView('list');
+    setFocusedGoalId(null);
+    setSelectedTaskId(null);
+  }, [setRpgSubtab]);
+
+  const handleSubtabChange = useCallback((subtab) => {
+    setMainTab('rpg');
+    setRpgSubtab(subtab);
+    setActiveView('list');
+    setSelectedTaskId(null);
+  }, [setRpgSubtab]);
+
+  const habdleActiveView = useCallback((view) => {
+    if (activeView === view) {
+      setActiveView('list');
+    } else {
+      setActiveView(view);
+    }
+    setSelectedTaskId(null);
+  }, [activeView]);
+
+  const handleMoodSheet = useCallback(() => {
+    if (moodSheet.isActive && moodSheet.isActive.value === 1) {
+      moodSheet.isActive = false;
+      moodSheet.closeSheet();
+    } else {
+      moodSheet.isActive = true;
+      moodSheet.openSheet();
+    }
+  }, [moodSheet]);
+
+  const handleOpenCalendar = useCallback(() => {
     if (isCalendarVisible) {
       setCalendarVisible(false);
     } else {
@@ -252,40 +299,41 @@ export default function App() {
     setMainTab('rpg');
     setRpgSubtab('dashboard');
     setActiveView('list');
-  }
+    setSelectedTaskId(null);
+  }, [isCalendarVisible, setRpgSubtab]);
+
+  const handleBackAction = useCallback(() => {
+    if (moodSheet.isActive && moodSheet.isActive.value === 1) {
+      moodSheet.closeSheet();
+      return true;
+    }
+
+    if (isCalendarVisible) {
+      setCalendarVisible(false);
+      return true;
+    }
+
+    if (activeView !== 'list') {
+      setActiveView('list');
+      return true;
+    }
+
+    if (mainTab === 'rpg' && rpgSubtab !== 'dashboard') {
+      setRpgSubtab('dashboard');
+      return true;
+    }
+
+    return false;
+  }, [moodSheet, isCalendarVisible, activeView, mainTab, rpgSubtab, setRpgSubtab]);
 
   useEffect(() => {
-    const backAction = () => {
-      if (moodSheet.isActive && moodSheet.isActive.value === 1) {
-        moodSheet.closeSheet();
-        return true;
-      }
-
-      if (isCalendarVisible) {
-        setCalendarVisible(false);
-        return true;
-      }
-
-      if (activeView !== 'list') {
-        setActiveView('list');
-        return true;
-      }
-
-      if (mainTab === 'rpg' && rpgSubtab !== 'dashboard') {
-        setRpgSubtab('dashboard');
-        return true;
-      }
-
-      return false;
-    };
-
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
-      backAction
+      handleBackAction
     );
 
     return () => backHandler.remove();
-  }, [mainTab, rpgSubtab, activeView, isCalendarVisible, moodSheet]);
+  }, [handleBackAction]);
 
   const handleLeftAction = useCallback((prog, drag, mode) => {
     return renderLeftAction(prog, drag, mode, theme, settings?.language || 'ru', settings?.soft_delete !== false);
@@ -322,40 +370,49 @@ export default function App() {
     piggyInputs,
     setPiggyInputs,
     handleUpdatePiggy,
-  }), [addTask, todoList, setTodoList, statusChangeTask, handleDeleteTodo, handleLeftAction, rpgHistory, setRpgHistory, rpgSubtab, setRpgSubtab, isCalendarVisible, setCalendarVisible, settings, dailyDays, setDailyDays, dailyProgressEnd, setDailyProgressEnd, showIsMovie, setShowIsMovie, showStartEpisode, setShowStartEpisode, isWideScreen, focusedGoalId, setFocusedGoalId, flashingGoalId, piggyInputs, setPiggyInputs, handleUpdatePiggy]);
+    selectedTaskId,
+    focusInputTrigger,
+    mainTab,
+  }), [addTask, todoList, setTodoList, statusChangeTask, handleDeleteTodo, handleLeftAction, rpgHistory, setRpgHistory, rpgSubtab, setRpgSubtab, isCalendarVisible, setCalendarVisible, settings, dailyDays, setDailyDays, dailyProgressEnd, setDailyProgressEnd, showIsMovie, setShowIsMovie, showStartEpisode, setShowStartEpisode, isWideScreen, focusedGoalId, setFocusedGoalId, flashingGoalId, piggyInputs, setPiggyInputs, handleUpdatePiggy, selectedTaskId, focusInputTrigger, mainTab]);
 
-  const handleTabChange = (tab) => {
-    if (tab === 'rpg') {
-      setRpgSubtab('dashboard');
+  const getActiveItems = useCallback(() => {
+    if (activeView !== 'list') return [];
+    if (mainTab === 'todo') {
+      return todoList
+        .filter(item => item.type === 'todo' && !item.deleted)
+        .sort((a, b) => {
+          if (a.completed && !b.completed) return 1;
+          if (!a.completed && b.completed) return -1;
+          return 0;
+        });
     }
-    setMainTab(tab);
-    setActiveView('list');
-    setFocusedGoalId(null);
-  };
-
-  const handleSubtabChange = (subtab) => {
-    setMainTab('rpg');
-    setRpgSubtab(subtab);
-    setActiveView('list');
-  }
-
-  const habdleActiveView = (view) => {
-    if (activeView === view) {
-      setActiveView('list');
-    } else {
-      setActiveView(view);
+    if (mainTab === 'daily') {
+      const todayDayIdx = (new Date().getDay() + 6) % 7;
+      return todoList
+        .filter(item => {
+          if (item.type !== 'daily' || item.deleted) return false;
+          const daysStr = item.days || '1111111';
+          return daysStr[todayDayIdx] === '1';
+        })
+        .sort((a, b) => {
+          if (a.completed && !b.completed) return 1;
+          if (!a.completed && b.completed) return -1;
+          return 0;
+        });
     }
-  }
-
-  const handleMoodSheet = () => {
-    if (moodSheet.isActive && moodSheet.isActive.value === 1) {
-      moodSheet.isActive = false;
-      moodSheet.closeSheet();
-    } else {
-      moodSheet.isActive = true;
-      moodSheet.openSheet();
+    if (mainTab === 'rpg') {
+      if (rpgSubtab === 'habits') {
+        return todoList.filter(item => item.type === 'habit' && !item.deleted);
+      }
+      if (rpgSubtab === 'piggy_bank') {
+        return todoList.filter(item => item.type === 'piggy_bank' && !item.deleted);
+      }
+      if (rpgSubtab === 'tv_shows') {
+        return todoList.filter(item => (item.type === 'tv_show' || item.type === 'movie') && !item.deleted);
+      }
     }
-  }
+    return [];
+  }, [mainTab, rpgSubtab, activeView, todoList]);
 
   const defaultShortcuts = {
     rpg_tab: 'mod+1',
@@ -384,23 +441,146 @@ export default function App() {
     if (shortcuts.settings_view) map[shortcuts.settings_view] = () => habdleActiveView('settings');
     if (shortcuts.calendar_view) map[shortcuts.calendar_view] = () => handleOpenCalendar();
     if (shortcuts.mood_view) map[shortcuts.mood_view] = () => handleMoodSheet();
+
+    // Escape back button
+    map['escape'] = () => {
+      handleBackAction();
+    };
+
+    // Mood selection when mood sheet is open
+    if (isMoodSheetOpen) {
+      map['1'] = () => { handleMoodChange(1); moodSheet.closeSheet(); };
+      map['2'] = () => { handleMoodChange(2); moodSheet.closeSheet(); };
+      map['3'] = () => { handleMoodChange(3); moodSheet.closeSheet(); };
+      map['4'] = () => { handleMoodChange(4); moodSheet.closeSheet(); };
+      map['5'] = () => { handleMoodChange(5); moodSheet.closeSheet(); };
+    }
+
+    // Arrow keys for item selection
+    map['arrowdown'] = (e) => {
+      if (isCalendarVisible) return;
+      e.preventDefault();
+      const items = getActiveItems();
+      if (items.length === 0) return;
+      const currentIndex = items.findIndex(item => item.id === selectedTaskId);
+      if (currentIndex === -1) {
+        setSelectedTaskId(items[0].id);
+      } else if (currentIndex === items.length - 1) {
+        setSelectedTaskId(items[0].id); // Wrap to first
+      } else {
+        setSelectedTaskId(items[currentIndex + 1].id);
+      }
+    };
+
+    map['arrowup'] = (e) => {
+      if (isCalendarVisible) return;
+      e.preventDefault();
+      const items = getActiveItems();
+      if (items.length === 0) return;
+      const currentIndex = items.findIndex(item => item.id === selectedTaskId);
+      if (currentIndex === -1) {
+        setSelectedTaskId(items[items.length - 1].id);
+      } else if (currentIndex === 0) {
+        setSelectedTaskId(items[items.length - 1].id); // Wrap to last
+      } else {
+        setSelectedTaskId(items[currentIndex - 1].id);
+      }
+    };
+
+    // Toggle/complete selected task
+    const handleToggleSelected = (e) => {
+      if (isCalendarVisible) return;
+      if (!selectedTaskId) return;
+      const items = getActiveItems();
+      const selectedItem = items.find(item => item.id === selectedTaskId);
+      if (!selectedItem) return;
+      e.preventDefault();
+      if (selectedItem.type === 'todo') {
+        statusChangeTask(selectedTaskId, 1);
+      } else if (selectedItem.type === 'daily') {
+        statusChangeTask(selectedTaskId);
+      } else if (selectedItem.type === 'habit') {
+        statusChangeTask(selectedTaskId);
+      } else if (selectedItem.type === 'tv_show') {
+        statusChangeTask(selectedTaskId, 1, 'episode');
+      } else if (selectedItem.type === 'movie') {
+        statusChangeTask(selectedTaskId);
+      } else if (selectedItem.type === 'piggy_bank') {
+        statusChangeTask(selectedTaskId, 1);
+      }
+    };
+    map['enter'] = handleToggleSelected;
+    map['space'] = handleToggleSelected;
+
+    // ArrowRight to delete selected task
+    map['arrowright'] = (e) => {
+      if (isCalendarVisible) return;
+      if (!selectedTaskId) return;
+      const items = getActiveItems();
+      const index = items.findIndex(item => item.id === selectedTaskId);
+      if (index !== -1) {
+        e.preventDefault();
+        let nextSelectedId = null;
+        if (items.length > 1) {
+          if (index === items.length - 1) {
+            nextSelectedId = items[index - 1].id;
+          } else {
+            nextSelectedId = items[index + 1].id;
+          }
+        }
+        handleDeleteTodo(selectedTaskId);
+        setSelectedTaskId(nextSelectedId);
+      }
+    };
+
+    // Backspace to reset habit or deduct piggy bank/tv show progress
+    map['backspace'] = (e) => {
+      if (isCalendarVisible) return;
+      if (!selectedTaskId) return;
+      const items = getActiveItems();
+      const selectedItem = items.find(item => item.id === selectedTaskId);
+      if (!selectedItem) return;
+      if (selectedItem.type === 'habit') {
+        e.preventDefault();
+        statusChangeTask(selectedTaskId, 'reset');
+      } else if (selectedItem.type === 'piggy_bank') {
+        e.preventDefault();
+        statusChangeTask(selectedTaskId, -1);
+      } else if (selectedItem.type === 'tv_show') {
+        e.preventDefault();
+        statusChangeTask(selectedTaskId, -1, 'episode');
+      }
+    };
+
+    // 'i' key to activate main input
+    map['i'] = (e) => {
+      if (isCalendarVisible) return;
+      e.preventDefault();
+      setFocusInputTrigger(prev => prev + 1);
+    };
+
     return map;
   }, [
-    shortcuts.rpg_tab,
-    shortcuts.todo_tab,
-    shortcuts.daily_tab,
-    shortcuts.habits_subtab,
-    shortcuts.piggy_subtab,
-    shortcuts.tv_subtab,
-    shortcuts.recycle_view,
-    shortcuts.settings_view,
-    shortcuts.calendar_view,
-    shortcuts.mood_view,
+    shortcuts,
+    isMoodSheetOpen,
+    selectedTaskId,
+    piggyInputs,
+    mainTab,
+    rpgSubtab,
+    getActiveItems,
     handleTabChange,
     handleSubtabChange,
     habdleActiveView,
     handleOpenCalendar,
-    handleMoodSheet
+    handleMoodSheet,
+    handleBackAction,
+    handleMoodChange,
+    moodSheet,
+    statusChangeTask,
+    handleUpdatePiggy,
+    handleDeleteTodo,
+    setFocusInputTrigger,
+    isCalendarVisible
   ]);
 
   useShortcuts(shortcutsMap);
@@ -421,6 +601,7 @@ export default function App() {
                     -webkit-user-select: none !important;
                     -moz-user-select: none !important;
                     -ms-user-select: none !important;
+                    outline: none !important;
                   }
                   *::-webkit-scrollbar {
                     display: none !important;

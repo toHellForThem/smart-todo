@@ -7,7 +7,7 @@ import { getStyles as getItemStyles } from '../styles/item.styles';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { useTranslation } from '../utils/LanguageContext';
 
-const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
+const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction, isSelected }) => {
   const itemStyles = useStyles(getItemStyles);
   const { theme } = useAppTheme();
 
@@ -55,7 +55,21 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
       activeOffsetX={[-15, 15]}
       failOffsetY={[-15, 15]}
     >
-      <View style={itemStyles.todoItem}>
+      <View style={[
+        itemStyles.todoItem,
+        isSelected && { backgroundColor: theme.colors.icon.bg }
+      ]}>
+        {isSelected && (
+          <View style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            backgroundColor: theme.colors.primary,
+            zIndex: 10,
+          }} />
+        )}
         <TouchableOpacity
           delayPressIn={150}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 100 }}
@@ -84,11 +98,18 @@ const TodoItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
   );
 });
 
-const TodoInput = memo(({ onAdd }) => {
+const TodoInput = memo(({ onAdd, inputRef }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
   const { t } = useTranslation();
   const [task, setTask] = useState('');
+
+  const handleKeyPress = useCallback((e) => {
+    if (e.nativeEvent?.key === 'Escape') {
+      e.stopPropagation();
+      Keyboard.dismiss();
+    }
+  }, []);
 
   const handleAdd = useCallback(() => {
     if (task.trim()) {
@@ -100,6 +121,7 @@ const TodoInput = memo(({ onAdd }) => {
   return (
     <View style={styles.inputContainer}>
       <TextInput
+        ref={inputRef}
         style={styles.input}
         value={task}
         onChangeText={setTask}
@@ -108,6 +130,7 @@ const TodoInput = memo(({ onAdd }) => {
         cursorColor={theme.colors.primary}
         onSubmitEditing={handleAdd}
         returnKeyType="done"
+        onKeyPress={handleKeyPress}
       />
       <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
         <MaterialCommunityIcons
@@ -126,9 +149,24 @@ export const TodoTab = memo(({
   onAdd,
   deleteTodo,
   statusChangeTask,
-  leftAction
+  leftAction,
+  selectedTaskId,
+  focusInputTrigger,
+  isActive,
 }) => {
   const styles = useStyles(getStyles);
+  const flatListRef = useRef(null);
+  const inputRef = useRef(null);
+  const lastTrigger = useRef(focusInputTrigger);
+
+  useEffect(() => {
+    if (focusInputTrigger !== lastTrigger.current) {
+      lastTrigger.current = focusInputTrigger;
+      if (isActive) {
+        inputRef.current?.focus();
+      }
+    }
+  }, [focusInputTrigger, isActive]);
 
   const activeTodos = useMemo(() =>
     todoList
@@ -151,20 +189,46 @@ export const TodoTab = memo(({
     return () => hideSubscription.remove();
   }, []);
 
+  useEffect(() => {
+    if (!selectedTaskId || !flatListRef.current) return;
+    const index = activeTodos.findIndex(item => item.id === selectedTaskId);
+    if (index !== -1) {
+      try {
+        flatListRef.current.scrollToIndex({
+          index,
+          viewPosition: 0.5,
+          animated: true,
+        });
+      } catch (err) {
+        try {
+          flatListRef.current.scrollToOffset({
+            offset: index * 60,
+            animated: true,
+          });
+        } catch (innerErr) {
+          console.log('Scroll to selected todo failed:', innerErr);
+        }
+      }
+    }
+  }, [selectedTaskId, activeTodos]);
+
   const renderItem = useCallback(({ item }) => (
     <TodoItem
       item={item}
       statusChangeTask={statusChangeTask}
       deleteTodo={deleteTodo}
       leftAction={leftAction}
+      isSelected={item.id === selectedTaskId}
     />
-  ), [statusChangeTask, deleteTodo, leftAction]);
+  ), [statusChangeTask, deleteTodo, leftAction, selectedTaskId]);
 
   return (
     <View style={styles.todoWrapper}>
-      <TodoInput onAdd={onAdd} />
+      <TodoInput onAdd={onAdd} inputRef={inputRef} />
       <FlatList
+        ref={flatListRef}
         data={activeTodos}
+        extraData={selectedTaskId}
         bounces={false}
         overScrollMode="never"
         keyExtractor={(item) => item.id}

@@ -9,7 +9,7 @@ import { FillProgress } from '../components/FillProgress';
 import { useTranslation } from '../utils/LanguageContext';
 
 
-const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
+const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction, isSelected }) => {
   const styles = useStyles(getStyles);
   const itemStyles = useStyles(getItemStyles);
   const { theme } = useAppTheme();
@@ -58,7 +58,21 @@ const DailyItem = memo(({ item, statusChangeTask, deleteTodo, leftAction }) => {
       activeOffsetX={[-15, 15]}
       failOffsetY={[-15, 15]}
     >
-      <View style={itemStyles.todoItem}>
+      <View style={[
+        itemStyles.todoItem,
+        isSelected && { backgroundColor: theme.colors.icon.bg }
+      ]}>
+        {isSelected && (
+          <View style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            backgroundColor: theme.colors.primary,
+            zIndex: 10,
+          }} />
+        )}
         <FillProgress
           progressNow={item.progressNow}
           progressEnd={item.progressEnd}
@@ -109,6 +123,7 @@ const DailyInput = memo(({
   dailyProgressEnd,
   setDailyProgressEnd,
   isWideScreen,
+  inputRef,
 }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
@@ -117,6 +132,24 @@ const DailyInput = memo(({
   const [task, setTask] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  const handleKeyPress = useCallback((e) => {
+    const key = e.nativeEvent?.key || e.key;
+    const isCtrl = e.ctrlKey || e.metaKey;
+
+    if (key === 'Escape') {
+      e.stopPropagation();
+      Keyboard.dismiss();
+      return;
+    }
+
+    if (isCtrl && /^[1-9]$/.test(key)) {
+      e.preventDefault();
+      e.stopPropagation();
+      const val = parseInt(key, 10);
+      setDailyProgressEnd(val);
+    }
+  }, [setDailyProgressEnd]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
@@ -156,6 +189,7 @@ const DailyInput = memo(({
     <>
       <View style={styles.inputContainer}>
         <TextInput
+          ref={inputRef}
           style={styles.input}
           value={task}
           onChangeText={setTask}
@@ -164,6 +198,7 @@ const DailyInput = memo(({
           cursorColor={theme.colors.primary}
           onSubmitEditing={handleAdd}
           returnKeyType="done"
+          onKeyPress={handleKeyPress}
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
           <MaterialCommunityIcons name="plus-thick" size={24} color={theme.colors.icon.primary} />
@@ -252,10 +287,25 @@ export const DailyTab = memo(({
   dailyProgressEnd,
   setDailyProgressEnd,
   isWideScreen,
+  selectedTaskId,
+  focusInputTrigger,
+  isActive,
 }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
   const { t } = useTranslation();
+  const flatListRef = useRef(null);
+  const inputRef = useRef(null);
+  const lastTrigger = useRef(focusInputTrigger);
+
+  useEffect(() => {
+    if (focusInputTrigger !== lastTrigger.current) {
+      lastTrigger.current = focusInputTrigger;
+      if (isActive) {
+        inputRef.current?.focus();
+      }
+    }
+  }, [focusInputTrigger, isActive]);
 
   const dailies = useMemo(() =>
     todoList
@@ -272,6 +322,29 @@ export const DailyTab = memo(({
       }),
     [todoList]
   );
+
+  useEffect(() => {
+    if (!selectedTaskId || !flatListRef.current) return;
+    const index = dailies.findIndex(item => item.id === selectedTaskId);
+    if (index !== -1) {
+      try {
+        flatListRef.current.scrollToIndex({
+          index,
+          viewPosition: 0.5,
+          animated: true,
+        });
+      } catch (err) {
+        try {
+          flatListRef.current.scrollToOffset({
+            offset: index * 60,
+            animated: true,
+          });
+        } catch (innerErr) {
+          console.log('Scroll to selected daily failed:', innerErr);
+        }
+      }
+    }
+  }, [selectedTaskId, dailies]);
 
   const progress = useMemo(() => {
     if (dailies.length === 0) return 0;
@@ -290,8 +363,9 @@ export const DailyTab = memo(({
       statusChangeTask={statusChangeTask}
       deleteTodo={deleteTodo}
       leftAction={leftAction}
+      isSelected={item.id === selectedTaskId}
     />
-  ), [statusChangeTask, deleteTodo, leftAction]);
+  ), [statusChangeTask, deleteTodo, leftAction, selectedTaskId]);
 
   return (
     <View style={styles.todoWrapper}>
@@ -302,9 +376,12 @@ export const DailyTab = memo(({
         dailyProgressEnd={dailyProgressEnd}
         setDailyProgressEnd={setDailyProgressEnd}
         isWideScreen={isWideScreen}
+        inputRef={inputRef}
       />
       <FlatList
+        ref={flatListRef}
         data={dailies}
+        extraData={selectedTaskId}
         bounces={false}
         overScrollMode="never"
         keyExtractor={(item) => item.id}

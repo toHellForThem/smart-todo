@@ -1,5 +1,5 @@
-import { memo, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import { memo, useState, useCallback, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, TextInput, FlatList, Keyboard } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 
@@ -10,6 +10,7 @@ const HabitItem = memo(({
   renderSwipeLeft,
   styles,
   theme,
+  isSelected,
 }) => {
   const handleReset = useCallback(() => {
     statusChangeTask(item.id, 'reset');
@@ -43,7 +44,21 @@ const HabitItem = memo(({
       activeOffsetX={[-15, 15]}
       failOffsetY={[-15, 15]}
     >
-      <View style={styles.habitItem}>
+      <View style={[
+        styles.habitItem,
+        isSelected && { backgroundColor: theme.colors.icon.bg }
+      ]}>
+        {isSelected && (
+          <View style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            backgroundColor: theme.colors.primary,
+            zIndex: 10,
+          }} />
+        )}
         <TouchableOpacity
           onPress={handleReset}
           style={{
@@ -93,9 +108,37 @@ const HabitInput = memo(({
   styles,
   theme,
   t,
+  inputRef,
 }) => {
   const [habitName, setHabitName] = useState('');
   const [pointsOrDeposit, setPointsOrDeposit] = useState('positive');
+
+  const handleKeyPress = useCallback((e) => {
+    const key = e.nativeEvent?.key || e.key;
+    const isCtrl = e.ctrlKey || e.metaKey;
+
+    if (key === 'Escape') {
+      e.stopPropagation();
+      Keyboard.dismiss();
+      return;
+    }
+
+    if (isCtrl) {
+      if (key === '0') {
+        e.preventDefault();
+        e.stopPropagation();
+        setPointsOrDeposit('neutral');
+      } else if (key === '-') {
+        e.preventDefault();
+        e.stopPropagation();
+        setPointsOrDeposit('negative');
+      } else if (key === '=') {
+        e.preventDefault();
+        e.stopPropagation();
+        setPointsOrDeposit('positive');
+      }
+    }
+  }, [setPointsOrDeposit]);
 
   const handleAdd = useCallback(() => {
     if (!habitName.trim()) return;
@@ -134,6 +177,7 @@ const HabitInput = memo(({
         />
       </TouchableOpacity>
       <TextInput
+        ref={inputRef}
         style={styles.input}
         placeholder={t('rpg_habit_placeholder')}
         placeholderTextColor="#94A3B8"
@@ -143,6 +187,7 @@ const HabitInput = memo(({
         onChangeText={setHabitName}
         onSubmitEditing={handleAdd}
         returnKeyType="done"
+        onKeyPress={handleKeyPress}
       />
       <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
         <MaterialCommunityIcons
@@ -165,7 +210,45 @@ export const HabitsSubtab = memo(({
   styles,
   theme,
   t,
+  selectedTaskId,
+  focusInputTrigger,
+  isActive,
 }) => {
+  const flatListRef = useRef(null);
+  const inputRef = useRef(null);
+  const lastTrigger = useRef(focusInputTrigger);
+
+  useEffect(() => {
+    if (focusInputTrigger !== lastTrigger.current) {
+      lastTrigger.current = focusInputTrigger;
+      if (isActive) {
+        inputRef.current?.focus();
+      }
+    }
+  }, [focusInputTrigger, isActive]);
+
+  useEffect(() => {
+    if (!selectedTaskId || !flatListRef.current) return;
+    const index = allHabits.findIndex(item => item.id === selectedTaskId);
+    if (index !== -1) {
+      try {
+        flatListRef.current.scrollToIndex({
+          index,
+          viewPosition: 0.5,
+          animated: true,
+        });
+      } catch (err) {
+        try {
+          flatListRef.current.scrollToOffset({
+            offset: index * 60,
+            animated: true,
+          });
+        } catch (innerErr) {
+          console.log('Scroll to selected habit failed:', innerErr);
+        }
+      }
+    }
+  }, [selectedTaskId, allHabits]);
   const renderItem = useCallback(({ item }) => (
     <HabitItem
       item={item}
@@ -174,8 +257,9 @@ export const HabitsSubtab = memo(({
       renderSwipeLeft={renderSwipeLeft}
       styles={styles}
       theme={theme}
+      isSelected={item.id === selectedTaskId}
     />
-  ), [statusChangeTask, deleteToRecycle, renderSwipeLeft, styles, theme]);
+  ), [statusChangeTask, deleteToRecycle, renderSwipeLeft, styles, theme, selectedTaskId]);
 
   return (
     <View style={styles.container}>
@@ -186,10 +270,13 @@ export const HabitsSubtab = memo(({
         styles={styles}
         theme={theme}
         t={t}
+        inputRef={inputRef}
       />
 
       <FlatList
+        ref={flatListRef}
         data={allHabits}
+        extraData={selectedTaskId}
         bounces={false}
         overScrollMode="never"
         keyExtractor={(item) => item.id}

@@ -10,6 +10,7 @@ import { CalendarModal } from '../components/CalendarModal';
 import { HabitsSubtab } from './rpg/HabitsSubtab';
 import { PiggyBankSubtab } from './rpg/PiggyBankSubtab';
 import { TvShowsSubtab } from './rpg/TvShowsSubtab';
+import { useShortcuts } from '../hooks/useShortcuts';
 
 export const RpgTab = memo(({
   rpgHistory,
@@ -35,6 +36,9 @@ export const RpgTab = memo(({
   piggyInputs,
   setPiggyInputs,
   handleUpdatePiggy,
+  selectedTaskId,
+  focusInputTrigger,
+  isActive,
 }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
@@ -317,6 +321,69 @@ export const RpgTab = memo(({
     setIsHabitsExpanded(false);
   };
 
+  const calendarShortcuts = useMemo(() => {
+    const map = {};
+    if (!isCalendarVisible) return map;
+
+    const navigateDay = (offset) => {
+      let targetCell = null;
+      if (!selectedDayDetail?.dateStr) {
+        targetCell = calendarCells.find(c => c.dateStr === todayStr);
+        if (!targetCell) {
+          targetCell = calendarCells.find(c => c.day !== null);
+        }
+      } else {
+        const currentIndex = calendarCells.findIndex(c => c.dateStr === selectedDayDetail.dateStr);
+        if (currentIndex !== -1) {
+          const targetIndex = currentIndex + offset;
+          if (targetIndex >= 0 && targetIndex < calendarCells.length) {
+            const cell = calendarCells[targetIndex];
+            if (cell && cell.day !== null) {
+              targetCell = cell;
+            }
+          }
+        }
+      }
+      
+      if (targetCell) {
+        handleDayPress(targetCell);
+      }
+    };
+
+    map['arrowleft'] = (e) => {
+      e.preventDefault();
+      navigateDay(-1);
+    };
+    
+    map['arrowright'] = (e) => {
+      e.preventDefault();
+      navigateDay(1);
+    };
+    
+    map['arrowup'] = (e) => {
+      e.preventDefault();
+      navigateDay(-7);
+    };
+    
+    map['arrowdown'] = (e) => {
+      e.preventDefault();
+      navigateDay(7);
+    };
+    
+    map['enter'] = (e) => {
+      e.preventDefault();
+      setIsHabitsExpanded(prev => !prev);
+    };
+    map['space'] = (e) => {
+      e.preventDefault();
+      setIsHabitsExpanded(prev => !prev);
+    };
+
+    return map;
+  }, [isCalendarVisible, calendarCells, selectedDayDetail, handleDayPress, setIsHabitsExpanded, todayStr]);
+
+  useShortcuts(calendarShortcuts);
+
   const handleAddHabit = (name, type) => {
     addTask(
       name.trim(),
@@ -403,6 +470,9 @@ export const RpgTab = memo(({
         styles={styles}
         theme={theme}
         t={t}
+        selectedTaskId={selectedTaskId}
+        focusInputTrigger={focusInputTrigger}
+        isActive={isActive && subtab === 'habits'}
       />
     );
   }
@@ -427,6 +497,9 @@ export const RpgTab = memo(({
         t={t}
         piggyInputs={piggyInputs}
         setPiggyInputs={setPiggyInputs}
+        selectedTaskId={selectedTaskId}
+        focusInputTrigger={focusInputTrigger}
+        isActive={isActive && subtab === 'piggy_bank'}
       />
     );
   }
@@ -449,6 +522,9 @@ export const RpgTab = memo(({
         showStartEpisode={showStartEpisode}
         setShowStartEpisode={setShowStartEpisode}
         isWideScreen={isWideScreen}
+        selectedTaskId={selectedTaskId}
+        focusInputTrigger={focusInputTrigger}
+        isActive={isActive && subtab === 'tv_shows'}
       />
     );
   }
