@@ -4,7 +4,6 @@ const fs = require('fs/promises');
 
 const isDev = process.env.NODE_ENV === 'development';
 
-// Register custom scheme
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'app',
@@ -17,7 +16,6 @@ protocol.registerSchemesAsPrivileged([
   }
 ]);
 
-// Simple MIME-type map
 const getMimeType = (filePath) => {
   const ext = path.extname(filePath).toLowerCase();
   const mimes = {
@@ -60,11 +58,10 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  // Setup custom app:// handler
   protocol.handle('app', async (request) => {
     const url = new URL(request.url);
     let relativePath = decodeURIComponent(url.pathname);
-    
+
     if (relativePath.startsWith('/')) {
       relativePath = relativePath.slice(1);
     }

@@ -400,7 +400,6 @@ export const SettingsTab = ({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Centered Dailies Header Block */}
             <View style={{ paddingHorizontal: 20, width: '100%', maxWidth: 600, alignSelf: 'center' }}>
               <View style={[styles.card, {
                 flexDirection: 'row',
@@ -487,8 +486,6 @@ export const SettingsTab = ({
                           </TouchableOpacity>
                         </View>
                       </View>
-
-                      {/* Weekdays indicator and toggle */}
                       <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: 12 }}>
                         {t('daily_weekdays').map((day, idx) => {
                           const isSelected = daysStr[idx] === '1';
@@ -586,14 +583,12 @@ export const SettingsTab = ({
               )}
             </View>
           )}
-
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="server" size={20} color={theme.colors.primary} />
                 <Text style={styles.cardTitle}>{t('set_server_config')}</Text>
               </View>
-
               <View style={{ marginTop: 12 }}>
                 <PaperInput
                   placeholder=" http://192.168.1.50:8000"
@@ -611,7 +606,6 @@ export const SettingsTab = ({
                   placeholderTextColor={theme.colors.text.muted}
                   style={styles.authInput}
                 />
-
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
                   <TouchableOpacity
                     style={[styles.primaryAuthButton, { flex: 1, height: 40, paddingVertical: 0, justifyContent: 'center' }]}
@@ -619,7 +613,6 @@ export const SettingsTab = ({
                   >
                     <Text style={styles.primaryAuthButtonText}>{t('set_save')}</Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity
                     style={[styles.secondaryAuthButton, { flex: 1, height: 40, paddingVertical: 0, justifyContent: 'center' }]}
                     onPress={handleResetServerUrl}
@@ -630,7 +623,6 @@ export const SettingsTab = ({
               </View>
             </View>
           )}
-
           {authState !== '' && (
             <View style={[styles.card, styles.authCard]}>
               <TouchableOpacity
@@ -640,11 +632,9 @@ export const SettingsTab = ({
               >
                 <Ionicons name="arrow-back" size={26} color={theme.colors.icon.primary} />
               </TouchableOpacity>
-
               <Text style={styles.authTitle}>
                 {authState === 'login' ? t('set_login_title') : t('set_register')}
               </Text>
-
               <View style={styles.formContainer}>
                 <PaperInput
                   placeholder={t('set_username_placeholder')}
@@ -663,7 +653,6 @@ export const SettingsTab = ({
                   left={<PaperInput.Icon icon="account" color={theme.colors.icon.primary} />}
                   placeholderTextColor={theme.colors.text.muted}
                 />
-
                 <PaperInput
                   placeholder={t('set_password_placeholder')}
                   value={password}
@@ -694,7 +683,6 @@ export const SettingsTab = ({
                   style={styles.authInput}
                   placeholderTextColor={theme.colors.text.muted}
                 />
-
                 <TouchableOpacity
                   onPress={authState === 'login' ? handleLogin : handleRegister}
                   style={styles.submitAuthButton}
@@ -703,7 +691,6 @@ export const SettingsTab = ({
                     {authState === 'login' ? t('set_login') : t('set_create_account')}
                   </Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   onPress={() => setAuthState(authState === 'login' ? 'register' : 'login')}
                   style={styles.toggleAuthLink}
@@ -717,14 +704,12 @@ export const SettingsTab = ({
               </View>
             </View>
           )}
-
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <Ionicons name="language-outline" size={20} color={theme.colors.primary} />
                 <Text style={styles.cardTitle}>{t('set_language')}</Text>
               </View>
-
               <View style={styles.segmentedControl}>
                 <TouchableOpacity
                   style={[
@@ -742,7 +727,6 @@ export const SettingsTab = ({
                     {t('set_lang_ru')}
                   </Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[
                     styles.segmentButton,
@@ -762,14 +746,12 @@ export const SettingsTab = ({
               </View>
             </View>
           )}
-
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="clock-outline" size={20} color={theme.colors.primary} />
                 <Text style={styles.cardTitle}>{t('set_reset_time_title')}</Text>
               </View>
-
               <View style={styles.clockCenterContainer}>
                 <View style={styles.compactClock}>
                   <View style={styles.compactClockGroup}>
@@ -794,9 +776,7 @@ export const SettingsTab = ({
                       <Ionicons name="add" size={22} color={theme.colors.icon.primary} />
                     </TouchableOpacity>
                   </View>
-
                   <Text style={styles.compactSeparator}>:</Text>
-
                   <View style={styles.compactClockGroup}>
                     <TouchableOpacity
                       onPress={() => changeMinutes(-5)}
@@ -823,14 +803,12 @@ export const SettingsTab = ({
               </View>
             </View>
           )}
-
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="home-outline" size={20} color={theme.colors.primary} />
                 <Text style={styles.cardTitle}>{t('set_start_page')}</Text>
               </View>
-
               <View style={styles.segmentedControl}>
                 <TouchableOpacity
                   style={[
@@ -853,7 +831,6 @@ export const SettingsTab = ({
                     {t('tab_rpg')}
                   </Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[
                     styles.segmentButton,
@@ -875,7 +852,6 @@ export const SettingsTab = ({
                     {t('tab_todo')}
                   </Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[
                     styles.segmentButton,
@@ -898,7 +874,6 @@ export const SettingsTab = ({
                   </Text>
                 </TouchableOpacity>
               </View>
-
               {settings?.main_page === 'rpg' && (
                 <View style={styles.subtabContainer}>
                   <View style={[styles.cardHeaderWithIcon, { marginTop: 10, marginBottom: 6 }]}>
@@ -907,7 +882,6 @@ export const SettingsTab = ({
                       {t('tab_rpg')}
                     </Text>
                   </View>
-
                   <View style={styles.segmentedControl}>
                     <TouchableOpacity
                       style={[
@@ -931,7 +905,6 @@ export const SettingsTab = ({
                         {t('rpg_menu_habits')}
                       </Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity
                       style={[
                         styles.segmentButton,
@@ -954,7 +927,6 @@ export const SettingsTab = ({
                         {t('rpg_menu_piggy')}
                       </Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity
                       style={[
                         styles.segmentButton,
@@ -982,14 +954,12 @@ export const SettingsTab = ({
               )}
             </View>
           )}
-
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="palette-outline" size={20} color={theme.colors.primary} />
                 <Text style={styles.cardTitle}>{t('set_theme')}</Text>
               </View>
-
               <View style={styles.segmentedControl}>
                 <TouchableOpacity
                   style={[
@@ -1007,7 +977,6 @@ export const SettingsTab = ({
                     {t('set_theme_blue')}
                   </Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[
                     styles.segmentButton,
@@ -1024,7 +993,6 @@ export const SettingsTab = ({
                     {t('set_theme_mint')}
                   </Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[
                     styles.segmentButton,
@@ -1041,7 +1009,6 @@ export const SettingsTab = ({
                     {t('set_theme_pink')}
                   </Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[
                     styles.segmentButton,
@@ -1061,9 +1028,6 @@ export const SettingsTab = ({
               </View>
             </View>
           )}
-
-
-
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.switchRow}>
@@ -1087,7 +1051,6 @@ export const SettingsTab = ({
               </View>
             </View>
           )}
-
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.switchRow}>
@@ -1111,7 +1074,6 @@ export const SettingsTab = ({
               </View>
             </View>
           )}
-
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
@@ -1135,7 +1097,6 @@ export const SettingsTab = ({
               </TouchableOpacity>
             </View>
           )}
-
           {authState === '' && Platform.OS === 'web' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
@@ -1145,7 +1106,6 @@ export const SettingsTab = ({
               <Text style={{ fontSize: 11, color: theme.colors.text.muted, marginTop: 4, marginBottom: 12 }}>
                 {t('set_shortcuts_desc')}
               </Text>
-
               {Object.keys(defaultShortcuts).map((key) => (
                 <View key={key} style={styles.shortcutRow}>
                   <View style={styles.shortcutInfo}>
@@ -1161,7 +1121,6 @@ export const SettingsTab = ({
                   </TouchableOpacity>
                 </View>
               ))}
-
               <TouchableOpacity
                 onPress={() => {
                   updateSetting('shortcuts', defaultShortcuts);
@@ -1181,32 +1140,26 @@ export const SettingsTab = ({
               </TouchableOpacity>
             </View>
           )}
-
           {authState === '' && (
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
                 <MaterialCommunityIcons name="information-outline" size={20} color={theme.colors.primary} />
                 <Text style={styles.cardTitle}>{t('set_about')}</Text>
               </View>
-
               <View style={{ marginTop: 12, alignItems: 'center' }}>
                 <Image
                   source={require('../../assets/icon.png')}
                   style={{ width: 64, height: 64, borderRadius: 14, marginBottom: 8 }}
                 />
-
                 <Text style={{ fontSize: 18, fontWeight: '800', color: theme.colors.text.primary }}>
                   ToDoSoDo
                 </Text>
-
                 <Text style={{ fontSize: 12, color: theme.colors.text.muted, marginTop: 2, fontWeight: '600' }}>
                   {t('set_about') === 'О программе' ? 'Версия 1.0.0' : 'Version 1.0.0'}
                 </Text>
-
                 <Text style={{ fontSize: 13, color: theme.colors.text.secondary, textAlign: 'center', marginTop: 10, lineHeight: 18, paddingHorizontal: 10 }}>
                   {t('set_desc')}
                 </Text>
-
                 <TouchableOpacity
                   onPress={handleDonate}
                   style={{
@@ -1228,9 +1181,7 @@ export const SettingsTab = ({
                     {t('set_support_author')}
                   </Text>
                 </TouchableOpacity>
-
                 <View style={{ width: '100%', height: 1, backgroundColor: theme.colors.border.light, marginVertical: 14 }} />
-
                 <Text style={{ fontSize: 11, color: theme.colors.text.muted, fontWeight: '500' }}>
                   Copyright © 2026 toHellForThem. All rights reserved.
                 </Text>

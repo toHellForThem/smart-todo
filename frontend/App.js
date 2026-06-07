@@ -30,7 +30,6 @@ import { useTodoSocket } from './src/hooks/useTodoSocket';
 import { useMoodSheet } from './src/hooks/useMoodSheet';
 import { useShortcuts } from './src/hooks/useShortcuts';
 import { AuthStorage } from './src/utils/storage';
-import { CalendarModal } from './src/components/CalendarModal';
 import { socket } from './src/utils/socket';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -446,12 +445,10 @@ export default function App() {
     if (shortcuts.calendar_view) map[shortcuts.calendar_view] = () => handleOpenCalendar();
     if (shortcuts.mood_view) map[shortcuts.mood_view] = () => handleMoodSheet();
 
-    // Escape back button
     map['escape'] = () => {
       handleBackAction();
     };
 
-    // Mood selection when mood sheet is open
     if (isMoodSheetOpen) {
       map['1'] = () => { handleMoodChange(1); moodSheet.closeSheet(); };
       map['2'] = () => { handleMoodChange(2); moodSheet.closeSheet(); };
@@ -460,7 +457,6 @@ export default function App() {
       map['5'] = () => { handleMoodChange(5); moodSheet.closeSheet(); };
     }
 
-    // Arrow keys for item selection
     map['arrowdown'] = (e) => {
       if (isCalendarVisible) return;
       e.preventDefault();
@@ -470,7 +466,7 @@ export default function App() {
       if (currentIndex === -1) {
         setSelectedTaskId(items[0].id);
       } else if (currentIndex === items.length - 1) {
-        setSelectedTaskId(items[0].id); // Wrap to first
+        setSelectedTaskId(items[0].id);
       } else {
         setSelectedTaskId(items[currentIndex + 1].id);
       }
@@ -485,13 +481,12 @@ export default function App() {
       if (currentIndex === -1) {
         setSelectedTaskId(items[items.length - 1].id);
       } else if (currentIndex === 0) {
-        setSelectedTaskId(items[items.length - 1].id); // Wrap to last
+        setSelectedTaskId(items[items.length - 1].id);
       } else {
         setSelectedTaskId(items[currentIndex - 1].id);
       }
     };
 
-    // Toggle/complete selected task
     const handleToggleSelected = (e) => {
       if (isCalendarVisible) return;
       if (!selectedTaskId) return;
@@ -544,7 +539,6 @@ export default function App() {
     map['enter'] = handleToggleSelected;
     map['space'] = handleToggleSelected;
 
-    // ArrowRight to delete selected task
     map['arrowright'] = (e) => {
       if (isCalendarVisible) return;
       if (!selectedTaskId) return;
@@ -569,7 +563,6 @@ export default function App() {
       }
     };
 
-    // Backspace to reset habit or deduct piggy bank/tv show progress
     map['backspace'] = (e) => {
       if (isCalendarVisible) return;
       if (!selectedTaskId) return;
@@ -588,7 +581,6 @@ export default function App() {
       }
     };
 
-    // 'i' key to activate main input
     map['i'] = (e) => {
       if (isCalendarVisible) return;
       e.preventDefault();
@@ -709,7 +701,6 @@ export default function App() {
                 ) : (
                   isWideScreen ? (
                     <View style={styles.dashboardContainer}>
-                      {/* RPG Column */}
                       <View
                         onStartShouldSetResponderCapture={() => { if (mainTab !== 'rpg') handleTabChange('rpg'); return false; }}
                         style={[styles.column, mainTab === 'rpg' && styles.activeColumn]}
@@ -735,8 +726,6 @@ export default function App() {
                           )}
                         </View>
                       </View>
-
-                      {/* Todo Column */}
                       <View
                         onStartShouldSetResponderCapture={() => { if (mainTab !== 'todo') handleTabChange('todo'); return false; }}
                         style={[styles.column, mainTab === 'todo' && styles.activeColumn]}
@@ -762,8 +751,6 @@ export default function App() {
                           )}
                         </View>
                       </View>
-
-                      {/* Daily Column */}
                       <View
                         onStartShouldSetResponderCapture={() => { if (mainTab !== 'daily') handleTabChange('daily'); return false; }}
                         style={[styles.column, mainTab === 'daily' && styles.activeColumn]}

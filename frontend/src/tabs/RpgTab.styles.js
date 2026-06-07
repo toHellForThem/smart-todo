@@ -1,6 +1,6 @@
 import { StyleSheet, Dimensions } from 'react-native';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 const isWide = width >= 900;
 const calendarWidth = isWide ? 420 : width;
 const cellWidth = (calendarWidth - 130) / 7;

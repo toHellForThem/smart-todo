@@ -94,7 +94,6 @@ const PiggyBankItem = memo(({
           <Text style={styles.piggyTitleText}>
             {item.text}
           </Text>
-
           <View style={styles.piggyCardProgressBarTrack}>
             <View style={[
               styles.piggyCardProgressBarFill,
@@ -102,7 +101,6 @@ const PiggyBankItem = memo(({
             ]} />
           </View>
         </View>
-
         <View style={styles.piggyCardBody}>
           <View style={styles.piggyRowOne}>
             <View style={styles.piggyLeftColumnCompact}>
@@ -113,7 +111,6 @@ const PiggyBankItem = memo(({
               </View>
               <View style={styles.piggyVerticalDivider} />
             </View>
-
             <View style={styles.piggyCenterColumnCompact}>
               <View style={[
                 styles.piggyCurrentContainerCompact,
@@ -128,7 +125,6 @@ const PiggyBankItem = memo(({
                 </Text>
               </View>
             </View>
-
             <View style={styles.piggyRightColumnCompact}>
               <TextInput
                 style={[
@@ -229,7 +225,6 @@ const PiggyGoalInput = memo(({
           onKeyPress={handleKeyPress}
         />
       </View>
-
       <TouchableOpacity style={styles.piggyCreateRightButton} onPress={handleSaveGoal}>
         <Text style={styles.piggyCreateRightButtonText}>{t('rpg_piggy_create')}</Text>
       </TouchableOpacity>
@@ -336,7 +331,6 @@ export const PiggyBankSubtab = memo(({
   return (
     <View style={styles.container}>
       <View style={{ marginTop: 10 }} />
-
       <PiggyGoalInput
         handleSavePiggyGoal={handleSavePiggyGoal}
         styles={styles}
@@ -344,7 +338,6 @@ export const PiggyBankSubtab = memo(({
         t={t}
         inputRef={inputRef}
       />
-
       <FlatList
         ref={flatListRef}
         data={piggyGoalItems}
@@ -357,7 +350,6 @@ export const PiggyBankSubtab = memo(({
         scrollEventThrottle={16}
         renderItem={renderItem}
       />
-
       {isKeyboardVisible && focusedGoalId && (
         <View style={[styles.piggyFloatingContainer, {
           bottom: keyboardHeight - 71,
@@ -369,7 +361,6 @@ export const PiggyBankSubtab = memo(({
             <MaterialCommunityIcons name="minus" size={20} color="#EF4444" />
             <Text style={[styles.piggyFloatingBtnText, { color: '#EF4444' }]}>{t('rpg_piggy_deduct')}</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.piggyFloatingBtn, { backgroundColor: 'rgba(52, 211, 153, 0.12)', borderColor: '#34D399' }]}
             onPress={() => onUpdateClick(true)}

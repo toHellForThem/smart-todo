@@ -14,7 +14,6 @@ import { useShortcuts } from '../hooks/useShortcuts';
 
 export const RpgTab = memo(({
   rpgHistory,
-  setRpgHistory,
   todoList,
   leftAction,
   deleteToRecycle,
@@ -91,8 +90,6 @@ export const RpgTab = memo(({
 
   const flatListRef = useRef(null);
   const currentScrollY = useRef(0);
-
-
 
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => getLogicalDateStr(settings?.reset_time), [settings?.reset_time]);
@@ -231,7 +228,7 @@ export const RpgTab = memo(({
   const dailyStats = useMemo(() => {
     const parts = todayStr.split('-').map(Number);
     const logicalDate = new Date(parts[0], parts[1] - 1, parts[2]);
-    const logicalDayIdx = (logicalDate.getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+    const logicalDayIdx = (logicalDate.getDay() + 6) % 7;
 
     const dailies = todoList.filter(item => {
       if (item.type !== 'daily' || item.deleted) return false;
@@ -250,7 +247,7 @@ export const RpgTab = memo(({
       }, { needProgress: 0, nowProgress: 0 });
       dailiesProgress = Math.round((nowProgress / needProgress) * 100);
     } else if (hasAnyDaily) {
-      dailiesProgress = 100; // Rest day: all active tasks completed
+      dailiesProgress = 100;
     }
 
     const positiveCount = positiveHabits.reduce((sum, h) => sum + (parseInt(h.progressNow, 10) || 0), 0);
@@ -344,7 +341,7 @@ export const RpgTab = memo(({
           }
         }
       }
-      
+
       if (targetCell) {
         handleDayPress(targetCell);
       }
@@ -354,22 +351,22 @@ export const RpgTab = memo(({
       e.preventDefault();
       navigateDay(-1);
     };
-    
+
     map['arrowright'] = (e) => {
       e.preventDefault();
       navigateDay(1);
     };
-    
+
     map['arrowup'] = (e) => {
       e.preventDefault();
       navigateDay(-7);
     };
-    
+
     map['arrowdown'] = (e) => {
       e.preventDefault();
       navigateDay(7);
     };
-    
+
     map['enter'] = (e) => {
       e.preventDefault();
       setIsHabitsExpanded(prev => !prev);

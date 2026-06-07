@@ -253,7 +253,6 @@ const DailyInput = memo(({
               );
             })}
           </View>
-
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
             <TouchableOpacity hitSlop={15} onPress={() => {
               setDailyProgressEnd(dailyProgressEnd === 1 ? 1 : dailyProgressEnd - 1);
@@ -277,7 +276,6 @@ const DailyInput = memo(({
 
 export const DailyTab = memo(({
   todoList,
-  setTodoList,
   onAdd,
   statusChangeTask,
   deleteTodo,
@@ -292,7 +290,6 @@ export const DailyTab = memo(({
   isActive,
 }) => {
   const styles = useStyles(getStyles);
-  const { theme } = useAppTheme();
   const { t } = useTranslation();
   const flatListRef = useRef(null);
   const inputRef = useRef(null);

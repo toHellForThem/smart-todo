@@ -142,7 +142,7 @@ export const useTodoActions = (mainTab, settings) => {
       }, { needProgress: 0, nowProgress: 0 });
       progress = needProgress > 0 ? nowProgress / needProgress : 1.0;
     } else if (hasAnyDaily) {
-      progress = 1.0; // Rest day: all active tasks completed
+      progress = 1.0;
     }
 
     const positiveCount = todoList
@@ -466,10 +466,8 @@ export const useTodoActions = (mainTab, settings) => {
     statusChangeTask,
     deleteTodo,
     editTask,
-
     rpgHistory,
     setRpgHistory: setRpgHistoryWrapper,
-
     handleMoodChange,
   };
 };

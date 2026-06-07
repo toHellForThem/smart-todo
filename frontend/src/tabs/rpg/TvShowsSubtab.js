@@ -166,7 +166,6 @@ const TvShowItem = memo(({
                       <Ionicons name="add" size={22} color={item.completed ? '#94A3B8' : theme.colors.primary} />
                     </TouchableOpacity>
                   </View>
-
                   <View style={styles.showControlGroupRight}>
                     <TouchableOpacity
                       disabled={item.completed}
@@ -254,7 +253,6 @@ const TvShowInput = memo(({
           />
         </TouchableOpacity>
       </View>
-
       {!isWideScreen && (
         <View
           pointerEvents={isKeyboardVisible ? 'auto' : 'none'}
@@ -278,9 +276,7 @@ const TvShowInput = memo(({
               )}
             </View>
           </TouchableOpacity>
-
           <View style={{ width: 1, height: 24, backgroundColor: theme.colors.border.light, marginHorizontal: 16 }} />
-
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: showIsMovie ? 0.35 : 1 }}>
             <Text style={styles.keyboardSuggestionText}>{t('rpg_tv_episode')}</Text>
             <TextInput
@@ -386,7 +382,6 @@ export const TvShowsSubtab = memo(({
   return (
     <View style={styles.container}>
       <View style={{ marginTop: 10 }} />
-
       <TvShowInput
         handleAddShow={handleAddShow}
         keyboardHeight={keyboardHeight}
@@ -401,7 +396,6 @@ export const TvShowsSubtab = memo(({
         isWideScreen={isWideScreen}
         inputRef={inputRef}
       />
-
       <FlatList
         ref={flatListRef}
         data={activeShows}

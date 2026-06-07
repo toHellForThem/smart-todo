@@ -264,7 +264,6 @@ export const HabitsSubtab = memo(({
   return (
     <View style={styles.container}>
       <View style={{ marginTop: 10 }} />
-
       <HabitInput
         handleAddHabit={handleAddHabit}
         styles={styles}
@@ -272,7 +271,6 @@ export const HabitsSubtab = memo(({
         t={t}
         inputRef={inputRef}
       />
-
       <FlatList
         ref={flatListRef}
         data={allHabits}
