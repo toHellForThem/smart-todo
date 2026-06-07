@@ -31,6 +31,7 @@ import { useMoodSheet } from './src/hooks/useMoodSheet';
 import { useShortcuts } from './src/hooks/useShortcuts';
 import { AuthStorage } from './src/utils/storage';
 import { CalendarModal } from './src/components/CalendarModal';
+import { socket } from './src/utils/socket';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -130,6 +131,7 @@ const GLOBAL_VIEWS = {
       deleteTodo={props.deleteTodo}
       leftAction={props.leftAction}
       setTodoList={props.setTodoList}
+      selectedTaskId={props.selectedTaskId}
     />
   ),
 };
@@ -376,10 +378,12 @@ export default function App() {
   }), [addTask, todoList, setTodoList, statusChangeTask, handleDeleteTodo, handleLeftAction, rpgHistory, setRpgHistory, rpgSubtab, setRpgSubtab, isCalendarVisible, setCalendarVisible, settings, dailyDays, setDailyDays, dailyProgressEnd, setDailyProgressEnd, showIsMovie, setShowIsMovie, showStartEpisode, setShowStartEpisode, isWideScreen, focusedGoalId, setFocusedGoalId, flashingGoalId, piggyInputs, setPiggyInputs, handleUpdatePiggy, selectedTaskId, focusInputTrigger, mainTab]);
 
   const getActiveItems = useCallback(() => {
-    if (activeView !== 'list') return [];
+    if (activeView !== 'list' && activeView !== 'recycle') return [];
+    const isRecycle = activeView === 'recycle';
+
     if (mainTab === 'todo') {
       return todoList
-        .filter(item => item.type === 'todo' && !item.deleted)
+        .filter(item => item.type === 'todo' && (isRecycle ? item.deleted : !item.deleted))
         .sort((a, b) => {
           if (a.completed && !b.completed) return 1;
           if (!a.completed && b.completed) return -1;
@@ -390,7 +394,7 @@ export default function App() {
       const todayDayIdx = (new Date().getDay() + 6) % 7;
       return todoList
         .filter(item => {
-          if (item.type !== 'daily' || item.deleted) return false;
+          if (item.type !== 'daily' || (isRecycle ? !item.deleted : item.deleted)) return false;
           const daysStr = item.days || '1111111';
           return daysStr[todayDayIdx] === '1';
         })
@@ -402,13 +406,13 @@ export default function App() {
     }
     if (mainTab === 'rpg') {
       if (rpgSubtab === 'habits') {
-        return todoList.filter(item => item.type === 'habit' && !item.deleted);
+        return todoList.filter(item => item.type === 'habit' && (isRecycle ? item.deleted : !item.deleted));
       }
       if (rpgSubtab === 'piggy_bank') {
-        return todoList.filter(item => item.type === 'piggy_bank' && !item.deleted);
+        return todoList.filter(item => item.type === 'piggy_bank' && (isRecycle ? item.deleted : !item.deleted));
       }
       if (rpgSubtab === 'tv_shows') {
-        return todoList.filter(item => (item.type === 'tv_show' || item.type === 'movie') && !item.deleted);
+        return todoList.filter(item => (item.type === 'tv_show' || item.type === 'movie') && (isRecycle ? item.deleted : !item.deleted));
       }
     }
     return [];
@@ -495,6 +499,34 @@ export default function App() {
       const selectedItem = items.find(item => item.id === selectedTaskId);
       if (!selectedItem) return;
       e.preventDefault();
+
+      if (activeView === 'recycle') {
+        const index = items.findIndex(item => item.id === selectedTaskId);
+        let nextSelectedId = null;
+        if (items.length > 1) {
+          if (index === items.length - 1) {
+            nextSelectedId = items[index - 1].id;
+          } else {
+            nextSelectedId = items[index + 1].id;
+          }
+        }
+        let updated = null;
+        setTodoList(prev => {
+          return prev.map(todo => {
+            if (todo.id === selectedTaskId) {
+              updated = { ...todo, deleted: false, updatedAt: Date.now() };
+              return updated;
+            }
+            return todo;
+          });
+        });
+        if (updated) {
+          socket.emit('client:sync_todo', updated);
+        }
+        setSelectedTaskId(nextSelectedId);
+        return;
+      }
+
       if (selectedItem.type === 'todo') {
         statusChangeTask(selectedTaskId, 1);
       } else if (selectedItem.type === 'daily') {
@@ -528,7 +560,11 @@ export default function App() {
             nextSelectedId = items[index + 1].id;
           }
         }
-        handleDeleteTodo(selectedTaskId);
+        if (activeView === 'recycle') {
+          deleteTodo(selectedTaskId);
+        } else {
+          handleDeleteTodo(selectedTaskId);
+        }
         setSelectedTaskId(nextSelectedId);
       }
     };
@@ -579,8 +615,11 @@ export default function App() {
     statusChangeTask,
     handleUpdatePiggy,
     handleDeleteTodo,
+    deleteTodo,
+    setTodoList,
     setFocusInputTrigger,
-    isCalendarVisible
+    isCalendarVisible,
+    activeView
   ]);
 
   useShortcuts(shortcutsMap);
@@ -665,6 +704,7 @@ export default function App() {
                     setRpgHistory,
                     setMainTab,
                     editTask,
+                    selectedTaskId,
                   })
                 ) : (
                   isWideScreen ? (
@@ -688,6 +728,7 @@ export default function App() {
                               deleteTodo={deleteTodo}
                               leftAction={handleLeftAction}
                               setTodoList={setTodoList}
+                              selectedTaskId={selectedTaskId}
                             />
                           ) : (
                             TAB_VIEWS.rpg.list(tabProps)
@@ -714,6 +755,7 @@ export default function App() {
                               deleteTodo={deleteTodo}
                               leftAction={handleLeftAction}
                               setTodoList={setTodoList}
+                              selectedTaskId={selectedTaskId}
                             />
                           ) : (
                             TAB_VIEWS.todo.list(tabProps)
@@ -740,6 +782,7 @@ export default function App() {
                               deleteTodo={deleteTodo}
                               leftAction={handleLeftAction}
                               setTodoList={setTodoList}
+                              selectedTaskId={selectedTaskId}
                             />
                           ) : (
                             TAB_VIEWS.daily.list(tabProps)

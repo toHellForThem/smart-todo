@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
@@ -6,7 +6,7 @@ import { getStyles } from '../styles/item.styles';
 import { useAppTheme, useStyles } from '../theme/ThemeContext';
 import { socket } from '../utils/socket';
 
-const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
+const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList, isSelected }) => {
   const styles = useStyles(getStyles);
   const { theme } = useAppTheme();
 
@@ -50,7 +50,21 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
       activeOffsetX={[-15, 15]}
       failOffsetY={[-15, 15]}
     >
-      <View style={styles.todoItem}>
+      <View style={[
+        styles.todoItem,
+        isSelected && { backgroundColor: theme.colors.icon.bg }
+      ]}>
+        {isSelected && (
+          <View style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            backgroundColor: theme.colors.primary,
+            zIndex: 10,
+          }} />
+        )}
         <Text style={[styles.todoText, item.completed && styles.completedText]}>
           {item.text}
         </Text>
@@ -81,7 +95,9 @@ const RecycleItem = memo(({ item, deleteTodo, leftAction, setTodoList }) => {
   );
 });
 
-export const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList, context, rpgSubtab }) => {
+export const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList, context, rpgSubtab, selectedTaskId }) => {
+  const flatListRef = useRef(null);
+
   const activeTodos = useMemo(() => {
     return todoList.filter(item => {
       if (!item.deleted) return false;
@@ -103,19 +119,45 @@ export const RecycleTab = memo(({ todoList, deleteTodo, leftAction, setTodoList,
     });
   }, [todoList, context, rpgSubtab]);
 
+  useEffect(() => {
+    if (!selectedTaskId || !flatListRef.current) return;
+    const index = activeTodos.findIndex(item => item.id === selectedTaskId);
+    if (index !== -1) {
+      try {
+        flatListRef.current.scrollToIndex({
+          index,
+          viewPosition: 0.5,
+          animated: true,
+        });
+      } catch (err) {
+        try {
+          flatListRef.current.scrollToOffset({
+            offset: index * 60,
+            animated: true,
+          });
+        } catch (innerErr) {
+          console.log('Scroll to selected recycled item failed:', innerErr);
+        }
+      }
+    }
+  }, [selectedTaskId, activeTodos]);
+
   const renderItem = useCallback(({ item }) => (
     <RecycleItem
       setTodoList={setTodoList}
       item={item}
       deleteTodo={deleteTodo}
       leftAction={leftAction}
+      isSelected={item.id === selectedTaskId}
     />
-  ), [deleteTodo, leftAction]);
+  ), [deleteTodo, leftAction, selectedTaskId]);
 
   return (
     <FlatList
+      ref={flatListRef}
       removeClippedSubviews={true}
       data={activeTodos}
+      extraData={selectedTaskId}
       bounces={false}
       overScrollMode="never"
       keyExtractor={(item) => item.id}
