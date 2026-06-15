@@ -1,0 +1,209 @@
+import { AuthStorage } from '../utils/storage';
+
+
+export interface ThemeColors {
+  primary: string,
+  primaryLight: string,
+  background: string,
+  surface: string,
+  text: {
+    primary: string,
+    secondary: string,
+    muted: string,
+    white: string,
+    link: string,
+  },
+  border: {
+    light: string,
+    default: string,
+  },
+  danger: string,
+  icon: {
+    primary: string,
+    active: string,
+    bg: string,
+    bgActive: string,
+  }
+}
+
+export interface Theme {
+  colors: ThemeColors;
+  spacing: typeof spacing;
+  radius: typeof radius;
+  sizes: typeof sizes;
+}
+
+const DANGER_COLOR: string = '#EF4444';
+const WHITE_COLOR: string = '#FFFFFF';
+
+export const defaultColors: ThemeColors = {
+  primary: '#3B82F6',
+  primaryLight: '#d9e7fd',
+  background: '#F1F5F9',
+  surface: WHITE_COLOR,
+  text: {
+    primary: '#1E293B',
+    secondary: '#64748B',
+    muted: '#94A3B8',
+    white: WHITE_COLOR,
+    link: '#3B82F6',
+  },
+  border: {
+    light: '#E2E8F0',
+    default: '#CBD5E1',
+  },
+  danger: DANGER_COLOR,
+  icon: {
+    primary: '#3B82F6',
+    active: WHITE_COLOR,
+    bg: '#d9e7fd',
+    bgActive: '#3B82F6',
+  },
+};
+
+export const darkColors = {
+  primary: '#8B5CF6',
+  primaryLight: '#2e1065',
+  background: '#0F172A',
+  surface: '#1E293B',
+  text: {
+    primary: '#F8FAFC',
+    secondary: '#94A3B8',
+    muted: '#64748B',
+    white: WHITE_COLOR,
+    link: '#A78BFA',
+  },
+  border: {
+    light: '#334155',
+    default: '#475569',
+  },
+  danger: DANGER_COLOR,
+  icon: {
+    primary: '#8B5CF6',
+    active: WHITE_COLOR,
+    bg: '#2e1065',
+    bgActive: '#8B5CF6',
+  },
+};
+
+export const mintColors = {
+  primary: '#10B981',
+  primaryLight: '#D1FAE5',
+  background: '#F0FDF4',
+  surface: WHITE_COLOR,
+  text: {
+    primary: '#064E3B',
+    secondary: '#374151',
+    muted: '#6B7280',
+    white: WHITE_COLOR,
+    link: '#10B981',
+  },
+  border: {
+    light: '#E6F4EA',
+    default: '#A7F3D0',
+  },
+  danger: DANGER_COLOR,
+  icon: {
+    primary: '#10B981',
+    active: WHITE_COLOR,
+    bg: '#D1FAE5',
+    bgActive: '#10B981',
+  },
+};
+
+export const pinkColors = {
+  primary: '#EC4899',
+  primaryLight: '#FCE7F3',
+  background: '#FDF2F8',
+  surface: WHITE_COLOR,
+  text: {
+    primary: '#3F2C35',
+    secondary: '#5C4E55',
+    muted: '#94A3B8',
+    white: WHITE_COLOR,
+    link: '#EC4899',
+  },
+  border: {
+    light: '#FCE7F3',
+    default: '#FBCFE8',
+  },
+  danger: DANGER_COLOR,
+  icon: {
+    primary: '#EC4899',
+    active: WHITE_COLOR,
+    bg: '#FCE7F3',
+    bgActive: '#EC4899',
+  },
+};
+
+const spacing = {
+  xs: 4,
+  sm: 8,
+  smd: 10,
+  md: 12,
+  mdl: 14,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 30,
+}
+
+const radius = {
+  xs: 4,
+  sm: 6,
+  smd: 8,
+  md: 10,
+  lg: 12,
+  xl: 16,
+  full: 9999,
+}
+
+const sizes = {
+  headerHeight: 60,
+  footerHeight: 70,
+  checkbox: 24,
+  floatingContainer: 50,
+  progressBar: 10,
+  moodMeterHeight: 374,
+}
+
+export const getTheme = (themeName: string): Theme => {
+  let colors = defaultColors;
+  if (themeName === 'dark') {
+    colors = darkColors;
+  } else if (themeName === 'mint') {
+    colors = mintColors;
+  } else if (themeName === 'pink') {
+    colors = pinkColors;
+  }
+  return {
+    colors,
+    spacing,
+    radius,
+    sizes,
+  };
+};
+
+const getActiveColors = (): ThemeColors => {
+  try {
+    const saved = AuthStorage.getSettings();
+    if (saved?.theme === 'dark') {
+      return darkColors;
+    }
+    if (saved?.theme === 'mint') {
+      return mintColors;
+    }
+    if (saved?.theme === 'pink') {
+      return pinkColors;
+    }
+  } catch (e) {
+  }
+  return defaultColors;
+};
+
+export const theme: Theme = {
+  colors: getActiveColors(),
+  spacing,
+  radius,
+  sizes
+};
