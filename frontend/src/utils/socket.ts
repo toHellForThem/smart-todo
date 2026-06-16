@@ -2,7 +2,7 @@ import { io } from 'socket.io-client';
 import { AuthStorage } from './storage';
 
 const getSocketUrl = () => {
-  return AuthStorage.getServerUrl() || process.env.EXPO_PUBLIC_SOCKET_URL || '';
+  return AuthStorage.getServerUrl() || process.env.EXPO_PUBLIC_SOCKET_URL || 'http://192.168.1.50:8000';
 };
 
 export const socket = io(getSocketUrl(), {
@@ -22,7 +22,7 @@ export const updateSocketUrlAndReconnect = (newUrl?: string | null) => {
     AuthStorage.setServerUrl('');
   }
 
-  const targetUrl = url || process.env.EXPO_PUBLIC_SOCKET_URL || '';
+  const targetUrl = url || process.env.EXPO_PUBLIC_SOCKET_URL || 'http://192.168.1.50:8000';
   (socket.io as any).uri = targetUrl;
 
   socket.disconnect();
