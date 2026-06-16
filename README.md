@@ -79,4 +79,4 @@ npx expo start
 
 ## Future Roadmap
 
-⏳ Refactor: Migrate the codebase to TypeScript for enhanced type safety and maintainability.
+✅ Refactor: Migrated the frontend codebase to TypeScript for enhanced type safety and maintainability.
