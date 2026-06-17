@@ -1,82 +1,64 @@
-# Smart To-Do App 🚀
-A mobile task management app with three modes (to-do list, daily tasks, RPG) and a focus on a polished UI/UX.
+<div align="center">
+  <h1>🚀 ToDoSoDo</h1>
+  <p><i>Кроссплатформенное приложение для управления задачами с упором на удобство, универсальность и offline-first архитектуру.</i></p>
 
-![Demo](https://github.com/user-attachments/assets/2319141e-f3eb-42cb-a02c-cf3d39ba2eda)
-
-## Tech Stack
-- Front-end: JavaScript (ES6+), React Native, Expo
-- Back-end: Python, Socket.io
-- Database: SQLite
-
-## Key Features
-- Triple-Mode Logic: Seamless switching between RPG, Daily, and Classic task management.
-- Real-Time Synchronization: Instant updates across multiple devices powered by WebSockets.
-- Persistent Storage: Local SQLite database for offline access and data reliability.
-
-## Platform Support
-
-- ✅ Android ([RuStore](https://www.rustore.ru/catalog/app/com.anonymous.toDoSoDo) / [GitHub APK](https://github.com/toHellForThem/smart-todo/releases/latest))
-- ✅ Desktop ([Download .exe for Windows](https://github.com/toHellForThem/smart-todo/releases/latest))
-- ⏳ iOS (In development)
-
-## Running the Server (Self-Hosting)
-
-If you only want to host your own synchronization server for the mobile app, follow these steps to set up and run the backend on Windows.
-
-### Backend Setup
-
-1. Make sure you have [Python 3.10+](https://www.python.org/) installed.
-2. Navigate to the `backend` folder:
-   ```bash
-   cd backend
-   ```
-3. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   ```
-4. Install dependencies:
-   ```bash
-   .\venv\Scripts\pip install -r requirements.txt
-   ```
-5. Copy `.env.example` to `.env`:
-   ```bash
-   copy .env.example .env
-   ```
-
-### Starting the Server
-
-Use the provided convenience script in the root directory:
-- Double-click `start_server_windows.bat`
+  <!-- Бэйджи с технологиями -->
+  <img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Native" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.io" />
+  <img src="https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
+</div>
 
 ---
 
-## Development Setup
+![Demo](https://github.com/user-attachments/assets/2319141e-f3eb-42cb-a02c-cf3d39ba2eda)
 
-If you want to contribute or build the frontend application locally, follow these steps.
+## 📱 О проекте
 
-### Frontend Setup
+**ToDoSoDo** — это универсальный инструмент для организации вашей жизни. Приложение создано для максимального удобства и позволяет не только вести обычные списки дел, но и отслеживать привычки, контролировать накопления на цели и сохранять прогресс в хобби.
 
-1. Make sure you have [Node.js](https://nodejs.org/) installed.
-2. Navigate to the `frontend` folder:
-   ```bash
-   cd frontend
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+### 🌟 Ключевые фичи
+- 🎯 **Triple-Mode Logic:** Бесшовное переключение между Классическим to-do листом, Ежедневными задачами (с трекером привычек) и RPG-режимом, который нужен для глубокого отслеживания жизни (серии сериалов, фильмы, контроль накоплений на цели).
+- 🔌 **Offline-First:** Полноценная работа без подключения к интернету. Данные надежно лежат в быстром локальном хранилище на устройстве (через `react-native-mmkv`) и синхронизируются в фоне при появлении сети.
+- ⚡ **Real-Time Синхронизация:** Мгновенное обновление задач на всех устройствах (телефон, ПК) через WebSockets с встроенным алгоритмом разрешения конфликтов версий.
+- 🔐 **Безопасность:** Регистрация и авторизация на базе JWT-токенов, хэширование паролей.
 
-### Running for Development
+---
 
-To run both the backend server and the frontend client simultaneously for debugging:
-- Double-click `start_dev_windows.bat`
+## 📥 Установка и загрузка
 
-Alternatively, you can run the frontend client separately:
+Приложение готово к использованию на Android и Windows:
+
+* 🤖 **Android:** Скачать из [RuStore](https://www.rustore.ru/catalog/app/com.anonymous.toDoSoDo) или [GitHub APK](https://github.com/toHellForThem/smart-todo/releases/latest)
+* 💻 **Windows:** Скачать [портативный .exe](https://github.com/toHellForThem/smart-todo/releases/latest)
+* 🍎 **iOS:** В разработке ⏳
+
+---
+
+## 🛠 Архитектура
+
+Приложение разделено на три основные части:
+1. **Frontend (Mobile & Web):** Написан на React Native (Expo) с использованием TypeScript. Отвечает за плавный интерфейс (`react-native-reanimated`, `react-native-paper`) и локальное хранилище ключей-значений.
+2. **Backend (Server):** Асинхронный Python-сервер на базе FastAPI.
+3. **Database:** SQLite в режиме WAL (Write-Ahead Logging) через библиотеку `aiosqlite` для неблокирующих запросов. Соединение с клиентами поддерживается через `python-socketio`.
+
+---
+
+## 🚀 Self-Hosting (Свой сервер синхронизации)
+
+Если вы хотите поднять собственный бэкенд для хранения и синхронизации ваших данных из приложения:
+
+Убедитесь, что установлен [Python 3.10+](https://www.python.org/).
 ```bash
-cd frontend
-npx expo start
+cd backend
+python -m venv venv
+
+# Для Windows:
+.\venv\Scripts\pip install -r requirements.txt
+
+# Настройте переменные окружения (.env)
+copy .env.example .env  
 ```
-
-## Future Roadmap
-
-✅ Refactor: Migrated the frontend codebase to TypeScript for enhanced type safety and maintainability.
+*Запуск сервера на Windows:* Двойной клик по скрипту `start_server_windows.bat`.
