@@ -32,7 +32,7 @@
 Приложение готово к использованию на Android и Windows:
 
 * 🤖 **Android:** Скачать из [RuStore](https://www.rustore.ru/catalog/app/com.anonymous.toDoSoDo) или [GitHub APK](https://github.com/toHellForThem/smart-todo/releases/latest)
-* 💻 **Windows:** Скачать [портативный .exe](https://github.com/toHellForThem/smart-todo/releases/latest)
+* 💻 **Windows:** Скачать [.exe приложение](https://github.com/toHellForThem/smart-todo/releases/latest)
 * 🍎 **iOS:** В разработке ⏳
 
 ---
